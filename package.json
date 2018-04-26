@@ -1,0 +1,15 @@
+{
+  "name": "flocc",
+  "version": "0.0.2",
+  "description": "Agent-based modeling in JavaScript in the browser or server.",
+  "main": "index.js",
+  "scripts": {
+    "build": "rollup main.js --o index.js -f umd --name \"index\""
+  },
+  "author": "Scott Donaldson",
+  "license": "ISC",
+  "devDependencies": {
+    "babel": "^6.23.0",
+    "rollup": "^0.58.2"
+  }
+}
