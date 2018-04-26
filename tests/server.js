@@ -1,4 +1,4 @@
-const { Agent, Environment, Grid } = require('../index');
+const { Agent, Environment, GridEnvironment } = require('../index');
 
-const grid = new Grid(10);
+const grid = new GridEnvironment(10);
 grid.tick();

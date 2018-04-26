@@ -1,7 +1,7 @@
 import Environment from './Environment';
 import Agent from '../agents/Agent';
 
-export default class Grid extends Environment {
+export default class GridEnvironment extends Environment {
 
     constructor(size) {
         
@@ -35,7 +35,7 @@ export default class Grid extends Environment {
         
         let output = '';
         this.agents.forEach(agent => {
-            output += agent.value || '-';
+            output += agent.get('value') || '-';
             if (agent.x === this.size - 1) output += '\n';
         });
 

@@ -1,10 +1,14 @@
 import Agent from './agents/Agent';
 
 import Environment from './environments/Environment';
-import Grid from './environments/Grid';
+import GridEnvironment from './environments/GridEnvironment';
+
+import utils from './utils/utils';
 
 export { 
     Agent, 
     Environment,
-    Grid
+    GridEnvironment,
+
+    utils
 };

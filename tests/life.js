@@ -1,11 +1,11 @@
-const { Agent, Grid } = require('../index');
+const { Agent, GridEnvironment, utils } = require('../index');
 
-const grid = new Grid(10);
+const grid = new GridEnvironment(10);
 
-grid.agents.forEach(agent => {
+grid.getAgents().forEach(agent => {
     
-    agent.value = 'o';
-    if (Math.random() < 0.15) agent.value = 'x';
+    agent.set('value', 'o');
+    if (Math.random() < 0.15) agent.set('value', 'x');
 
     agent.addRule(() => {
 
@@ -15,15 +15,15 @@ grid.agents.forEach(agent => {
         for (let dx = -1; dx <= 1; dx++) {
             for (let dy = -1; dy <= 1; dy++) {
                 if (dx === 0 && dy === 0) continue;
-                if (grid.getAgent(x + dx, y + dy).value === 'x') livingNeighbors++;
+                if (grid.getAgent(x + dx, y + dy).get('value') === 'x') livingNeighbors++;
             }
         }
 
         agent.enqueue(() => {
             if (livingNeighbors < 2 || livingNeighbors > 3) {
-                agent.value = 'o';
+                agent.set('value', 'o');
             } else if (livingNeighbors === 3) {
-                agent.value = 'x';
+                agent.set('value', 'x');
             }
         });
     });
@@ -31,7 +31,6 @@ grid.agents.forEach(agent => {
 
 grid.log();
 
-setInterval(() => {
-    grid.tick();
-    grid.log();
-}, 1000);
+grid.tick(20);
+
+grid.log();
