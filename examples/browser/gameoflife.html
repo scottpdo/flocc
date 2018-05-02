@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <script src="../../flocc.js"></script>
+    <title>Game of Life</title>
+
+    <style>#life { font-size: 24px; line-height: 0.75; }</style>
+</head>
+<body>
+    
+    <pre id="life"></pre>
+    <button id="reset">Randomize</button>
+
+    <script>
+    var container = document.getElementById('life');
+    var size = 15;
+    var grid = new flocc.GridEnvironment(size, size);
+
+    grid.fill();
+    
+    function setup() {
+
+        grid.loop(function(x, y, agent) {
+
+            agent.set('alive', Math.random() < 0.15);
+
+            agent.addRule(function() {
+
+                var x = agent.x;
+                var y = agent.y;
+                
+                var livingNeighbors = 0;
+                for (var dx = -1; dx <= 1; dx++) {
+                    for (var dy = -1; dy <= 1; dy++) {
+                        if (dx === 0 && dy === 0) continue;
+                        if (grid.getAgent(x + dx, y + dy).get('alive')) livingNeighbors++;
+                    }
+                }
+
+                agent.enqueue(function() {
+                    if (livingNeighbors < 2 || livingNeighbors > 3) {
+                        agent.set('alive', false);
+                    } else if (livingNeighbors === 3) {
+                        agent.set('alive', true);
+                    }
+                })
+            });
+        });
+    }
+
+    function render() {
+
+        container.innerHTML = '';
+        grid.loop(function(x, y, agent) {
+            container.innerHTML += agent.get('alive') ? 'x' : '-';
+            if (x === size - 1) container.innerHTML += '\n';
+        });
+
+        grid.tick();
+
+        setTimeout(render, 1000);
+    }
+
+    setup();
+    render();
+
+    document.getElementById('reset').addEventListener('click', setup);
+    </script>
+
+</body>
+</html>

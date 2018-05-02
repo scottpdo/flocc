@@ -1,6 +1,6 @@
 {
   "name": "flocc",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Agent-based modeling in JavaScript in the browser or server.",
   "main": "flocc.js",
   "scripts": {
@@ -10,5 +10,6 @@
   "license": "ISC",
   "devDependencies": {
     "rollup": "^0.58.2"
-  }
+  },
+  "keywords": ["abm", "agent-based modeling", "agent-based simulation"]
 }
