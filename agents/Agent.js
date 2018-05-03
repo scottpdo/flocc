@@ -35,24 +35,32 @@ export default class Agent {
 
     /**
      * Add a rule to be executed during the agent's 
-     * environment's tick cycle.
+     * environment's tick cycle. When executed, the 
      * @param {Function} rule 
      */
-    addRule(rule) {
-        this.rules.push(rule);
+    addRule(rule, ...args) {
+        this.rules.push({
+            args,
+            rule
+        });
     }
 
     /**
      * Enqueue a function to be executed at the end of
      * the agent's environment's tick cycle (for example,
      * if agents in an environment should perform their 
-     * calculations and updates separately). 
+     * calculations and updates separately). Additional/external 
+     * data passed in as arguments to the enqueued function will
+     * be remembered and passed through when the function is executed.
      * 
      * The `queue` array is cleared at the very end of 
      * the environment's tick cycle.
      * @param {Function} enqueuedRule
      */
-    enqueue(enqueuedRule) {
-        this.queue.push(enqueuedRule);
+    enqueue(rule, ...args) {
+        this.queue.push({
+            args,
+            rule
+        });
     }
 };

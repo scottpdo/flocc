@@ -35,12 +35,16 @@ export default class Environment {
     tick(n = 1) {
         
         this.agents.forEach(agent => {
-            agent.rules.forEach(rule => rule());
+            agent.rules.forEach(ruleObj => {
+                const { rule, args } = ruleObj;
+                rule(agent, ...args);
+            });
         });
         
         this.agents.forEach(agent => {
             while (agent.queue.length > 0) {
-                agent.queue.shift()();
+                const { rule, args } = agent.queue.shift();
+                rule(agent, ...args);
             }
         });
 
