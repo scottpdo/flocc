@@ -59,6 +59,8 @@ export default class GridEnvironment extends Environment {
 
         const indexAmongAgents = this.agents.indexOf(agent);
         this.agents.splice(indexAmongAgents, 1);
+
+        this.cells.delete(hash(x, y));
     }
 
     /**
