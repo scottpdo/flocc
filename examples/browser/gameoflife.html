@@ -8,11 +8,11 @@
     <script src="../../flocc.js"></script>
     <title>Game of Life</title>
 
-    <style>#life { font-size: 24px; line-height: 0.75; }</style>
+    <style>#container { font-size: 24px; line-height: 0.75; }</style>
 </head>
 <body>
     
-    <pre id="life"></pre>
+    <pre id="container"></pre>
     <button id="reset">Randomize</button>
 
     <script>
@@ -21,7 +21,7 @@
      * set its size (width and height),
      * and instantiate a new GridEnvironment of that size.
      */ 
-    var container = document.getElementById('life');
+    var container = document.getElementById('container');
     var size = 15;
     var grid = new flocc.GridEnvironment(size, size);
     

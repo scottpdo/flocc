@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <script src="../../flocc.js"></script>
+    <title>Segregation</title>
+
+    <style>#container { font-size: 24px; line-height: 0.75; }</style>
+</head>
+<body>
+    
+    <pre id="container"></pre>
+    <button id="reset">Randomize</button>
+
+    <script>
+    var container = document.getElementById('container');
+    var size = 25;
+    var grid = new flocc.GridEnvironment(size, size);
+    
+    function setup() {
+
+        grid.loop(function(x, y, agent) {
+
+            if (Math.random() < 0.1) return;
+            
+            var agent = grid.addAgent(x, y);
+            agent.set('color', Math.random() > 0.5 ? 'red' : 'blue');
+            agent.addRule(tick);
+        });
+    }
+
+    function tick(agent) {
+
+        var x = agent.x;
+        var y = agent.y;
+        var color = agent.get('color');
+
+        var percentLike = 0;
+        var neighbors = 0;
+
+        for (var dx = -1; dx <= 1; dx++) {
+
+            for (var dy = -1; dy <= 1; dy++) {
+                
+                if (dx === 0 && dy === 0) continue;
+                
+                var maybeNeighbor = grid.getAgent(x + dx, y + dy);
+                if (!maybeNeighbor) continue;
+
+                neighbors++;
+                if (maybeNeighbor.get('color') === color) percentLike++;
+            }
+        }
+        
+        if (neighbors === 0) return;
+
+        percentLike /= neighbors;
+
+        if (percentLike < 0.5) move(agent, percentLike);
+    }
+
+    function getOpenSpace(attempts) {
+        
+        if (!attempts) attempts = 0;
+        if (attempts === size * size * size) throw new Error("Took too long to find an open space!");
+
+        var x = (Math.random() * size) | 0;
+        var y = (Math.random() * size) | 0;
+        
+        return !grid.getAgent(x, y) ? { x, y } : getOpenSpace(attempts + 1);
+    }
+
+    function move(agent, percentLike) {
+        
+        // do a monte carlo search for open spaces...
+        var space = getOpenSpace();
+        var x = space.x;
+        var y = space.y;
+
+        grid.removeAgent(agent.x, agent.y);
+
+        var movedAgent = grid.addAgent(x, y);
+        movedAgent.addRule(tick);
+        movedAgent.set('color', agent.get('color'));
+    }
+
+    function render() {
+
+        container.innerHTML = '';
+        grid.loop(function(x, y, agent) {
+            container.innerHTML += agent ? 
+                `<span style="color: ${agent.get('color')}">w</span>` : 
+                ' ';
+            if (x === size - 1) container.innerHTML += '\n';
+        });
+
+        grid.tick();
+
+        setTimeout(render, 1000);
+    }
+
+    setup();
+    render();
+
+    document.getElementById('reset').addEventListener('click', setup);
+    </script>
+
+</body>
+</html>
