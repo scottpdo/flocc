@@ -132,11 +132,76 @@
         }
     }
 
+    /**
+     * Gets a random element from `array`. (This is lodash's implementation).
+     * @param {Array} array 
+     * @returns {*} Returns the random element.
+     */
+    function sample(array) {
+        const length = array == null ? 0 : array.length;
+        return length ? array[Math.floor(Math.random() * length)] : undefined;
+    }
+
+    /**
+     * Copies the values of `source` to `array`. (This is lodash's implementation).
+     *
+     * @private
+     * @param {Array} source The array to copy values from.
+     * @param {Array} [array=[]] The array to copy values to.
+     * @returns {Array} Returns `array`.
+     */
+    function copyArray(source, array) {
+        let index = -1;
+        const length = source.length;
+      
+        array || (array = new Array(length));
+
+        while (++index < length) {
+            array[index] = source[index];
+        }
+
+        return array;
+    }
+
+    /**
+     * Creates an array of shuffled values, using a version of the
+     * [Fisher-Yates shuffle](https://en.wikipedia.org/wiki/Fisher-Yates_shuffle).
+     * (This is lodash's implementation).
+     *
+     * @since 0.1.0
+     * @category Array
+     * @param {Array} array The array to shuffle.
+     * @returns {Array} Returns the new shuffled array.
+     */
+    function shuffle(array) {
+
+        const length = array == null ? 0 : array.length;
+
+        if (!length) return [];
+        
+        let index = -1;
+        const lastIndex = length - 1;
+        const result = copyArray(array);
+        while (++index < length) {
+            const rand = index + Math.floor(Math.random() * (lastIndex - index + 1));
+            const value = result[rand];
+            result[rand] = result[index];
+            result[index] = value;
+        }
+
+        return result;
+    }
+
     const hash = (x, y) => x.toString() + ',' + y.toString();
+    const unhash = (str) => { return {
+            x: +(str.split(',')[0]),
+            y: +(str.split(',')[1])
+        };
+    };
 
     class GridEnvironment extends Environment {
 
-        constructor(width, height) {
+        constructor(width = 2, height = 2) {
             
             super();
             
@@ -144,6 +209,14 @@
             this.width = width;
 
             this.cells = new Map();
+
+            // store hashes of all possible cells internally
+            this._cellHashes = [];
+            for (let y = 0; y < this.height; y++) {
+                for (let x = 0; x < this.width; x++) {
+                    this._cellHashes.push(hash(x, y));
+                }
+            }
         }
 
         /**
@@ -218,6 +291,39 @@
                 }
             }
         }
+
+        swap(x1, y1, x2, y2) {
+            
+            const maybeAgent1 = this.getAgent(x1, y1);
+            const maybeAgent2 = this.getAgent(x2, y2);
+            
+            if (maybeAgent1) {
+                maybeAgent1.x = x2;
+                maybeAgent1.y = y2;
+            }
+
+            if (maybeAgent2) {
+                maybeAgent1.x = x1;
+                maybeAgent1.y = y1;
+            }
+
+            this.cells.set(hash(x1, y1), maybeAgent2);
+            this.cells.set(hash(x2, y2), maybeAgent1);
+        }
+
+        getRandomOpenCell() {
+
+            // randomize order of cell hashes
+            const hashes = shuffle(this._cellHashes);
+            
+            while (hashes.length > 0) {
+                const hash = hashes.pop();
+                const maybeAgent = this.cells.get(hash);
+                if (!maybeAgent) return unhash(hash);
+            }
+
+            return null;
+        }
     }
 
     /**
@@ -231,6 +337,21 @@
         if (x < min) return min;
         if (x > max) return max;
         return x;
+    }
+
+    /**
+     * Finds the distance between `p1` and `p2`.
+     * Expects that p1 and p2 each contain `x`, `y`, and `z`
+     * keys that have numeric values.
+     * @param {*} p1 
+     * @param {*} p2 
+     * @return {number} The distance between p1 and p2.
+     */
+    function distance(p1, p2) {
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const dz = p2.z - p1.z;
+        return Math.sqrt(dx * dx + dy * dy + dz * dz);
     }
 
     /**
@@ -250,7 +371,10 @@
 
     const utils = {
         clamp,
-        remap
+        distance,
+        remap,
+        sample,
+        shuffle
     };
 
     exports.Agent = Agent;

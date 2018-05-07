@@ -64,29 +64,9 @@
         if (percentLike < 0.5) move(agent, percentLike);
     }
 
-    function getOpenSpace(attempts) {
-        
-        if (!attempts) attempts = 0;
-        if (attempts === size * size * size) throw new Error("Took too long to find an open space!");
-
-        var x = (Math.random() * size) | 0;
-        var y = (Math.random() * size) | 0;
-        
-        return !grid.getAgent(x, y) ? { x, y } : getOpenSpace(attempts + 1);
-    }
-
     function move(agent, percentLike) {
-        
-        // do a monte carlo search for open spaces...
-        var space = getOpenSpace();
-        var x = space.x;
-        var y = space.y;
-
-        grid.removeAgent(agent.x, agent.y);
-
-        var movedAgent = grid.addAgent(x, y);
-        movedAgent.addRule(tick);
-        movedAgent.set('value', agent.get('value'));
+        var space = grid.getRandomOpenCell();
+        grid.swap(agent.x, agent.y, space.x, space.y);
     }
 
     function render() {

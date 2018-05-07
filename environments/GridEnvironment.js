@@ -1,11 +1,19 @@
 import Environment from './Environment';
 import SpatialAgent from '../agents/SpatialAgent';
 
+import sample from '../utils/sample';
+import shuffle from '../utils/shuffle';
+
 const hash = (x, y) => x.toString() + ',' + y.toString();
+const unhash = (str) => { return {
+        x: +(str.split(',')[0]),
+        y: +(str.split(',')[1])
+    };
+};
 
 export default class GridEnvironment extends Environment {
 
-    constructor(width, height) {
+    constructor(width = 2, height = 2) {
         
         super();
         
@@ -13,6 +21,14 @@ export default class GridEnvironment extends Environment {
         this.width = width;
 
         this.cells = new Map();
+
+        // store hashes of all possible cells internally
+        this._cellHashes = [];
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                this._cellHashes.push(hash(x, y));
+            }
+        }
     }
 
     /**
@@ -86,5 +102,38 @@ export default class GridEnvironment extends Environment {
                 callback(x, y, agent);
             }
         }
+    }
+
+    swap(x1, y1, x2, y2) {
+        
+        const maybeAgent1 = this.getAgent(x1, y1);
+        const maybeAgent2 = this.getAgent(x2, y2);
+        
+        if (maybeAgent1) {
+            maybeAgent1.x = x2;
+            maybeAgent1.y = y2;
+        }
+
+        if (maybeAgent2) {
+            maybeAgent1.x = x1;
+            maybeAgent1.y = y1;
+        }
+
+        this.cells.set(hash(x1, y1), maybeAgent2);
+        this.cells.set(hash(x2, y2), maybeAgent1);
+    }
+
+    getRandomOpenCell() {
+
+        // randomize order of cell hashes
+        const hashes = shuffle(this._cellHashes);
+        
+        while (hashes.length > 0) {
+            const hash = hashes.pop();
+            const maybeAgent = this.cells.get(hash);
+            if (!maybeAgent) return unhash(hash);
+        }
+
+        return null;
     }
 }
