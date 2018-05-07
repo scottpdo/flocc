@@ -71,6 +71,15 @@
         }
     }
 
+    class SpatialAgent extends Agent {
+        constructor(x = 0, y = 0, z = 0) {
+            super();
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+    }
+
     class Environment {
         
         constructor() {
@@ -120,15 +129,6 @@
             });
 
             if (n > 1) this.tick(n - 1);
-        }
-    }
-
-    class SpatialAgent extends Agent {
-        constructor(x = 0, y = 0, z = 0) {
-            super();
-            this.x = x;
-            this.y = y;
-            this.z = z;
         }
     }
 
@@ -348,6 +348,14 @@
      * @return {number} The distance between p1 and p2.
      */
     function distance(p1, p2) {
+
+        if (!p1.x) p1.x = 0;
+        if (!p1.y) p1.y = 0;
+        if (!p1.z) p1.z = 0;
+        if (!p2.x) p2.x = 0;
+        if (!p2.y) p2.y = 0;
+        if (!p2.z) p2.z = 0;
+
         const dx = p2.x - p1.x;
         const dy = p2.y - p1.y;
         const dz = p2.z - p1.z;
@@ -378,6 +386,7 @@
     };
 
     exports.Agent = Agent;
+    exports.SpatialAgent = SpatialAgent;
     exports.Environment = Environment;
     exports.GridEnvironment = GridEnvironment;
     exports.utils = utils;
