@@ -17,6 +17,12 @@ export default class Environment {
         this.agents.push(agent);
     }
 
+    removeAgent(agent) {
+        agent.environment = null;
+        const index = this.agents.indexOf(agent);
+        this.agents.splice(index, 1);
+    }
+
     /**
      * Get an array of all the agents in the environment.
      * @return {Agent[]}

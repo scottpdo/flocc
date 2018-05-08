@@ -39,6 +39,16 @@
             this.data[name] = value;
         }
 
+        increment(value) {
+            if (!this.get(value)) this.set(value, 0);
+            this.set(value, this.get(value) + 1);
+        }
+
+        decrement(value) {
+            if (!this.get(value)) this.set(value, 0);
+            this.set(value, this.get(value) - 1);
+        }
+
         /**
          * Add a rule to be executed during the agent's 
          * environment's tick cycle. When executed, the 
@@ -95,6 +105,12 @@
         addAgent(agent) {
             agent.environment = this;
             this.agents.push(agent);
+        }
+
+        removeAgent(agent) {
+            agent.environment = null;
+            const index = this.agents.indexOf(agent);
+            this.agents.splice(index, 1);
         }
 
         /**

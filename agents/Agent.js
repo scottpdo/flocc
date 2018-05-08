@@ -33,6 +33,16 @@ export default class Agent {
         this.data[name] = value;
     }
 
+    increment(value) {
+        if (!this.get(value)) this.set(value, 0);
+        this.set(value, this.get(value) + 1);
+    }
+
+    decrement(value) {
+        if (!this.get(value)) this.set(value, 0);
+        this.set(value, this.get(value) - 1);
+    }
+
     /**
      * Add a rule to be executed during the agent's 
      * environment's tick cycle. When executed, the 
