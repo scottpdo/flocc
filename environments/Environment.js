@@ -17,6 +17,10 @@ export default class Environment {
         this.agents.push(agent);
     }
 
+    /**
+     * Remove an agent from the environment.
+     * @param {Agent} agent 
+     */
     removeAgent(agent) {
         agent.environment = null;
         const index = this.agents.indexOf(agent);

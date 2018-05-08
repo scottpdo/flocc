@@ -33,11 +33,23 @@ export default class Agent {
         this.data[name] = value;
     }
 
+    /**
+     * Increment a numeric (assume integer) piece of data
+     * associated with this agent. If the value has not yet been set,
+     * initializes it to 1.
+     * @param {number} value 
+     */
     increment(value) {
         if (!this.get(value)) this.set(value, 0);
         this.set(value, this.get(value) + 1);
     }
 
+    /**
+     * Decremenet a numeric (assume integer) piece of data
+     * associated with this agent. If the value has not yet been set,
+     * initializes it to -1.
+     * @param {number} value 
+     */
     decrement(value) {
         if (!this.get(value)) this.set(value, 0);
         this.set(value, this.get(value) - 1);

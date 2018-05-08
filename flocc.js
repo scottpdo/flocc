@@ -39,11 +39,23 @@
             this.data[name] = value;
         }
 
+        /**
+         * Increment a numeric (assume integer) piece of data
+         * associated with this agent. If the value has not yet been set,
+         * initializes it to 1.
+         * @param {number} value 
+         */
         increment(value) {
             if (!this.get(value)) this.set(value, 0);
             this.set(value, this.get(value) + 1);
         }
 
+        /**
+         * Decremenet a numeric (assume integer) piece of data
+         * associated with this agent. If the value has not yet been set,
+         * initializes it to -1.
+         * @param {number} value 
+         */
         decrement(value) {
             if (!this.get(value)) this.set(value, 0);
             this.set(value, this.get(value) - 1);
@@ -107,6 +119,10 @@
             this.agents.push(agent);
         }
 
+        /**
+         * Remove an agent from the environment.
+         * @param {Agent} agent 
+         */
         removeAgent(agent) {
             agent.environment = null;
             const index = this.agents.indexOf(agent);
@@ -250,7 +266,12 @@
         }
 
         /**
+         * For GridEnvironments, `addAgent` takes `x` and `y` values
+         * and automatically adds a SpatialAgent to that cell coordinate.
          * @override
+         * @param {number} x
+         * @param {number} y
+         * @returns {SpatialAgent} The agent that was added at the specified coordinate.
          */
         addAgent(x = 0, y = 0) {
 
@@ -269,6 +290,13 @@
             return agent;
         }
 
+        /**
+         * For GridEnvironments, `removeAgent` takes `x` and `y` values
+         * and removes the SpatialAgent (if there is one) at that cell coordinate.
+         * @override
+         * @param {number} x
+         * @param {number} y
+         */
         removeAgent(x = 0, y = 0) {
 
             const agent = this.cells.get(hash(x, y));
@@ -284,9 +312,9 @@
         }
 
         /**
-         * 
-         * @param {*} x 
-         * @param {*} y 
+         * Retrieve the agent at the specified cell coordinate.
+         * @param {number} x 
+         * @param {number} y 
          * @return {undefined | SpatialAgent}
          */
         getAgent(x, y) {
@@ -299,6 +327,14 @@
             return this.cells.get(hash(x, y));
         }
 
+        /**
+         * `loop` is like `tick`, but the callback is invoked with every
+         * cell coordinate, not every agent. 
+         * 
+         * The callback is invoked with arguments `x`, `y`, and `agent`
+         * (if there is one at that cell coordinate).
+         * @param {Function} callback 
+         */
         loop(callback = function() {}) {
             for (let y = 0; y < this.height; y++) {
                 for (let x = 0; x < this.width; x++) {
@@ -308,6 +344,15 @@
             }
         }
 
+        /**
+         * Given two pairs of cell coordinates, swap the agents at those cells.
+         * If both are empty, nothing happens. If one is empty and the other has an agent,
+         * this is equivalent to moving that agent to the new cell coordinate.
+         * @param {number} x1 
+         * @param {number} y1 
+         * @param {number} x2 
+         * @param {number} y2 
+         */
         swap(x1, y1, x2, y2) {
             
             const maybeAgent1 = this.getAgent(x1, y1);
@@ -327,17 +372,23 @@
             this.cells.set(hash(x2, y2), maybeAgent1);
         }
 
+        /**
+         * Find a random open cell in the GridEnvironment.
+         * @returns {{ x: number, y: number }} The coordinate of the open cell.
+         */
         getRandomOpenCell() {
 
             // randomize order of cell hashes
             const hashes = shuffle(this._cellHashes);
             
+            // keep looking for an empty one until we find it
             while (hashes.length > 0) {
                 const hash = hashes.pop();
                 const maybeAgent = this.cells.get(hash);
                 if (!maybeAgent) return unhash(hash);
             }
 
+            // once there are no hashes left, that means that there are no open cells
             return null;
         }
     }
