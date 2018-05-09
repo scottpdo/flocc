@@ -99,10 +99,10 @@ export default class GridEnvironment extends Environment {
      */
     getAgent(x, y) {
         
-        while (x < 0) x += size;
-        while (x >= size) x -= size;
-        while (y < 0) y += size;
-        while (y >= size) y -= size;
+        while (x < 0) x += this.width;
+        while (x >= this.width) x -= this.width;
+        while (y < 0) y += this.height;
+        while (y >= this.height) y -= this.height;
 
         return this.cells.get(hash(x, y));
     }
