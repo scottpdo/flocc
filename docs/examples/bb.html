@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <script src="../../flocc.js"></script>
+    <title>BB</title>
+
+    <style>#container { font-size: 24px; line-height: 0.75; }</style>
+</head>
+<body>
+    
+    <pre id="container"></pre>
+    <canvas id="canvas" width="800" height="200"></canvas>
+    <button id="reset">Randomize</button>
+
+    <script>
+    var container = document.getElementById('container');
+    var canvas = document.getElementById('canvas');
+    var context = canvas.getContext('2d');
+    
+    var house = new flocc.Environment();
+    var houseguests = 200;
+    
+    function setup() {
+        for (var i = 0; i < houseguests; i++) {
+            
+            var guest = new flocc.Agent();
+            guest.set('strength', flocc.utils.gaussian(50, 10) | 0);
+
+            guest.addRule(tick);
+
+            house.addAgent(guest);
+        }
+    }
+
+    function tick(agent) {
+        let vote;
+        let guesses = 10;
+        let i = 0;
+        do {
+            vote = flocc.utils.sample( house.getAgents() );
+            i++;
+        } while (
+            vote === agent || // short-circuit and try again if we accidentally picked this one
+            (vote.get('strength') < agent.get('strength') && i < guesses)
+        );
+
+        vote.increment('votes');
+    }
+
+    var time = 0;
+
+    function render() {
+
+        house.tick();
+
+        let highestVote = 0;
+        let evictees = [];
+
+        house.getAgents().forEach(function(agent) {
+            const votes = agent.get('votes');
+            if (votes > highestVote) {
+                highestVote = agent.get('votes');
+                evictees = [agent];
+            } else if (votes === highestVote) {
+                evictees.push(agent);
+            }
+        });
+
+        if (evictees.length > 1) console.log('tie, picking randomly');
+
+        const evictee = flocc.utils.sample(evictees);
+        house.removeAgent(evictee);
+
+        context.fillRect(time * 2, 200 - evictee.get('strength') * 2, 2, 2);
+
+        time++;
+
+        if (house.getAgents().length > 2) requestAnimationFrame(render);
+    }
+
+    setup();
+    render();
+
+    document.getElementById('reset').addEventListener('click', setup);
+    </script>
+
+</body>
+</html>
