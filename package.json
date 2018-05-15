@@ -1,10 +1,11 @@
 {
   "name": "flocc",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Agent-based modeling in JavaScript in the browser or server.",
   "main": "flocc.js",
   "scripts": {
-    "build": "rollup main.js --o flocc.js -f umd --name \"flocc\""
+    "build": "rollup main.js --o flocc.js -f umd --name \"flocc\" && cp flocc.js docs/assets/flocc.js",
+    "docs": "bundle exec jekyll serve"
   },
   "author": "Scott Donaldson",
   "license": "ISC",
