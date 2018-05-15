@@ -93,15 +93,6 @@
         }
     }
 
-    class SpatialAgent extends Agent {
-        constructor(x = 0, y = 0, z = 0) {
-            super();
-            this.x = x;
-            this.y = y;
-            this.z = z;
-        }
-    }
-
     class Environment {
         
         constructor() {
@@ -252,28 +243,26 @@
         }
 
         /**
-         * Fill every cell of the grid with a SpatialAgent
+         * Fill every cell of the grid with an agent
          * and set that agent's position to its x/y coordinate.
          */
         fill() {
             for (let y = 0; y < this.height; y++) {
                 for (let x = 0; x < this.width; x++) {
-                    const agent = new SpatialAgent(x, y);
-                    this.agents.push(agent);
-                    this.cells.set(hash(x, y), agent);
+                    this.addAgent(x, y);
                 }
             }
         }
 
         /**
          * For GridEnvironments, `addAgent` takes `x` and `y` values
-         * and automatically adds a SpatialAgent to that cell coordinate.
+         * and automatically adds a Agent to that cell coordinate.
          * @override
          * @param {number} x
          * @param {number} y
-         * @returns {SpatialAgent} The agent that was added at the specified coordinate.
+         * @returns {Agent} The agent that was added at the specified coordinate.
          */
-        addAgent(x = 0, y = 0) {
+        addAgent(x = 0, y = 0, agent = new Agent()) {
 
             // If there is already an agent at this location,
             // overwrite it (with a warning). Remove the existing agent...
@@ -283,7 +272,8 @@
             }
             
             // ...and add a new one
-            const agent = new SpatialAgent(x, y);
+            agent.set('x', x);
+            agent.set('y', y);
             this.agents.push(agent);
             this.cells.set(hash(x, y), agent);
 
@@ -292,7 +282,7 @@
 
         /**
          * For GridEnvironments, `removeAgent` takes `x` and `y` values
-         * and removes the SpatialAgent (if there is one) at that cell coordinate.
+         * and removes the Agent (if there is one) at that cell coordinate.
          * @override
          * @param {number} x
          * @param {number} y
@@ -315,7 +305,7 @@
          * Retrieve the agent at the specified cell coordinate.
          * @param {number} x 
          * @param {number} y 
-         * @return {undefined | SpatialAgent}
+         * @return {undefined | Agent}
          */
         getAgent(x, y) {
             
@@ -359,13 +349,13 @@
             const maybeAgent2 = this.getAgent(x2, y2);
             
             if (maybeAgent1) {
-                maybeAgent1.x = x2;
-                maybeAgent1.y = y2;
+                maybeAgent1.set('x', x2);
+                maybeAgent1.set('y', y2);
             }
 
             if (maybeAgent2) {
-                maybeAgent1.x = x1;
-                maybeAgent1.y = y1;
+                maybeAgent1.set('x', x1);
+                maybeAgent1.set('y', y1);
             }
 
             this.cells.set(hash(x1, y1), maybeAgent2);
@@ -416,6 +406,21 @@
      */
     function distance(p1, p2) {
 
+        const a = {};
+        const b = {};
+
+        if (p1 instanceof Agent) {
+            a.x = p1.get('x');
+            a.y = p1.get('y');
+            a.z = p1.get('z');
+        }
+
+        if (p2 instanceof Agent) {
+            b.x = p2.get('x');
+            b.y = p2.get('y');
+            b.z = p2.get('z');
+        }
+
         if (!p1.x) p1.x = 0;
         if (!p1.y) p1.y = 0;
         if (!p1.z) p1.z = 0;
@@ -426,6 +431,7 @@
         const dx = p2.x - p1.x;
         const dy = p2.y - p1.y;
         const dz = p2.z - p1.z;
+        
         return Math.sqrt(dx * dx + dy * dy + dz * dz);
     }
 
@@ -473,7 +479,6 @@
     };
 
     exports.Agent = Agent;
-    exports.SpatialAgent = SpatialAgent;
     exports.Environment = Environment;
     exports.GridEnvironment = GridEnvironment;
     exports.utils = utils;
