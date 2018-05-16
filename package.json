@@ -5,7 +5,7 @@
   "main": "flocc.js",
   "scripts": {
     "build": "rollup main.js --o flocc.js -f umd --name \"flocc\" && cp flocc.js docs/assets/flocc.js",
-    "docs": "cd docs && bundle exec jekyll"
+    "docs": "cd docs && bundle exec jekyll serve"
   },
   "author": "Scott Donaldson",
   "license": "ISC",
