@@ -74,4 +74,4 @@ agent.addRule(tick);
 
 In the above example, each agent calculates some average value, and sets its `target` value to that average. If we had not called `.enqueue` within the rule function (`tick`), then when the first agent in the environment calculates the average and sets its `target`, the second agent might not get the same average value!
 
-Next, read up on [environments](/docs/environment).
+Next, read up on [environments]({{ site.baseurl }}/docs/environment).

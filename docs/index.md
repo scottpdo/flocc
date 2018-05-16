@@ -6,10 +6,10 @@ Flocc is a JavaScript library for [agent-based modeling and simulation](https://
 
 ## Examples
 
-- [Game of Life](/examples/gameoflife)
-- [Segregation](/examples/segregation)
-- [Flocking](/examples/flocking)
+- [Game of Life]({{ site.baseurl }}/examples/gameoflife)
+- [Segregation]({{ site.baseurl }}/examples/segregation)
+- [Flocking]({{ site.baseurl }}/examples/flocking)
 
 ## Documentation
 
-- [Quick Start](/examples/quickstart)
+- [Quick Start]({{ site.baseurl }}/examples/quickstart)

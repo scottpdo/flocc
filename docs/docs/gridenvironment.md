@@ -2,7 +2,7 @@
 title: GridEnvironment
 ---
 
-The class `flocc.GridEnvironment` (from here on, just `GridEnvironment`) is a special case of the [`Environment` class](/docs/environment).
+The class `flocc.GridEnvironment` (from here on, just `GridEnvironment`) is a special case of the [`Environment` class]({{ site.baseurl }}/docs/environment).
 
 A new `GridEnvironment` of size x/y can be instantiated by calling: `const environment = new GridEnvironment(x, y);`
 

@@ -2,7 +2,7 @@
 title: Segregation
 ---
 
-<script src="/assets/flocc.js"></script>
+<script src="{{ site.baseurl }}/assets/flocc.js"></script>
     
 <pre id="container"></pre>
 <button id="reset">Randomize</button>

@@ -15,10 +15,10 @@ const environment = new Environment();
 
 ## Classes
 
-- [flocc.Agent](/docs/agent)
-- [flocc.Environment](/docs/environment)
-- [flocc.GridEnvironment](/docs/gridenvironment)
+- [flocc.Agent]({{ site.baseurl }}/docs/agent)
+- [flocc.Environment]({{ site.baseurl }}/docs/environment)
+- [flocc.GridEnvironment]({{ site.baseurl }}/docs/gridenvironment)
 
 ## Utility Functions
 
-- [flocc.utils](/docs/utils)
+- [flocc.utils]({{ site.baseurl }}/docs/utils)

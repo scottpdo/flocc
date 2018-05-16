@@ -2,7 +2,7 @@
 title: Flocking
 ---
 
-<script src="/assets/flocc.js"></script>
+<script src="{{ site.baseurl }}/assets/flocc.js"></script>
 
 <canvas id="container"></canvas>
 <button id="reset">Randomize</button>

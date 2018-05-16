@@ -72,4 +72,4 @@ The agents will have these new ages:
 
 How else could we extend this model? Agents could have additional rules that allow them to interact with each other or the environment. Their health could deteriorate as they age, and eventually they might die and be removed from the environment.
 
-At this point, it might be helpful to read through the [documentation](/docs) to see what else you can do with agents and environments.
+At this point, it might be helpful to read through the [documentation]({{ site.baseurl }}/docs) to see what else you can do with agents and environments.
