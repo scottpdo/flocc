@@ -11,7 +11,10 @@ title: Segregation
 var container = document.getElementById('container');
 var width = 50;
 var height = 20;
+
 var grid = new flocc.GridEnvironment(width, height);
+var renderer = new flocc.ASCIIRenderer(grid);
+renderer.mount(container);
 
 function setup() {
 
@@ -63,12 +66,6 @@ function move(agent, percentLike) {
 }
 
 function render() {
-
-    container.innerHTML = '';
-    grid.loop(function(x, y, agent) {
-        container.innerHTML += agent ? agent.get('value') : ' ';
-        if (x === width - 1) container.innerHTML += '\n';
-    });
 
     grid.tick();
 

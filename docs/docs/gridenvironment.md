@@ -87,3 +87,5 @@ environment.swap(0, 0, 3, 4);
 If there is at least one open cell, returns an object like `{ x: number, y: number }` corresponding to that cell. Internally, cells are shuffled so that the returned cell should be randomized. 
 
 If every cell already contains an agent, returns `null`.
+
+Next, read how to render a `GridEnvironment` onto a web page using the [`ASCIIRenderer`]({{ site.baseurl }}/docs/asciirenderer).

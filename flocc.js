@@ -98,6 +98,7 @@
         constructor() {
             /** @member {Agent[]} */
             this.agents = [];
+            this.renderer = null;
         }
 
         /**
@@ -151,7 +152,12 @@
                 }
             });
 
-            if (n > 1) this.tick(n - 1);
+            if (n > 1) {
+                this.tick(n - 1);
+                return;
+            }
+            
+            if (this.renderer !== null) this.renderer.render();
         }
     }
 
@@ -383,6 +389,33 @@
         }
     }
 
+    class ASCIIRenderer {
+        
+        constructor(environment, opts = {}) {
+            
+            /** @member GridEnvironment */
+            this.environment = environment;
+            environment.renderer = this;
+
+            /** @member HTMLPreElement */
+            this.pre = document.createElement('pre');
+        }
+
+        mount(el) {
+            const container = (typeof el === 'string') ? document.querySelector(el) : el;
+            container.appendChild(this.pre);
+        }
+
+        render() {
+            this.pre.innerHTML = '';
+            this.environment.loop((x, y, agent) => {
+                if (!agent || !agent.get('value')) this.pre.innerHTML += ' ';
+                if (agent && agent.get('value')) this.pre.innerHTML += agent.get('value');
+                if (x === this.environment.width - 1) this.pre.innerHTML += '\n';
+            });
+        }
+    }
+
     /**
      * Restricts a number x to the range min --> max.
      * @param {number} x 
@@ -481,6 +514,7 @@
     exports.Agent = Agent;
     exports.Environment = Environment;
     exports.GridEnvironment = GridEnvironment;
+    exports.ASCIIRenderer = ASCIIRenderer;
     exports.utils = utils;
 
     Object.defineProperty(exports, '__esModule', { value: true });

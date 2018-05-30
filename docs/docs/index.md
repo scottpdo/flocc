@@ -18,6 +18,7 @@ const environment = new Environment();
 - [flocc.Agent]({{ site.baseurl }}/docs/agent)
 - [flocc.Environment]({{ site.baseurl }}/docs/environment)
 - [flocc.GridEnvironment]({{ site.baseurl }}/docs/gridenvironment)
+- [flocc.ASCIIRenderer]({{ site.baseurl }}/docs/asciirenderer)
 
 ## Utility Functions
 

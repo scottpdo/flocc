@@ -5,6 +5,7 @@ export default class Environment {
     constructor() {
         /** @member {Agent[]} */
         this.agents = [];
+        this.renderer = null;
     }
 
     /**
@@ -58,6 +59,11 @@ export default class Environment {
             }
         });
 
-        if (n > 1) this.tick(n - 1);
+        if (n > 1) {
+            this.tick(n - 1);
+            return;
+        }
+        
+        if (this.renderer !== null) this.renderer.render();
     }
 };

@@ -2,6 +2,10 @@
 title: Game of Life
 ---
 
+The [Game of Life](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life) shows how remarkable complexity and emergent patterns can result from simple rules.
+
+From one tick of the game to the next, a live cell with fewer than two or more than three live neighbors dies. A live cell with two or three neighbors lives on, and a dead cell with exactly three live neighbors becomes a live cell.
+
 <script src="{{ site.baseurl }}/assets/flocc.js"></script>
 
 <pre id="container"></pre>
@@ -17,6 +21,9 @@ var container = document.getElementById('container');
 var width = 50;
 var height = 20;
 var grid = new flocc.GridEnvironment(width, height);
+
+var renderer = new flocc.ASCIIRenderer(grid);
+renderer.mount(container);
 
 /**
  * Setup fills every cell of the GridEnvironment with a new Agent
@@ -71,15 +78,12 @@ function liveOrDie(agent, livingNeighbors) {
     } else if (livingNeighbors === 3) {
         agent.set('alive', true);
     }
+    
+    // The ASCIIRenderer chooses what to display from the agent's value
+    agent.set('value', agent.get('alive') ? 'X' : '.');
 }
 
 function render() {
-
-    container.innerHTML = '';
-    grid.loop(function(x, y, agent) {
-        container.innerHTML += agent.get('alive') ? 'x' : '-';
-        if (x === width - 1) container.innerHTML += '\n';
-    });
 
     grid.tick();
 
