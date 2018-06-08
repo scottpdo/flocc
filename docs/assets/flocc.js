@@ -416,6 +416,50 @@
         }
     }
 
+    class CanvasRenderer {
+        
+        constructor(environment, opts = {}) {
+            
+            /** @member Environment */
+            this.environment = environment;
+            environment.renderer = this;
+
+            /** @member HTMLCanvasElement */
+            this.canvas = document.createElement('canvas');
+            this.context = this.canvas.getContext('2d');
+            
+            this.width = opts.width || 500;
+            this.height = opts.height || 500;
+
+            this.canvas.width = this.width;
+            this.canvas.height = this.height;
+        }
+
+        mount(el) {
+            const container = (typeof el === 'string') ? document.querySelector(el) : el;
+            container.appendChild(this.canvas);
+        }
+
+        render() {
+            this.context.clearRect(0, 0, this.width, this.height);
+            this.context.beginPath();
+            this.environment.getAgents().forEach(agent => {
+                const x = agent.get('x') || 0;
+                const y = agent.get('y') || 0;
+                this.context.moveTo(x, y);
+                this.context.arc(
+                    x, 
+                    y, 
+                    agent.get('radius') || 1, 
+                    0, 
+                    2 * Math.PI
+                );
+            });
+            this.context.closePath();
+            this.context.fill();
+        }
+    }
+
     /**
      * Restricts a number x to the range min --> max.
      * @param {number} x 
@@ -454,16 +498,16 @@
             b.z = p2.get('z');
         }
 
-        if (!p1.x) p1.x = 0;
-        if (!p1.y) p1.y = 0;
-        if (!p1.z) p1.z = 0;
-        if (!p2.x) p2.x = 0;
-        if (!p2.y) p2.y = 0;
-        if (!p2.z) p2.z = 0;
+        if (!a.x) a.x = 0;
+        if (!a.y) a.y = 0;
+        if (!a.z) a.z = 0;
+        if (!b.x) b.x = 0;
+        if (!b.y) b.y = 0;
+        if (!b.z) b.z = 0;
 
-        const dx = p2.x - p1.x;
-        const dy = p2.y - p1.y;
-        const dz = p2.z - p1.z;
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const dz = b.z - a.z;
         
         return Math.sqrt(dx * dx + dy * dy + dz * dz);
     }
@@ -515,6 +559,7 @@
     exports.Environment = Environment;
     exports.GridEnvironment = GridEnvironment;
     exports.ASCIIRenderer = ASCIIRenderer;
+    exports.CanvasRenderer = CanvasRenderer;
     exports.utils = utils;
 
     Object.defineProperty(exports, '__esModule', { value: true });
