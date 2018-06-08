@@ -25,16 +25,16 @@ export default function distance(p1, p2) {
         b.z = p2.get('z');
     }
 
-    if (!p1.x) p1.x = 0;
-    if (!p1.y) p1.y = 0;
-    if (!p1.z) p1.z = 0;
-    if (!p2.x) p2.x = 0;
-    if (!p2.y) p2.y = 0;
-    if (!p2.z) p2.z = 0;
+    if (!a.x) a.x = 0;
+    if (!a.y) a.y = 0;
+    if (!a.z) a.z = 0;
+    if (!b.x) b.x = 0;
+    if (!b.y) b.y = 0;
+    if (!b.z) b.z = 0;
 
-    const dx = p2.x - p1.x;
-    const dy = p2.y - p1.y;
-    const dz = p2.z - p1.z;
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const dz = b.z - a.z;
     
     return Math.sqrt(dx * dx + dy * dy + dz * dz);
 };
