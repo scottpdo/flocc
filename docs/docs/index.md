@@ -19,6 +19,7 @@ const environment = new Environment();
 - [flocc.Environment]({{ site.baseurl }}/docs/environment)
 - [flocc.GridEnvironment]({{ site.baseurl }}/docs/gridenvironment)
 - [flocc.ASCIIRenderer]({{ site.baseurl }}/docs/asciirenderer)
+- [flocc.CanvasRenderer]({{ site.baseurl }}/docs/canvasrenderer)
 
 ## Utility Functions
 

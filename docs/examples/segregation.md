@@ -2,6 +2,10 @@
 title: Segregation
 ---
 
+The Schelling Segregation model (1971) demonstrates how group-level patterns can emerge that are disconnected from the intentions of individuals. In this model, agents have a value of either `.` or `X`. An agent belonging to each group wants to be surrounded by more of its own type than the other, and will move to an empty cell in the environment if it is in the minority.
+
+These agents do not exhibit aversion to other types of agents _per se_, and only want to find a position in a non-minority group, but the resulting movements deterministically result in a _highly segregated_ environment.
+
 <script src="{{ site.baseurl }}/assets/flocc.js"></script>
     
 <pre id="container"></pre>
@@ -25,7 +29,12 @@ function setup() {
         if (Math.random() < 0.05) return;
         
         var agent = grid.addAgent(x, y);
-        agent.set('value', Math.random() > 0.5 ? 'X' : '.');
+        var r = Math.random();
+        agent.set('value', r > 0.5 ? 'X' : '.');
+
+        // uncomment to add a third group into the mix...
+        // agent.set('value', r > 0.667 ? 'X' : r > 0.333 ? 'l' : '.');
+
         agent.addRule(tick);
     });
 }
