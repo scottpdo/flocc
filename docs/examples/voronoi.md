@@ -56,7 +56,6 @@ function tick(agent) {
     
     pts.forEach(pt => {
         const d = flocc.utils.distance(agent, pt);
-        // const d = Math.abs(agent.get('x') - pt.get('x')) + Math.abs(agent.get('y') - pt.get('y'));
         if (d < d1) {
             if (pt1 !== null) {
                 pt2 = pt1;
