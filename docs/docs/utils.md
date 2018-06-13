@@ -33,6 +33,24 @@ const point = {
 utils.distance(agent, point); // returns 70.71
 ```
 
+### utils.manhattanDistance(_pt1_, _pt2_)
+
+Returns the [Manhattan distance](https://en.wikipedia.org/wiki/Taxicab_geometry) between `pt1` and `pt2` (see above).
+
+```js
+const agent = new Agent();
+agent.set('x', 0);
+agent.set('y', 0);
+
+const point = {
+    x: 3,
+    y: 4
+};
+
+utils.distance(agent, point);           // returns 5  = sqrt( 3^2 + 4^2 )
+utils.manhattanDistance(agent, point);  // returns 7  = 3 + 4
+```
+
 ### utils.gaussian(_mean_, _std_)
 
 Return a sampled value from a [Gaussian/normal distribution](https://en.wikipedia.org/wiki/Normal_distribution) with `mean` and standard deviation `std`. Theoretically, this function might return _any_ value, but most likely it will return a value within _std_ of _mean_. This is useful for instantiating agents with diverse but statistically probable values.

@@ -13,6 +13,27 @@ const environment = new Environment();
 const renderer = new CanvasRenderer(environment);
 ```
 
+## Options
+
+A `CanvasRenderer` can also be instantiated with configuration options, which affect the output.
+
+```js
+const opts = {
+    height: 200,
+    width: 200,
+    trace: true
+};
+new CanvasRenderer(environment, opts);
+```
+
+### width / height
+
+The width and height (in pixels) of the canvas.
+
+### trace
+
+If `trace` is set to `true`, the `CanvasRenderer` won't clear the canvas with every tick of the simulation. Instead, you will see agent paths "tracing" over time, which can be useful for visualizing movement over time.
+
 ## Methods
 
 ### .mount(_selector_ or _element_)
