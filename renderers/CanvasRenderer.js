@@ -8,6 +8,8 @@ export default class CanvasRenderer {
         this.environment = environment;
         environment.renderer = this;
 
+        this.opts = opts;
+
         /** @member HTMLCanvasElement */
         this.canvas = document.createElement('canvas');
         this.context = this.canvas.getContext('2d');
@@ -25,21 +27,26 @@ export default class CanvasRenderer {
     }
 
     render() {
-        this.context.clearRect(0, 0, this.width, this.height);
-        this.context.beginPath();
-        this.environment.getAgents().forEach(agent => {
+        const { context, environment, width, height } = this;
+        
+        // if "trace" is truthy, don't clear the canvas with every frame
+        // to trace the paths of agents
+        if (!this.opts.trace) context.clearRect(0, 0, width, height);
+        
+        environment.getAgents().forEach(agent => {
             const x = agent.get('x') || 0;
             const y = agent.get('y') || 0;
-            this.context.moveTo(x, y);
-            this.context.arc(
+            context.beginPath();
+            context.moveTo(x, y);
+            context.fillStyle = agent.get('color') || 'black';
+            context.arc(
                 x, 
                 y, 
                 agent.get('radius') || 1, 
                 0, 
                 2 * Math.PI
             );
+            context.fill();
         });
-        this.context.closePath();
-        this.context.fill();
     }
 }
