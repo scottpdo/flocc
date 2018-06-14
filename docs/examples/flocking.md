@@ -25,8 +25,12 @@ function setup() {
         
         agent.set('x', Math.random() * width);
         agent.set('y', Math.random() * height);
-        agent.set('dir', 2 * Math.random() * Math.PI);
-        agent.set('velocity', 1);
+
+        const angle = 2 * Math.random() * Math.PI;
+        agent.set('velocity', {
+            x: Math.cos(angle),
+            y: Math.sin(angle)
+        });
 
         agent.addRule(tick);
 
@@ -39,8 +43,8 @@ function tick(agent) {
     var x = agent.get('x');
     var y = agent.get('y');
     
-    x += agent.get('velocity') * Math.cos(agent.get('dir'));
-    y += agent.get('velocity') * Math.sin(agent.get('dir'));
+    x += agent.get('velocity').x;
+    y += agent.get('velocity').y;
 
     while (x < 0) x += width;
     while (x >= width) x -= width;
@@ -53,17 +57,26 @@ function tick(agent) {
     // update direction
     var neighbors = space.getAgents().filter(function(neighbor) {
         var d = flocc.utils.distance(agent, neighbor);
-        return d < 25 && d > 0;
+        return d < 20 && d > 0;
     });
 
     if (neighbors.length === 0) return;
 
-    var meanDir = neighbors.reduce(function(a, b) {
-        return (a + b.get('dir')) % (2 * Math.PI);
-    }, 0) / neighbors.length;
+    var meanVel = neighbors.reduce(function(a, b) {
+        return {
+            x: (a.x + b.get('velocity').x),
+            y: (a.y + b.get('velocity').y)
+        };
+    }, { x: 0, y: 0 });
 
-    if (meanDir > agent.get('dir')) agent.set('dir', agent.get('dir') + 0.01);
-    if (meanDir < agent.get('dir')) agent.set('dir', agent.get('dir') - 0.01);
+    const norm = flocc.utils.distance(meanVel, { x: 0, y: 0 });
+    meanVel.x /= norm;
+    meanVel.y /= norm;
+    
+    agent.set('velocity', {
+        x: (99 * agent.get('velocity').x + meanVel.x) / 100,
+        y: (99 * agent.get('velocity').y + meanVel.y) / 100
+    });
 }
 
 function render() {

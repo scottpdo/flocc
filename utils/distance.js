@@ -17,12 +17,20 @@ export default function distance(p1, p2) {
         a.x = p1.get('x');
         a.y = p1.get('y');
         a.z = p1.get('z');
+    } else {
+        a.x = p1.x;
+        a.y = p1.y;
+        a.z = p1.z;
     }
 
     if (p2 instanceof Agent) {
         b.x = p2.get('x');
         b.y = p2.get('y');
         b.z = p2.get('z');
+    } else {
+        b.x = p2.x;
+        b.y = p2.y;
+        b.z = p2.z;
     }
 
     if (!a.x) a.x = 0;
