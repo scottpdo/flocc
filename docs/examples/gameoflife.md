@@ -36,11 +36,9 @@ renderer.mount(container);
  */ 
 function setup() {
 
-    grid.fill();
-
-    grid.loop(function(x, y, agent) {
-        agent.set('alive', Math.random() < 0.15);
-        agent.addRule(tick);
+    grid.getCells().forEach(cell => {
+        cell.set('alive', Math.random() < 0.15);
+        cell.addRule(tick);
     });
 }
 
@@ -59,7 +57,7 @@ function tick(agent) {
     for (var dx = -1; dx <= 1; dx++) {
         for (var dy = -1; dy <= 1; dy++) {
             if (dx === 0 && dy === 0) continue;
-            if (grid.getAgent(x + dx, y + dy).get('alive')) livingNeighbors++;
+            if (grid.getCell(x + dx, y + dy).get('alive')) livingNeighbors++;
         }
     }
 

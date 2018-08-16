@@ -342,6 +342,14 @@
         }
 
         /**
+         * Get all cells of the environment, in a flat array.
+         * @return {Cell[]}
+         */
+        getCells() {
+            return [...this.cells.values()];
+        }
+
+        /**
          * Retrieve the agent at the specified cell coordinate.
          * @param {number} x 
          * @param {number} y 
@@ -429,6 +437,7 @@
         /**
          * Override/extend Environment.tick to include the 
          * GridEnvironment's cells.
+         * @override
          * @param {number} n - Number of times to tick.
          */
         tick(n = 1) {
@@ -436,7 +445,7 @@
             for (let y = 0; y < this.height; y++) {
                 for (let x = 0; x < this.width; x++) {
                     const cell = this.getCell(x, y);
-                    cell.forEach(ruleObj => {
+                    cell.rules.forEach(ruleObj => {
                         const { rule, args } = ruleObj;
                         rule(cell, ...args);
                     });
