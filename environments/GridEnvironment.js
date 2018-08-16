@@ -5,10 +5,19 @@ import sample from '../utils/sample';
 import shuffle from '../utils/shuffle';
 
 const hash = (x, y) => x.toString() + ',' + y.toString();
-const unhash = (str) => { return {
+const unhash = (str) => { 
+    return {
         x: +(str.split(',')[0]),
         y: +(str.split(',')[1])
     };
+};
+
+class Cell extends Agent {
+    constructor(x, y) {
+        super();
+        this.set('x', x);
+        this.set('y', y);
+    }
 };
 
 export default class GridEnvironment extends Environment {
@@ -24,9 +33,16 @@ export default class GridEnvironment extends Environment {
 
         // store hashes of all possible cells internally
         this._cellHashes = [];
+
         for (let y = 0; y < this.height; y++) {
             for (let x = 0; x < this.width; x++) {
-                this._cellHashes.push(hash(x, y));
+                
+                const id = hash(x, y);
+                this._cellHashes.push(id);
+
+                const cell = new Cell(x, y);
+                cell.environment = this;
+                this.cells.set(id, cell);
             }
         }
     }
@@ -43,6 +59,14 @@ export default class GridEnvironment extends Environment {
         }
     }
 
+    normalize(x, y) {
+        while (x < 0) x += this.width;
+        while (x >= this.width) x -= this.width;
+        while (y < 0) y += this.height;
+        while (y >= this.height) y -= this.height;
+        return { x, y };
+    }
+
     /**
      * For GridEnvironments, `addAgent` takes `x` and `y` values
      * and automatically adds a Agent to that cell coordinate.
@@ -51,11 +75,14 @@ export default class GridEnvironment extends Environment {
      * @param {number} y
      * @returns {Agent} The agent that was added at the specified coordinate.
      */
-    addAgent(x = 0, y = 0, agent = new Agent()) {
+    addAgent(x_ = 0, y_ = 0, agent = new Agent()) {
+
+        const { x, y } = this.normalize(x_, y_);
+        const id = hash(x, y);
 
         // If there is already an agent at this location,
         // overwrite it (with a warning). Remove the existing agent...
-        if (this.cells.get(hash(x, y))) {
+        if (this.cells.get(id).get('agent')) {
             console.warn(`Overwriting agent at ${x}, ${y}.`);
             this.removeAgent(x, y);
         }
@@ -63,8 +90,9 @@ export default class GridEnvironment extends Environment {
         // ...and add a new one
         agent.set('x', x);
         agent.set('y', y);
+
         this.agents.push(agent);
-        this.cells.set(hash(x, y), agent);
+        this.cells.get(id).set('agent', agent);
 
         return agent;
     }
@@ -76,9 +104,11 @@ export default class GridEnvironment extends Environment {
      * @param {number} x
      * @param {number} y
      */
-    removeAgent(x = 0, y = 0) {
+    removeAgent(x_ = 0, y_ = 0) {
 
-        const agent = this.cells.get(hash(x, y));
+        const { x, y } = this.normalize(x_, y_);
+        const id = hash(x, y);
+        const agent = this.cells.get(id).get('agent');
         
         if (!agent) return;
 
@@ -87,7 +117,18 @@ export default class GridEnvironment extends Environment {
         const indexAmongAgents = this.agents.indexOf(agent);
         this.agents.splice(indexAmongAgents, 1);
 
-        this.cells.delete(hash(x, y));
+        this.cells.get(id).set('agent', null);
+    }
+    /**
+     * Retrieve the cell at the specified coordinate.
+     * @param {number} x 
+     * @param {number} y 
+     * @return {Cell}
+     */
+    getCell(x_, y_) {
+        const { x, y } = this.normalize(x_, y_);
+        const id = hash(x, y);
+        return this.cells.get(id);
     }
 
     /**
@@ -96,14 +137,10 @@ export default class GridEnvironment extends Environment {
      * @param {number} y 
      * @return {undefined | Agent}
      */
-    getAgent(x, y) {
-        
-        while (x < 0) x += this.width;
-        while (x >= this.width) x -= this.width;
-        while (y < 0) y += this.height;
-        while (y >= this.height) y -= this.height;
-
-        return this.cells.get(hash(x, y));
+    getAgent(x_, y_) {
+        const { x, y } = this.normalize(x_, y_);
+        const id = hash(x, y);
+        return this.cells.get(id).get('agent');
     }
 
     /**
@@ -132,8 +169,15 @@ export default class GridEnvironment extends Environment {
      * @param {number} x2 
      * @param {number} y2 
      */
-    swap(x1, y1, x2, y2) {
+    swap(x1_, y1_, x2_, y2_) {
         
+        const a = this.normalize(x1_, y1_);
+        const x1 = a.x;
+        const y1 = a.y;
+        const b = this.normalize(x2_, y2_);
+        const x2 = b.x;
+        const y2 = b.y;
+
         const maybeAgent1 = this.getAgent(x1, y1);
         const maybeAgent2 = this.getAgent(x2, y2);
         
@@ -147,8 +191,8 @@ export default class GridEnvironment extends Environment {
             maybeAgent1.set('y', y1);
         }
 
-        this.cells.set(hash(x1, y1), maybeAgent2);
-        this.cells.set(hash(x2, y2), maybeAgent1);
+        this.cells.get(hash(x1, y1)).set('agent', maybeAgent2);
+        this.cells.get(hash(x2, y2)).set('agent', maybeAgent1);
     }
 
     /**
@@ -162,9 +206,10 @@ export default class GridEnvironment extends Environment {
         
         // keep looking for an empty one until we find it
         while (hashes.length > 0) {
-            const hash = hashes.pop();
-            const maybeAgent = this.cells.get(hash);
-            if (!maybeAgent) return unhash(hash);
+            const id = hashes.pop();
+            const cell = this.cells.get(id);
+            const maybeAgent = cell.get('agent');
+            if (!maybeAgent) return cell;
         }
 
         // once there are no hashes left, that means that there are no open cells

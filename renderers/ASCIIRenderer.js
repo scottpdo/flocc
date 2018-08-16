@@ -20,8 +20,14 @@ export default class ASCIIRenderer {
     render() {
         this.pre.innerHTML = '';
         this.environment.loop((x, y, agent) => {
-            if (!agent || !agent.get('value')) this.pre.innerHTML += ' ';
-            if (agent && agent.get('value')) this.pre.innerHTML += agent.get('value');
+            let value = ' ';
+            const cell = this.environment.getCell(x, y);
+            if (agent && agent.get('value')) {
+                value = agent.get('value');
+            } else if (cell.get('value')) {
+                value = cell.get('value');
+            }
+            this.pre.innerHTML += value;
             if (x === this.environment.width - 1) this.pre.innerHTML += '\n';
         });
     }
