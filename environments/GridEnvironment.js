@@ -215,4 +215,53 @@ export default class GridEnvironment extends Environment {
         // once there are no hashes left, that means that there are no open cells
         return null;
     }
+
+    /**
+     * Override/extend Environment.tick to include the 
+     * GridEnvironment's cells.
+     * @param {number} n - Number of times to tick.
+     */
+    tick(n = 1) {
+
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                const cell = this.getCell(x, y);
+                cell.forEach(ruleObj => {
+                    const { rule, args } = ruleObj;
+                    rule(cell, ...args);
+                });
+            }
+        }
+        
+        this.agents.forEach(agent => {
+            agent.rules.forEach(ruleObj => {
+                const { rule, args } = ruleObj;
+                rule(agent, ...args);
+            });
+        });
+
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                const cell = this.getCell(x, y);
+                while (cell.queue.length > 0) {
+                    const { rule, args } = cell.queue.shift();
+                    rule(cell, ...args);
+                }
+            }
+        }
+        
+        this.agents.forEach(agent => {
+            while (agent.queue.length > 0) {
+                const { rule, args } = agent.queue.shift();
+                rule(agent, ...args);
+            }
+        });
+
+        if (n > 1) {
+            this.tick(n - 1);
+            return;
+        }
+        
+        if (this.renderer !== null) this.renderer.render();
+    }
 }
