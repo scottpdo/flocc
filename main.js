@@ -1,21 +1,9 @@
-import Agent from './agents/Agent';
+export { Agent } from './agents/Agent';
 
-import Environment from './environments/Environment';
-import GridEnvironment from './environments/GridEnvironment';
+export { Environment } from './environments/Environment';
+export { GridEnvironment } from './environments/GridEnvironment';
 
-import ASCIIRenderer from './renderers/ASCIIRenderer';
-import CanvasRenderer from './renderers/CanvasRenderer';
+export { ASCIIRenderer } from './renderers/ASCIIRenderer';
+export { CanvasRenderer } from './renderers/CanvasRenderer';
 
-import utils from './utils/utils';
-
-export { 
-    Agent, 
-    
-    Environment,
-    GridEnvironment,
-
-    ASCIIRenderer,
-    CanvasRenderer,
-
-    utils
-};
+export { utils } from './utils/utils';

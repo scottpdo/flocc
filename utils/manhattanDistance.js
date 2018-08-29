@@ -1,4 +1,4 @@
-import Agent from '../agents/Agent';
+import { Agent } from '../agents/Agent';
 
 /**
  * Finds the Manhattan distance between `p1` and `p2`.

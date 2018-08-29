@@ -1,4 +1,4 @@
-export default class Agent {
+class Agent {
 
     constructor() {
         /**
@@ -86,3 +86,5 @@ export default class Agent {
         });
     }
 };
+
+export { Agent };

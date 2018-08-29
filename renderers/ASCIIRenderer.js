@@ -1,6 +1,6 @@
-import GridEnvironment from '../environments/GridEnvironment';
+import { GridEnvironment } from '../environments/GridEnvironment';
 
-export default class ASCIIRenderer {
+class ASCIIRenderer {
     
     constructor(environment, opts = {}) {
         
@@ -31,4 +31,6 @@ export default class ASCIIRenderer {
             if (x === this.environment.width - 1) this.pre.innerHTML += '\n';
         });
     }
-}
+};
+
+export { ASCIIRenderer };

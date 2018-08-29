@@ -16,4 +16,4 @@ const utils = {
     shuffle
 };
 
-export default utils;
+export { utils };

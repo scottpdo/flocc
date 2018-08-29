@@ -1,6 +1,6 @@
-import Agent from '../agents/Agent';
+import { Agent } from '../agents/Agent';
 
-export default class Environment {
+class Environment {
     
     constructor() {
         /** @member {Agent[]} */
@@ -67,3 +67,5 @@ export default class Environment {
         if (this.renderer !== null) this.renderer.render();
     }
 };
+
+export { Environment };

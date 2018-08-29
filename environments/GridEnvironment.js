@@ -1,5 +1,5 @@
-import Agent from '../agents/Agent';
-import Environment from './Environment';
+import { Agent } from '../agents/Agent';
+import { Environment } from './Environment';
 
 import sample from '../utils/sample';
 import shuffle from '../utils/shuffle';
@@ -20,7 +20,7 @@ class Cell extends Agent {
     }
 };
 
-export default class GridEnvironment extends Environment {
+class GridEnvironment extends Environment {
 
     constructor(width = 2, height = 2) {
         
@@ -273,4 +273,6 @@ export default class GridEnvironment extends Environment {
         
         if (this.renderer !== null) this.renderer.render();
     }
-}
+};
+
+export { GridEnvironment };

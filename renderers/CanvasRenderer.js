@@ -1,6 +1,6 @@
-import Environment from '../environments/Environment';
+import { Environment } from '../environments/Environment';
 
-export default class CanvasRenderer {
+class CanvasRenderer {
     
     constructor(environment, opts = {}) {
         
@@ -49,4 +49,6 @@ export default class CanvasRenderer {
             context.fill();
         });
     }
-}
+};
+
+export { CanvasRenderer };
