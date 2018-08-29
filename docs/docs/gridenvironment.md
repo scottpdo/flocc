@@ -4,11 +4,19 @@ title: GridEnvironment
 
 The class `flocc.GridEnvironment` (from here on, just `GridEnvironment`) is a special case of the [`Environment` class]({{ site.baseurl }}/docs/environment).
 
-A new `GridEnvironment` of size x/y can be instantiated by calling: `const environment = new GridEnvironment(x, y);`
+A new `GridEnvironment` of size x/y can be instantiated by calling: `const environment = new GridEnvironment(x, y);` It is automatically populated with `x * y` cells (which are just `Agent`s set with `x` and `y` data).
 
 ## Methods
 
 Unless indicated otherwise, `GridEnvironment` inherits all the methods from `Environment`.
+
+### .getCell(_x_, _y_)
+
+Returns the `Cell` (`Agent`) at (`x`, `y`).
+
+### .getCells()
+
+Returns an array of all `Cell`s in the `GridEnvironment` (length = `x * y`);
 
 ### .addAgent(_x_, _y_, _agent = new Agent()_)
 
