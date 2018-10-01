@@ -22,8 +22,10 @@ renderer.mount(container);
 
 function setup() {
 
-    grid.loop(function(x, y, agent) {
+    grid.getCells().forEach(function(cell) {
 
+        const x = cell.get('x');
+        const y = cell.get('y');
         grid.removeAgent(x, y);
 
         if (Math.random() < 0.05) return;
@@ -31,9 +33,6 @@ function setup() {
         var agent = grid.addAgent(x, y);
         var r = Math.random();
         agent.set('value', r > 0.5 ? 'X' : '.');
-
-        // uncomment to add a third group into the mix...
-        // agent.set('value', r > 0.667 ? 'X' : r > 0.333 ? 'l' : '.');
 
         agent.addRule(tick);
     });
@@ -66,12 +65,12 @@ function tick(agent) {
 
     percentLike /= neighbors;
 
-    if (percentLike < 0.5) move(agent, percentLike);
+    if (percentLike < 0.5) move(agent);
 }
 
-function move(agent, percentLike) {
+function move(agent) {
     var space = grid.getRandomOpenCell();
-    grid.swap(agent.get('x'), agent.get('y'), space.x, space.y);
+    grid.swap(agent.get('x'), agent.get('y'), space.get('x'), space.get('y'));
 }
 
 function render() {

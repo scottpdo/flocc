@@ -26,9 +26,9 @@ Get a piece of data associated with an agent. `key` should be a string correspon
 agent.get('color'); // returns 'blue'
 ```
 
-### .increment(_key_)
+### .increment(_key_, _n = 1_)
 
-If a piece of data is a (integer) number, calling this will increase the value by 1. If the value has not yet been set, this will automatically set it to 1.
+If a piece of data is a (integer) number, calling this will increase the value by 1 (or `n`, if given). If the value has not yet been set, this will automatically set it to 1.
 
 ```js
 agent.increment('size'); // size is now 102
@@ -36,7 +36,7 @@ agent.increment('size'); // size is now 102
 
 ### .decrement(_key_)
 
-The opposite of `.increment`, this will decrease the value by 1. If the value has not yet been set, this will automatically set it to -1.
+The opposite of `.increment`, this will decrease the value by 1 (or `n`, if given). If the value has not yet been set, this will automatically set it to -1.
 
 ```js
 agent.decrement('size'); // size is now 101

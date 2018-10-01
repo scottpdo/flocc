@@ -15,6 +15,9 @@ var space = new flocc.Environment();
 var width = 600;
 var height = 400;
 
+space.width = width;
+space.height = height;
+
 function setup() {
 
     space.agents = [];

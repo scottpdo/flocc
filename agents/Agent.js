@@ -35,24 +35,26 @@ class Agent {
 
     /**
      * Increment a numeric (assume integer) piece of data
-     * associated with this agent. If the value has not yet been set,
+     * associated with this agent. If `n` is included, increments by
+     * `n`. If the value has not yet been set,
      * initializes it to 1.
      * @param {number} value 
      */
-    increment(value) {
+    increment(value, n = 1) {
         if (!this.get(value)) this.set(value, 0);
-        this.set(value, this.get(value) + 1);
+        this.set(value, this.get(value) + n);
     }
 
     /**
-     * Decremenet a numeric (assume integer) piece of data
-     * associated with this agent. If the value has not yet been set,
+     * Decrement a numeric (assume integer) piece of data
+     * associated with this agent. If `n` is included, decrements by
+     * `n`. If the value has not yet been set,
      * initializes it to -1.
      * @param {number} value 
      */
-    decrement(value) {
+    decrement(value, n = 1) {
         if (!this.get(value)) this.set(value, 0);
-        this.set(value, this.get(value) - 1);
+        this.set(value, this.get(value) - n);
     }
 
     /**
