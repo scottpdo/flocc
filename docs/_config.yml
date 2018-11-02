@@ -1,8 +1,0 @@
-title: Flocc
-baseurl: /flocc
-author: Scott Donaldson
-email: scott.p.donaldson@gmail.com
-theme: Minima
-header_pages:
-  - docs/index.md
-  - examples/quickstart.md
