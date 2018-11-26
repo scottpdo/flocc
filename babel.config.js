@@ -4,6 +4,9 @@ const presets = [
     {
       modules: false
     }
+  ],
+  [
+    "@babel/preset-flow"
   ]
 ];
 

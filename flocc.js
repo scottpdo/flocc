@@ -300,33 +300,34 @@
   }();
 
   /**
-   * Gets a random element from `array`. (This is lodash's implementation).
+   * Gets a random element from `array`.
    * @param {Array} array 
    * @returns {*} Returns the random element.
    */
   function sample(array) {
-    var length = array == null ? 0 : array.length;
-    return length ? array[Math.floor(Math.random() * length)] : undefined;
+    var length = array ? array.length : 0;
+    return length ? array[Math.floor(Math.random() * length)] : null;
   }
 
   /**
-   * Copies the values of `source` to `array`. (This is lodash's implementation).
+   * Copies the values of `source` to `arr`
+   * or to a new Array.
    *
    * @private
-   * @param {Array} source The array to copy values from.
-   * @param {Array} [array=[]] The array to copy values to.
-   * @returns {Array} Returns `array`.
+   * @param {Array} source The Array to copy values from.
+   * @param {Array} [arr=[]] The Array to copy values to.
+   * @returns {Array}
    */
-  function copyArray(source, array) {
+  function copyArray(source, arr) {
     var index = -1;
     var length = source.length;
-    array || (array = new Array(length));
+    if (!arr) arr = new Array(length);
 
     while (++index < length) {
-      array[index] = source[index];
+      arr[index] = source[index];
     }
 
-    return array;
+    return arr;
   }
 
   /**
@@ -334,14 +335,12 @@
    * [Fisher-Yates shuffle](https://en.wikipedia.org/wiki/Fisher-Yates_shuffle).
    * (This is lodash's implementation).
    *
-   * @since 0.1.0
-   * @category Array
    * @param {Array} array The array to shuffle.
    * @returns {Array} Returns the new shuffled array.
    */
 
   function shuffle(array) {
-    var length = array == null ? 0 : array.length;
+    var length = array ? array.length : 0;
     if (!length) return [];
     var index = -1;
     var lastIndex = length - 1;
@@ -815,10 +814,10 @@
 
   /**
    * Restricts a number x to the range min --> max.
-   * @param {number} x 
-   * @param {number} min 
-   * @param {number} max
-   * @return {number} The clamped value.
+   * @param {Number} x 
+   * @param {Number} min 
+   * @param {Number} max
+   * @return {Number} The clamped value.
    */
   function clamp(x, min, max) {
     if (x < min) return min;
@@ -830,8 +829,8 @@
    * Finds the distance between `p1` and `p2`. The inputs may be plain objects
    * with `x`, `y`, and/or `z` keys, or Agent-like objects who have
    * `x`, `y`, and/or `z` data.
-   * @param {*} p1 
-   * @param {*} p2 
+   * @param {Object|Agent} p1 
+   * @param {Object|Agent} p2 
    * @return {number} The distance between p1 and p2.
    */
 
@@ -857,7 +856,16 @@
     return Math.sqrt(dx * dx + dy * dy + dz * dz);
   }
 
-  function gaussian(mean, sd) {
+  /**
+   * Given a mean and standard deviation,
+   * returns a value from a normal/Gaussian distribution.
+   * @param {number} mean 
+   * @param {number} sd 
+   * @returns {number}
+   */
+  function gaussian() {
+    var mean = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+    var sd = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
     var y, x1, x2, w;
 
     do {
@@ -868,9 +876,7 @@
 
     w = Math.sqrt(-2 * Math.log(w) / w);
     y = x1 * w;
-    var m = mean || 0;
-    var s = sd || 1;
-    return y * s + m;
+    return y * sd + mean;
   }
 
   /**
@@ -878,8 +884,8 @@
    * The inputs may be plain objects
    * with `x`, `y`, and/or `z` keys, or Agent-like objects who have
    * `x`, `y`, and/or `z` data.
-   * @param {*} p1 
-   * @param {*} p2 
+   * @param {Object|Agent} p1 
+   * @param {Object|Agent} p2 
    * @return {number} The Manhattan distance between p1 and p2.
    */
 
@@ -914,15 +920,16 @@
    * @param {number} aMax 
    * @param {number} bMin 
    * @param {number} bMax 
-   * @return {number} The remapped value.
+   * @returns {number} The remapped value.
    */
   function remap(x, aMin, aMax, bMin, bMax) {
     return bMin + (bMax - bMin) * (x - aMin) / (aMax - aMin);
   }
 
   /**
-   * Sum the values of an array.
-   * @param {Array[Number]} arr 
+   * Find the sum of an Array of numbers.
+   * @param {Array<number>} arr 
+   * @returns {number}
    */
   function sum(arr) {
     return arr.reduce(function (a, b) {
@@ -930,9 +937,21 @@
     }, 0);
   }
 
+  /**
+   * Find the mean value of an Array of numbers.
+   * @param {Array<number>} arr 
+   * @returns {number}
+   */
+
   function mean(arr) {
     return sum(arr) / arr.length;
   }
+
+  /**
+   * Find the standard deviation of an Array of numbers.
+   * @param {Array<number>} arr 
+   * @returns {number}
+   */
 
   function stdDev(arr) {
     var ave = mean(arr);

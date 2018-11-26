@@ -1,3 +1,4 @@
+// @flow
 import copyArray from './copyArray'
 
 /**
@@ -5,26 +6,23 @@ import copyArray from './copyArray'
  * [Fisher-Yates shuffle](https://en.wikipedia.org/wiki/Fisher-Yates_shuffle).
  * (This is lodash's implementation).
  *
- * @since 0.1.0
- * @category Array
  * @param {Array} array The array to shuffle.
  * @returns {Array} Returns the new shuffled array.
  */
-export default function shuffle(array) {
+export default function shuffle(array: Array<any>): Array<any> {
 
-    const length = array == null ? 0 : array.length;
+  const length = array ? array.length : 0;
+  if (!length) return [];
 
-    if (!length) return [];
-    
-    let index = -1;
-    const lastIndex = length - 1;
-    const result = copyArray(array);
-    while (++index < length) {
-        const rand = index + Math.floor(Math.random() * (lastIndex - index + 1));
-        const value = result[rand];
-        result[rand] = result[index];
-        result[index] = value;
-    }
+  let index: number = -1;
+  const lastIndex: number = length - 1;
+  const result: Array<any> = copyArray(array);
+  while (++index < length) {
+    const rand = index + Math.floor(Math.random() * (lastIndex - index + 1));
+    const value = result[rand];
+    result[rand] = result[index];
+    result[index] = value;
+  }
 
-    return result;
+  return result;
 };

@@ -1,4 +1,8 @@
-const { utils } = require('flocc');
+/**
+ * Test stats functions (sum, mean, standard deviation).
+ */
+
+const { utils } = require('../flocc');
 const { sum, mean, stdDev } = utils;
 
 it('Correctly sums an array.', () => {

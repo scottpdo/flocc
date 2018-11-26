@@ -5,13 +5,16 @@
   "main": "flocc.js",
   "scripts": {
     "build": "rollup -c",
-    "test": "jest"
+    "test": "jest",
+    "prepublish": "yarn run build"
   },
   "author": "Scott Donaldson",
   "license": "ISC",
   "devDependencies": {
     "@babel/core": "^7.1.6",
     "@babel/preset-env": "^7.1.6",
+    "@babel/preset-flow": "^7.0.0",
+    "flow-bin": "^0.86.0",
     "jest": "^23.6.0",
     "rollup": "^0.67.3",
     "rollup-plugin-babel": "^4.0.3"
