@@ -1,5 +1,5 @@
 // @flow
-import copyArray from './copyArray'
+import copyArray from './copyArray';
 
 /**
  * Creates an array of shuffled values, using a version of the

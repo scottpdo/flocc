@@ -24,8 +24,20 @@ export default function manhattanDistance(p1: Object | Agent, p2: Object | Agent
   let dy: number = Math.abs(y2 - y1);
   let dz: number = Math.abs(z2 - z1);
 
-  if (p1.environment && p1.environment.width && p1.environment.height) {
-    const { width, height } = p1.environment;
+  // distance for toroidal environments
+  if (
+    p1 instanceof Agent && 
+    p1.environment && 
+    p2.environment &&
+    p1.environment === p2.environment &&
+    p1.environment.width && 
+    p1.environment.height &&
+    // $FlowFixMe: Why isn't flow reading opts as an instance variable?
+    p1.environment.opts.torus
+  ) {
+    const { environment } = p1;
+    // $FlowFixMe: Why isn't Flow reading these as instance variables?
+    const { width, height } = environment;
     if (dx > width / 2) dx = width - dx;
     if (dy > height / 2) dy = height - dy;
   }
