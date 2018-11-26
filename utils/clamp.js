@@ -1,3 +1,4 @@
+// @flow
 /**
  * Restricts a number x to the range min --> max.
  * @param {number} x 
@@ -5,8 +6,8 @@
  * @param {number} max
  * @return {number} The clamped value.
  */
-export default function clamp(x, min, max) {
-    if (x < min) return min;
-    if (x > max) return max;
-    return x;
+export default function clamp(x: number, min: number, max: number): number {
+  if (x < min) return min;
+  if (x > max) return max;
+  return x;
 };
