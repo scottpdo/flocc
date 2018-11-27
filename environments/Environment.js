@@ -1,7 +1,7 @@
 // @flow
 import { Agent } from '../agents/Agent';
-import { typeof ASCIIRenderer } from '../renderers/ASCIIRenderer';
-import { typeof CanvasRenderer } from '../renderers/CanvasRenderer';
+import { ASCIIRenderer } from '../renderers/ASCIIRenderer';
+import { CanvasRenderer } from '../renderers/CanvasRenderer';
 
 type Options = {
   torus: boolean

@@ -212,103 +212,6 @@
     return Agent;
   }();
 
-  var Environment =
-  /*#__PURE__*/
-  function () {
-    /** @member {Agent[]} */
-
-    /** @member {ASCIIRenderer|CanvasRenderer} */
-    function Environment() {
-      var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
-        torus: true
-      };
-
-      _classCallCheck(this, Environment);
-
-      this.agents = [];
-      this.renderer = null;
-      this.opts = opts;
-      this.width = 0;
-      this.height = 0;
-    }
-    /**
-     * Add an agent to the environment. Automatically sets the
-     * agent's environment to be this environment.
-     * @param {Agent} agent 
-     */
-
-
-    _createClass(Environment, [{
-      key: "addAgent",
-      value: function addAgent(agent) {
-        // $FlowFixMe
-        agent.environment = this;
-        this.agents.push(agent);
-      }
-      /**
-       * Remove an agent from the environment.
-       * @param {Agent} agent 
-       */
-
-    }, {
-      key: "removeAgent",
-      value: function removeAgent(agent) {
-        // $FlowFixMe
-        agent.environment = null;
-        var index = this.agents.indexOf(agent);
-        this.agents.splice(index, 1);
-      }
-      /**
-       * Get an array of all the agents in the environment.
-       * @return {Agent[]}
-       */
-
-    }, {
-      key: "getAgents",
-      value: function getAgents() {
-        return this.agents;
-      }
-      /**
-       * Moves the environment `n` ticks forward in time,
-       * executing all agent's rules sequentially, followed by
-       * any enqueued rules (which are removed with every tick).
-       * If `n` is left empty, defaults to 1.
-       * @param {number} n - Number of times to tick.
-       */
-
-    }, {
-      key: "tick",
-      value: function tick() {
-        var n = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
-        this.agents.forEach(function (agent) {
-          agent.rules.forEach(function (ruleObj) {
-            var rule = ruleObj.rule,
-                args = ruleObj.args;
-            rule.apply(void 0, [agent].concat(_toConsumableArray(args)));
-          });
-        });
-        this.agents.forEach(function (agent) {
-          while (agent.queue.length > 0) {
-            var _agent$queue$shift = agent.queue.shift(),
-                rule = _agent$queue$shift.rule,
-                args = _agent$queue$shift.args;
-
-            rule.apply(void 0, [agent].concat(_toConsumableArray(args)));
-          }
-        });
-
-        if (n > 1) {
-          this.tick(n - 1);
-          return;
-        }
-
-        if (this.renderer !== null) this.renderer.render();
-      }
-    }]);
-
-    return Environment;
-  }();
-
   /**
    * Gets a random element from `array`.
    * @param {Array} array 
@@ -738,15 +641,16 @@
   var ASCIIRenderer =
   /*#__PURE__*/
   function () {
+    /** @member GridEnvironment */
+
+    /** @member HTMLPreElement */
     function ASCIIRenderer(environment) {
 
       _classCallCheck(this, ASCIIRenderer);
 
-      /** @member GridEnvironment */
-      this.environment = environment;
-      environment.renderer = this;
-      /** @member HTMLPreElement */
+      this.environment = environment; // $FlowFixMe
 
+      environment.renderer = this;
       this.pre = document.createElement('pre');
     }
 
@@ -754,7 +658,7 @@
       key: "mount",
       value: function mount(el) {
         var container = typeof el === 'string' ? document.querySelector(el) : el;
-        container.appendChild(this.pre);
+        if (container) container.appendChild(this.pre);
       }
     }, {
       key: "render",
@@ -769,7 +673,7 @@
 
           if (agent && agent.get('value')) {
             value = agent.get('value');
-          } else if (cell.get('value')) {
+          } else if (cell && cell.get('value')) {
             value = cell.get('value');
           }
 
@@ -785,21 +689,26 @@
   var CanvasRenderer =
   /*#__PURE__*/
   function () {
+    /** @member Environment */
+
+    /** @member HTMLCanvasElement */
     function CanvasRenderer(environment) {
-      var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {
+        width: 500,
+        height: 500,
+        trace: false
+      };
 
       _classCallCheck(this, CanvasRenderer);
 
-      /** @member Environment */
-      this.environment = environment;
+      this.environment = environment; // $FlowFixMe
+
       environment.renderer = this;
       this.opts = opts;
-      /** @member HTMLCanvasElement */
-
       this.canvas = document.createElement('canvas');
       this.context = this.canvas.getContext('2d');
-      this.width = opts.width || 500;
-      this.height = opts.height || 500;
+      this.width = opts.width;
+      this.height = opts.height;
       this.canvas.width = this.width;
       this.canvas.height = this.height;
     }
@@ -808,7 +717,7 @@
       key: "mount",
       value: function mount(el) {
         var container = typeof el === 'string' ? document.querySelector(el) : el;
-        container.appendChild(this.canvas);
+        if (container) container.appendChild(this.canvas);
       }
     }, {
       key: "render",
@@ -833,6 +742,103 @@
     }]);
 
     return CanvasRenderer;
+  }();
+
+  var Environment =
+  /*#__PURE__*/
+  function () {
+    /** @member {Agent[]} */
+
+    /** @member {ASCIIRenderer|CanvasRenderer} */
+    function Environment() {
+      var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+        torus: true
+      };
+
+      _classCallCheck(this, Environment);
+
+      this.agents = [];
+      this.renderer = null;
+      this.opts = opts;
+      this.width = 0;
+      this.height = 0;
+    }
+    /**
+     * Add an agent to the environment. Automatically sets the
+     * agent's environment to be this environment.
+     * @param {Agent} agent 
+     */
+
+
+    _createClass(Environment, [{
+      key: "addAgent",
+      value: function addAgent(agent) {
+        // $FlowFixMe
+        agent.environment = this;
+        this.agents.push(agent);
+      }
+      /**
+       * Remove an agent from the environment.
+       * @param {Agent} agent 
+       */
+
+    }, {
+      key: "removeAgent",
+      value: function removeAgent(agent) {
+        // $FlowFixMe
+        agent.environment = null;
+        var index = this.agents.indexOf(agent);
+        this.agents.splice(index, 1);
+      }
+      /**
+       * Get an array of all the agents in the environment.
+       * @return {Agent[]}
+       */
+
+    }, {
+      key: "getAgents",
+      value: function getAgents() {
+        return this.agents;
+      }
+      /**
+       * Moves the environment `n` ticks forward in time,
+       * executing all agent's rules sequentially, followed by
+       * any enqueued rules (which are removed with every tick).
+       * If `n` is left empty, defaults to 1.
+       * @param {number} n - Number of times to tick.
+       */
+
+    }, {
+      key: "tick",
+      value: function tick() {
+        var n = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+        this.agents.forEach(function (agent) {
+          agent.rules.forEach(function (ruleObj) {
+            var rule = ruleObj.rule,
+                args = ruleObj.args;
+            rule.apply(void 0, [agent].concat(_toConsumableArray(args)));
+          });
+        });
+        this.agents.forEach(function (agent) {
+          while (agent.queue.length > 0) {
+            var _agent$queue$shift = agent.queue.shift(),
+                rule = _agent$queue$shift.rule,
+                args = _agent$queue$shift.args;
+
+            rule.apply(void 0, [agent].concat(_toConsumableArray(args)));
+          }
+        });
+
+        if (n > 1) {
+          this.tick(n - 1);
+          return;
+        }
+
+        if (this.renderer !== null) this.renderer.render();
+      }
+    }]);
+
+    return Environment;
   }();
 
   /**
