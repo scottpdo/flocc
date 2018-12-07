@@ -15,3 +15,10 @@ it('Correctly gets data associated with an agent.', () => {
   const { x } = agent.getData();
   expect(x).toBe(12);
 });
+
+it('Correctly sets new data.', () => {
+
+  agent.set('x', 65);
+  expect(agent.get('x')).toEqual(65);
+
+});
