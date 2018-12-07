@@ -120,7 +120,17 @@
     _createClass(Agent, [{
       key: "get",
       value: function get(name) {
-        return this.data[name];
+        return this.data[name] || null;
+      }
+      /**
+       * Retrieve all the data associated with this agent
+       * (useful for destructuring properties).
+       */
+
+    }, {
+      key: "getData",
+      value: function getData() {
+        return this.data;
       }
       /**
        * Set a piece of data associated with this agent.
@@ -210,6 +220,103 @@
     }]);
 
     return Agent;
+  }();
+
+  var Environment =
+  /*#__PURE__*/
+  function () {
+    /** @member {Agent[]} */
+
+    /** @member {ASCIIRenderer|CanvasRenderer} */
+    function Environment() {
+      var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+        torus: true
+      };
+
+      _classCallCheck(this, Environment);
+
+      this.agents = [];
+      this.renderer = null;
+      this.opts = opts;
+      this.width = 0;
+      this.height = 0;
+    }
+    /**
+     * Add an agent to the environment. Automatically sets the
+     * agent's environment to be this environment.
+     * @param {Agent} agent 
+     */
+
+
+    _createClass(Environment, [{
+      key: "addAgent",
+      value: function addAgent(agent) {
+        // $FlowFixMe
+        agent.environment = this;
+        this.agents.push(agent);
+      }
+      /**
+       * Remove an agent from the environment.
+       * @param {Agent} agent 
+       */
+
+    }, {
+      key: "removeAgent",
+      value: function removeAgent(agent) {
+        // $FlowFixMe
+        agent.environment = null;
+        var index = this.agents.indexOf(agent);
+        this.agents.splice(index, 1);
+      }
+      /**
+       * Get an array of all the agents in the environment.
+       * @return {Agent[]}
+       */
+
+    }, {
+      key: "getAgents",
+      value: function getAgents() {
+        return this.agents;
+      }
+      /**
+       * Moves the environment `n` ticks forward in time,
+       * executing all agent's rules sequentially, followed by
+       * any enqueued rules (which are removed with every tick).
+       * If `n` is left empty, defaults to 1.
+       * @param {number} n - Number of times to tick.
+       */
+
+    }, {
+      key: "tick",
+      value: function tick() {
+        var n = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+        this.agents.forEach(function (agent) {
+          agent.rules.forEach(function (ruleObj) {
+            var rule = ruleObj.rule,
+                args = ruleObj.args;
+            rule.apply(void 0, [agent].concat(_toConsumableArray(args)));
+          });
+        });
+        this.agents.forEach(function (agent) {
+          while (agent.queue.length > 0) {
+            var _agent$queue$shift = agent.queue.shift(),
+                rule = _agent$queue$shift.rule,
+                args = _agent$queue$shift.args;
+
+            rule.apply(void 0, [agent].concat(_toConsumableArray(args)));
+          }
+        });
+
+        if (n > 1) {
+          this.tick(n - 1);
+          return;
+        }
+
+        if (this.renderer !== null) this.renderer.render();
+      }
+    }]);
+
+    return Environment;
   }();
 
   /**
@@ -742,103 +849,6 @@
     }]);
 
     return CanvasRenderer;
-  }();
-
-  var Environment =
-  /*#__PURE__*/
-  function () {
-    /** @member {Agent[]} */
-
-    /** @member {ASCIIRenderer|CanvasRenderer} */
-    function Environment() {
-      var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
-        torus: true
-      };
-
-      _classCallCheck(this, Environment);
-
-      this.agents = [];
-      this.renderer = null;
-      this.opts = opts;
-      this.width = 0;
-      this.height = 0;
-    }
-    /**
-     * Add an agent to the environment. Automatically sets the
-     * agent's environment to be this environment.
-     * @param {Agent} agent 
-     */
-
-
-    _createClass(Environment, [{
-      key: "addAgent",
-      value: function addAgent(agent) {
-        // $FlowFixMe
-        agent.environment = this;
-        this.agents.push(agent);
-      }
-      /**
-       * Remove an agent from the environment.
-       * @param {Agent} agent 
-       */
-
-    }, {
-      key: "removeAgent",
-      value: function removeAgent(agent) {
-        // $FlowFixMe
-        agent.environment = null;
-        var index = this.agents.indexOf(agent);
-        this.agents.splice(index, 1);
-      }
-      /**
-       * Get an array of all the agents in the environment.
-       * @return {Agent[]}
-       */
-
-    }, {
-      key: "getAgents",
-      value: function getAgents() {
-        return this.agents;
-      }
-      /**
-       * Moves the environment `n` ticks forward in time,
-       * executing all agent's rules sequentially, followed by
-       * any enqueued rules (which are removed with every tick).
-       * If `n` is left empty, defaults to 1.
-       * @param {number} n - Number of times to tick.
-       */
-
-    }, {
-      key: "tick",
-      value: function tick() {
-        var n = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
-        this.agents.forEach(function (agent) {
-          agent.rules.forEach(function (ruleObj) {
-            var rule = ruleObj.rule,
-                args = ruleObj.args;
-            rule.apply(void 0, [agent].concat(_toConsumableArray(args)));
-          });
-        });
-        this.agents.forEach(function (agent) {
-          while (agent.queue.length > 0) {
-            var _agent$queue$shift = agent.queue.shift(),
-                rule = _agent$queue$shift.rule,
-                args = _agent$queue$shift.args;
-
-            rule.apply(void 0, [agent].concat(_toConsumableArray(args)));
-          }
-        });
-
-        if (n > 1) {
-          this.tick(n - 1);
-          return;
-        }
-
-        if (this.renderer !== null) this.renderer.render();
-      }
-    }]);
-
-    return Environment;
   }();
 
   /**

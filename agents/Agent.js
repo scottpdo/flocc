@@ -32,7 +32,15 @@ class Agent {
    * @param {string} name 
    */
   get(name: string): any {
-    return this.data[name];
+    return this.data[name] || null;
+  }
+
+  /**
+   * Retrieve all the data associated with this agent
+   * (useful for destructuring properties).
+   */
+  getData(): Object {
+    return this.data;
   }
 
   /**
