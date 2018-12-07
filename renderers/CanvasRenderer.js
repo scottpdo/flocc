@@ -49,15 +49,15 @@ class CanvasRenderer {
     if (!this.opts.trace) context.clearRect(0, 0, width, height);
 
     environment.getAgents().forEach(agent => {
-      const x = agent.get('x') || 0;
-      const y = agent.get('y') || 0;
+      // $FlowFixMe -- TODO: not sure why .getData() is reading incorrectly here...?
+      const { x, y, color, radius } = agent.getData();
       context.beginPath();
       context.moveTo(x, y);
-      context.fillStyle = agent.get('color') || 'black';
+      context.fillStyle = color || 'black';
       context.arc(
         x, 
         y, 
-        agent.get('radius') || 1, 
+        radius || 1,
         0, 
         2 * Math.PI
         );

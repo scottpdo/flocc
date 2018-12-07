@@ -19,8 +19,7 @@ a1.set('x', 0);
 a1.set('y', 0);
 
 const a2 = new Agent(); 
-a2.set('x', 1);
-a2.set('y', 1);
+a2.set({ x: 1, y: 1 });
 
 const a3 = new Agent(); 
 a3.set('x', 3);

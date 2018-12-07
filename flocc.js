@@ -136,14 +136,18 @@
        * Set a piece of data associated with this agent.
        * Name should be a string while value can be any valid type.
        * Ex. agent.set('x', 5); agent.set('color', 'red');
-       * @param {string} name 
+       * @param {string|Object} name 
        * @param {*} value 
        */
 
     }, {
       key: "set",
       value: function set(name, value) {
-        this.data[name] = value;
+        if (typeof name === 'string') {
+          this.data[name] = value;
+        } else {
+          this.data = Object.assign(this.data, name);
+        }
       }
       /**
        * Increment a numeric (assume integer) piece of data
@@ -392,9 +396,10 @@
 
       _this = _possibleConstructorReturn(this, _getPrototypeOf(Cell).call(this));
 
-      _this.set('x', x);
-
-      _this.set('y', y);
+      _this.set({
+        x: x,
+        y: y
+      });
 
       return _this;
     }
@@ -508,8 +513,10 @@
         } // ...and add a new one
 
 
-        agent.set('x', x);
-        agent.set('y', y);
+        agent.set({
+          x: x,
+          y: y
+        });
         this.agents.push(agent);
         cell.set('agent', agent);
         return agent;
@@ -632,13 +639,17 @@
         var maybeAgent2 = this.getAgent(x2, y2);
 
         if (maybeAgent1) {
-          maybeAgent1.set('x', x2);
-          maybeAgent1.set('y', y2);
+          maybeAgent1.set({
+            x: x2,
+            y: y2
+          });
         }
 
         if (maybeAgent2) {
-          maybeAgent2.set('x', x1);
-          maybeAgent2.set('y', y1);
+          maybeAgent2.set({
+            x: x1,
+            y: y1
+          });
         }
 
         var cell1 = this.cells.get(hash(x1, y1));
@@ -837,12 +848,17 @@
 
         if (!this.opts.trace) context.clearRect(0, 0, width, height);
         environment.getAgents().forEach(function (agent) {
-          var x = agent.get('x') || 0;
-          var y = agent.get('y') || 0;
+          // $FlowFixMe -- TODO: not sure why .getData() is reading incorrectly here...?
+          var _agent$getData = agent.getData(),
+              x = _agent$getData.x,
+              y = _agent$getData.y,
+              color = _agent$getData.color,
+              radius = _agent$getData.radius;
+
           context.beginPath();
           context.moveTo(x, y);
-          context.fillStyle = agent.get('color') || 'black';
-          context.arc(x, y, agent.get('radius') || 1, 0, 2 * Math.PI);
+          context.fillStyle = color || 'black';
+          context.arc(x, y, radius || 1, 0, 2 * Math.PI);
           context.fill();
         });
       }

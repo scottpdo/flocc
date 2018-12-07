@@ -46,12 +46,18 @@ class Agent {
   /**
    * Set a piece of data associated with this agent.
    * Name should be a string while value can be any valid type.
+   * Alternatively, the first parameter can be an object, which merges
+   * the current data with the new data (adding new values and overwriting existing).
    * Ex. agent.set('x', 5); agent.set('color', 'red');
-   * @param {string} name 
+   * @param {string|Object} name 
    * @param {*} value 
    */
-  set(name: string, value: any) {
-    this.data[name] = value;
+  set(name: string | Object, value: ?any) {
+    if (typeof name === 'string') {
+      this.data[name] = value;
+    } else {
+      this.data = Object.assign(this.data, name);
+    }
   }
 
   /**

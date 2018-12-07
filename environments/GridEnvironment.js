@@ -21,8 +21,7 @@ const unhash = (str): pt => {
 class Cell extends Agent {
   constructor(x, y) {
     super();
-    this.set('x', x);
-    this.set('y', y);
+    this.set({ x, y });
   }
 };
 
@@ -101,8 +100,7 @@ class GridEnvironment extends Environment {
     }
 
     // ...and add a new one
-    agent.set('x', x);
-    agent.set('y', y);
+    agent.set({ x, y });
 
     this.agents.push(agent);
     cell.set('agent', agent);
@@ -209,13 +207,17 @@ class GridEnvironment extends Environment {
     const maybeAgent2 = this.getAgent(x2, y2);
 
     if (maybeAgent1) {
-      maybeAgent1.set('x', x2);
-      maybeAgent1.set('y', y2);
+      maybeAgent1.set({
+        x: x2,
+        y: y2
+      });
     }
 
     if (maybeAgent2) {
-      maybeAgent2.set('x', x1);
-      maybeAgent2.set('y', y1);
+      maybeAgent2.set({
+        x: x1,
+        y: y1
+      });
     }
 
     const cell1 = this.cells.get(hash(x1, y1));
