@@ -96,15 +96,15 @@
   var Agent =
   /*#__PURE__*/
   function () {
+    /**
+     * @member {Environment|null} environment
+     * @member {RuleObj[]} rules
+     * @member {RuleObj[]} queue
+     * @member {Object} data
+     */
     function Agent() {
       _classCallCheck(this, Agent);
 
-      /**
-       * @member {Environment} environment
-       * @member {Function[]} rules
-       * @member {Function[]} queue
-       * @member {Object} data
-       */
       this.environment = null;
       this.rules = [];
       this.queue = [];
@@ -120,50 +120,65 @@
     _createClass(Agent, [{
       key: "get",
       value: function get(name) {
-        return this.data[name];
+        return this.data.hasOwnProperty(name) ? this.data[name] : null;
+      }
+      /**
+       * Retrieve all the data associated with this agent
+       * (useful for destructuring properties).
+       */
+
+    }, {
+      key: "getData",
+      value: function getData() {
+        return this.data;
       }
       /**
        * Set a piece of data associated with this agent.
        * Name should be a string while value can be any valid type.
+       * Alternatively, the first parameter can be an object, which merges
+       * the current data with the new data (adding new values and overwriting existing).
        * Ex. agent.set('x', 5); agent.set('color', 'red');
-       * @param {string} name 
+       * @param {string|Object} name 
        * @param {*} value 
        */
 
     }, {
       key: "set",
       value: function set(name, value) {
-        this.data[name] = value;
+        if (typeof name === 'string') {
+          this.data[name] = value;
+        } else {
+          this.data = Object.assign(this.data, name);
+        }
       }
       /**
        * Increment a numeric (assume integer) piece of data
        * associated with this agent. If `n` is included, increments by
-       * `n`. If the value has not yet been set,
-       * initializes it to 1.
-       * @param {number} value 
+       * `n`. If the value has not yet been set, initializes it to 1.
+       * @param {string} name 
+       * @param {number} n
        */
 
     }, {
       key: "increment",
-      value: function increment(value) {
+      value: function increment(name) {
         var n = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
-        if (!this.get(value)) this.set(value, 0);
-        this.set(value, this.get(value) + n);
+        if (!this.get(name)) this.set(name, 0);
+        this.set(name, this.get(name) + n);
       }
       /**
        * Decrement a numeric (assume integer) piece of data
        * associated with this agent. If `n` is included, decrements by
        * `n`. If the value has not yet been set,
        * initializes it to -1.
-       * @param {number} value 
+       * @param {string} name 
        */
 
     }, {
       key: "decrement",
-      value: function decrement(value) {
+      value: function decrement(name) {
         var n = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
-        if (!this.get(value)) this.set(value, 0);
-        this.set(value, this.get(value) - n);
+        this.increment(name, -n);
       }
       /**
        * Add a rule to be executed during the agent's 
@@ -216,12 +231,21 @@
   var Environment =
   /*#__PURE__*/
   function () {
+    /** @member {Agent[]} */
+
+    /** @member {ASCIIRenderer|CanvasRenderer} */
     function Environment() {
+      var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+        torus: true
+      };
+
       _classCallCheck(this, Environment);
 
-      /** @member {Agent[]} */
       this.agents = [];
       this.renderer = null;
+      this.opts = opts;
+      this.width = 0;
+      this.height = 0;
     }
     /**
      * Add an agent to the environment. Automatically sets the
@@ -233,6 +257,7 @@
     _createClass(Environment, [{
       key: "addAgent",
       value: function addAgent(agent) {
+        // $FlowFixMe
         agent.environment = this;
         this.agents.push(agent);
       }
@@ -244,6 +269,7 @@
     }, {
       key: "removeAgent",
       value: function removeAgent(agent) {
+        // $FlowFixMe
         agent.environment = null;
         var index = this.agents.indexOf(agent);
         this.agents.splice(index, 1);
@@ -372,9 +398,10 @@
 
       _this = _possibleConstructorReturn(this, _getPrototypeOf(Cell).call(this));
 
-      _this.set('x', x);
-
-      _this.set('y', y);
+      _this.set({
+        x: x,
+        y: y
+      });
 
       return _this;
     }
@@ -408,7 +435,8 @@
 
           _this2._cellHashes.push(id);
 
-          var cell = new Cell(x, y);
+          var cell = new Cell(x, y); // $FlowFixMe
+
           cell.environment = _assertThisInitialized(_assertThisInitialized(_this2));
 
           _this2.cells.set(id, cell);
@@ -476,19 +504,23 @@
             x = _this$normalize.x,
             y = _this$normalize.y;
 
-        var id = hash(x, y); // If there is already an agent at this location,
+        var id = hash(x, y);
+        var cell = this.cells.get(id);
+        if (!cell) throw new Error("Can't add an Agent to a non-existent Cell!"); // If there is already an agent at this location,
         // overwrite it (with a warning). Remove the existing agent...
 
-        if (this.cells.get(id).get('agent')) {
+        if (cell.get('agent')) {
           console.warn("Overwriting agent at ".concat(x, ", ").concat(y, "."));
           this.removeAgent(x, y);
         } // ...and add a new one
 
 
-        agent.set('x', x);
-        agent.set('y', y);
+        agent.set({
+          x: x,
+          y: y
+        });
         this.agents.push(agent);
-        this.cells.get(id).set('agent', agent);
+        cell.set('agent', agent);
         return agent;
       }
       /**
@@ -510,12 +542,14 @@
             y = _this$normalize2.y;
 
         var id = hash(x, y);
-        var agent = this.cells.get(id).get('agent');
+        var cell = this.cells.get(id);
+        if (!cell) throw new Error("Can't remove an Agent from a non-existent Cell!");
+        var agent = cell.get('agent');
         if (!agent) return;
         agent.environment = null;
         var indexAmongAgents = this.agents.indexOf(agent);
         this.agents.splice(indexAmongAgents, 1);
-        this.cells.get(id).set('agent', null);
+        cell.set('agent', null);
       }
       /**
        * Retrieve the cell at the specified coordinate.
@@ -532,7 +566,7 @@
             y = _this$normalize3.y;
 
         var id = hash(x, y);
-        return this.cells.get(id);
+        return this.cells.get(id) || null;
       }
       /**
        * Get all cells of the environment, in a flat array.
@@ -542,7 +576,7 @@
     }, {
       key: "getCells",
       value: function getCells() {
-        return _toConsumableArray(this.cells.values());
+        return Array.from(this.cells.values());
       }
       /**
        * Retrieve the agent at the specified cell coordinate.
@@ -559,7 +593,9 @@
             y = _this$normalize4.y;
 
         var id = hash(x, y);
-        return this.cells.get(id).get('agent');
+        var cell = this.cells.get(id);
+        if (!cell) return null;
+        return cell.get('agent') || null;
       }
       /**
        * `loop` is like `tick`, but the callback is invoked with every
@@ -605,17 +641,23 @@
         var maybeAgent2 = this.getAgent(x2, y2);
 
         if (maybeAgent1) {
-          maybeAgent1.set('x', x2);
-          maybeAgent1.set('y', y2);
+          maybeAgent1.set({
+            x: x2,
+            y: y2
+          });
         }
 
         if (maybeAgent2) {
-          maybeAgent1.set('x', x1);
-          maybeAgent1.set('y', y1);
+          maybeAgent2.set({
+            x: x1,
+            y: y1
+          });
         }
 
-        this.cells.get(hash(x1, y1)).set('agent', maybeAgent2);
-        this.cells.get(hash(x2, y2)).set('agent', maybeAgent1);
+        var cell1 = this.cells.get(hash(x1, y1));
+        var cell2 = this.cells.get(hash(x2, y2));
+        if (cell1) cell1.set('agent', maybeAgent2);
+        if (cell2) cell2.set('agent', maybeAgent1);
       }
       /**
        * Find a random open cell in the GridEnvironment.
@@ -631,8 +673,8 @@
         while (hashes.length > 0) {
           var id = hashes.pop();
           var cell = this.cells.get(id);
-          var maybeAgent = cell.get('agent');
-          if (!maybeAgent) return cell;
+          var maybeAgent = cell ? cell.get('agent') : null;
+          if (cell && !maybeAgent) return cell;
         } // once there are no hashes left, that means that there are no open cells
 
 
@@ -656,6 +698,7 @@
           var _loop = function _loop(x) {
             var cell = _this3.getCell(x, y);
 
+            if (!cell) return "continue";
             cell.rules.forEach(function (ruleObj) {
               var rule = ruleObj.rule,
                   args = ruleObj.args;
@@ -664,7 +707,9 @@
           };
 
           for (var x = 0; x < this.width; x++) {
-            _loop(x);
+            var _ret = _loop(x);
+
+            if (_ret === "continue") continue;
           }
         }
 
@@ -679,6 +724,7 @@
         for (var _y = 0; _y < this.height; _y++) {
           for (var x = 0; x < this.width; x++) {
             var cell = this.getCell(x, _y);
+            if (!cell) continue;
 
             while (cell.queue.length > 0) {
               var _cell$queue$shift = cell.queue.shift(),
@@ -715,15 +761,16 @@
   var ASCIIRenderer =
   /*#__PURE__*/
   function () {
+    /** @member GridEnvironment */
+
+    /** @member HTMLPreElement */
     function ASCIIRenderer(environment) {
 
       _classCallCheck(this, ASCIIRenderer);
 
-      /** @member GridEnvironment */
-      this.environment = environment;
-      environment.renderer = this;
-      /** @member HTMLPreElement */
+      this.environment = environment; // $FlowFixMe
 
+      environment.renderer = this;
       this.pre = document.createElement('pre');
     }
 
@@ -731,7 +778,7 @@
       key: "mount",
       value: function mount(el) {
         var container = typeof el === 'string' ? document.querySelector(el) : el;
-        container.appendChild(this.pre);
+        if (container) container.appendChild(this.pre);
       }
     }, {
       key: "render",
@@ -746,7 +793,7 @@
 
           if (agent && agent.get('value')) {
             value = agent.get('value');
-          } else if (cell.get('value')) {
+          } else if (cell && cell.get('value')) {
             value = cell.get('value');
           }
 
@@ -762,21 +809,26 @@
   var CanvasRenderer =
   /*#__PURE__*/
   function () {
+    /** @member Environment */
+
+    /** @member HTMLCanvasElement */
     function CanvasRenderer(environment) {
-      var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {
+        width: 500,
+        height: 500,
+        trace: false
+      };
 
       _classCallCheck(this, CanvasRenderer);
 
-      /** @member Environment */
-      this.environment = environment;
+      this.environment = environment; // $FlowFixMe
+
       environment.renderer = this;
       this.opts = opts;
-      /** @member HTMLCanvasElement */
-
       this.canvas = document.createElement('canvas');
       this.context = this.canvas.getContext('2d');
-      this.width = opts.width || 500;
-      this.height = opts.height || 500;
+      this.width = opts.width;
+      this.height = opts.height;
       this.canvas.width = this.width;
       this.canvas.height = this.height;
     }
@@ -785,7 +837,7 @@
       key: "mount",
       value: function mount(el) {
         var container = typeof el === 'string' ? document.querySelector(el) : el;
-        container.appendChild(this.canvas);
+        if (container) container.appendChild(this.canvas);
       }
     }, {
       key: "render",
@@ -798,12 +850,35 @@
 
         if (!this.opts.trace) context.clearRect(0, 0, width, height);
         environment.getAgents().forEach(function (agent) {
-          var x = agent.get('x') || 0;
-          var y = agent.get('y') || 0;
+          // $FlowFixMe -- TODO: not sure why .getData() is reading incorrectly here...?
+          var _agent$getData = agent.getData(),
+              x = _agent$getData.x,
+              y = _agent$getData.y,
+              vx = _agent$getData.vx,
+              vy = _agent$getData.vy,
+              color = _agent$getData.color,
+              shape = _agent$getData.shape,
+              size = _agent$getData.size;
+
           context.beginPath();
           context.moveTo(x, y);
-          context.fillStyle = agent.get('color') || 'black';
-          context.arc(x, y, agent.get('radius') || 1, 0, 2 * Math.PI);
+          context.fillStyle = color || 'black';
+
+          if (shape === 'arrow' && vx !== null && vy !== null) {
+            var norm = Math.sqrt(Math.pow(vx, 2) + Math.pow(vy, 2));
+
+            var _vx = 6 * (vx / norm);
+
+            var _vy = 6 * (vy / norm);
+
+            context.beginPath();
+            context.moveTo(x + 1.5 * _vx, y + 1.5 * _vy);
+            context.lineTo(x + _vy / 2, y - _vx / 2);
+            context.lineTo(x - _vy / 2, y + _vx / 2);
+          } else {
+            context.arc(x, y, size || 1, 0, 2 * Math.PI);
+          }
+
           context.fill();
         });
       }
@@ -814,10 +889,10 @@
 
   /**
    * Restricts a number x to the range min --> max.
-   * @param {Number} x 
-   * @param {Number} min 
-   * @param {Number} max
-   * @return {Number} The clamped value.
+   * @param {number} x 
+   * @param {number} min 
+   * @param {number} max
+   * @return {number} The clamped value.
    */
   function clamp(x, min, max) {
     if (x < min) return min;
@@ -833,7 +908,6 @@
    * @param {Object|Agent} p2 
    * @return {number} The distance between p1 and p2.
    */
-
   function distance(p1, p2) {
     var x1 = (p1 instanceof Agent ? p1.get('x') : p1.x) || 0;
     var y1 = (p1 instanceof Agent ? p1.get('y') : p1.y) || 0;
@@ -843,12 +917,14 @@
     var z2 = (p2 instanceof Agent ? p2.get('z') : p2.z) || 0;
     var dx = Math.abs(x2 - x1);
     var dy = Math.abs(y2 - y1);
-    var dz = Math.abs(z2 - z1);
+    var dz = Math.abs(z2 - z1); // distance for toroidal environments
 
-    if (p1.environment && p1.environment.width && p1.environment.height) {
-      var _p1$environment = p1.environment,
-          width = _p1$environment.width,
-          height = _p1$environment.height;
+    if (p1 instanceof Agent && p1.environment && p2.environment && p1.environment === p2.environment && p1.environment.width && p1.environment.height && // $FlowFixMe: Why isn't flow reading opts as an instance variable?
+    p1.environment.opts.torus) {
+      var environment = p1.environment; // $FlowFixMe: Why isn't Flow reading these as instance variables?
+
+      var width = environment.width,
+          height = environment.height;
       if (dx > width / 2) dx = width - dx;
       if (dy > height / 2) dy = height - dy;
     }
@@ -898,12 +974,14 @@
     var z2 = (p2 instanceof Agent ? p2.get('z') : p2.z) || 0;
     var dx = Math.abs(x2 - x1);
     var dy = Math.abs(y2 - y1);
-    var dz = Math.abs(z2 - z1);
+    var dz = Math.abs(z2 - z1); // distance for toroidal environments
 
-    if (p1.environment && p1.environment.width && p1.environment.height) {
-      var _p1$environment = p1.environment,
-          width = _p1$environment.width,
-          height = _p1$environment.height;
+    if (p1 instanceof Agent && p1.environment && p2.environment && p1.environment === p2.environment && p1.environment.width && p1.environment.height && // $FlowFixMe: Why isn't flow reading opts as an instance variable?
+    p1.environment.opts.torus) {
+      var environment = p1.environment; // $FlowFixMe: Why isn't Flow reading these as instance variables?
+
+      var width = environment.width,
+          height = environment.height;
       if (dx > width / 2) dx = width - dx;
       if (dy > height / 2) dy = height - dy;
     }

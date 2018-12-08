@@ -1,36 +1,41 @@
+// @flow
 import { GridEnvironment } from '../environments/GridEnvironment';
 
 class ASCIIRenderer {
-    
-    constructor(environment, opts = {}) {
-        
-        /** @member GridEnvironment */
-        this.environment = environment;
-        environment.renderer = this;
 
-        /** @member HTMLPreElement */
-        this.pre = document.createElement('pre');
-    }
+  /** @member GridEnvironment */
+  environment: GridEnvironment;
+  /** @member HTMLPreElement */
+  pre: HTMLPreElement;
 
-    mount(el) {
-        const container = (typeof el === 'string') ? document.querySelector(el) : el;
-        container.appendChild(this.pre);
-    }
+  constructor(environment: GridEnvironment, opts: Object = {}) {
 
-    render() {
-        this.pre.innerHTML = '';
-        this.environment.loop((x, y, agent) => {
-            let value = ' ';
-            const cell = this.environment.getCell(x, y);
-            if (agent && agent.get('value')) {
-                value = agent.get('value');
-            } else if (cell.get('value')) {
-                value = cell.get('value');
-            }
-            this.pre.innerHTML += value;
-            if (x === this.environment.width - 1) this.pre.innerHTML += '\n';
-        });
-    }
+    this.environment = environment;
+    // $FlowFixMe
+    environment.renderer = this;
+
+    this.pre = document.createElement('pre');
+  }
+
+  mount(el: string | HTMLElement) {
+    const container = (typeof el === 'string') ? document.querySelector(el) : el;
+    if (container) container.appendChild(this.pre);
+  }
+
+  render() {
+    this.pre.innerHTML = '';
+    this.environment.loop((x, y, agent) => {
+      let value: string = ' ';
+      const cell = this.environment.getCell(x, y);
+      if (agent && agent.get('value')) {
+        value = agent.get('value');
+      } else if (cell && cell.get('value')) {
+        value = cell.get('value');
+      }
+      this.pre.innerHTML += value;
+      if (x === this.environment.width - 1) this.pre.innerHTML += '\n';
+    });
+  }
 };
 
 export { ASCIIRenderer };
