@@ -120,7 +120,7 @@
     _createClass(Agent, [{
       key: "get",
       value: function get(name) {
-        return this.data[name] || null;
+        return this.data.hasOwnProperty(name) ? this.data[name] : null;
       }
       /**
        * Retrieve all the data associated with this agent
@@ -135,6 +135,8 @@
       /**
        * Set a piece of data associated with this agent.
        * Name should be a string while value can be any valid type.
+       * Alternatively, the first parameter can be an object, which merges
+       * the current data with the new data (adding new values and overwriting existing).
        * Ex. agent.set('x', 5); agent.set('color', 'red');
        * @param {string|Object} name 
        * @param {*} value 

@@ -32,7 +32,7 @@ class Agent {
    * @param {string} name 
    */
   get(name: string): any {
-    return this.data[name] || null;
+    return this.data.hasOwnProperty(name) ? this.data[name] : null;
   }
 
   /**

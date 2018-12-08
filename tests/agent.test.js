@@ -21,4 +21,13 @@ it('Correctly sets new data.', () => {
   agent.set('x', 65);
   expect(agent.get('x')).toEqual(65);
 
+  agent.set({
+    x: 100,
+    y: false
+  });
+
+  expect(agent.get('x')).toEqual(100);
+  expect(agent.get('y')).toEqual(false);
+  expect(agent.getData()).toEqual({ x: 100, y: false });
+
 });
