@@ -7,6 +7,11 @@ export default {
       file: 'flocc.js',
       format: 'umd',
       name: 'flocc'
+    },
+    {
+      file: 'flocc.es.js',
+      format: 'es',
+      name: 'flocc'
     }
   ],
   plugins: [

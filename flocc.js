@@ -854,13 +854,31 @@
           var _agent$getData = agent.getData(),
               x = _agent$getData.x,
               y = _agent$getData.y,
+              vx = _agent$getData.vx,
+              vy = _agent$getData.vy,
               color = _agent$getData.color,
-              radius = _agent$getData.radius;
+              shape = _agent$getData.shape,
+              size = _agent$getData.size;
 
           context.beginPath();
           context.moveTo(x, y);
           context.fillStyle = color || 'black';
-          context.arc(x, y, radius || 1, 0, 2 * Math.PI);
+
+          if (shape === 'arrow' && vx !== null && vy !== null) {
+            var norm = Math.sqrt(Math.pow(vx, 2) + Math.pow(vy, 2));
+
+            var _vx = 6 * (vx / norm);
+
+            var _vy = 6 * (vy / norm);
+
+            context.beginPath();
+            context.moveTo(x + 1.5 * _vx, y + 1.5 * _vy);
+            context.lineTo(x + _vy / 2, y - _vx / 2);
+            context.lineTo(x - _vy / 2, y + _vx / 2);
+          } else {
+            context.arc(x, y, size || 1, 0, 2 * Math.PI);
+          }
+
           context.fill();
         });
       }
