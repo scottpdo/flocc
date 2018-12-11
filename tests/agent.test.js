@@ -31,3 +31,7 @@ it('Correctly sets new data.', () => {
   expect(agent.getData()).toEqual({ x: 100, y: false });
 
 });
+
+it('Retrieves a null value for data that does not exist.', () => {
+  expect(agent.get('notfound')).toBeNull();
+});
