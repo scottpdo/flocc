@@ -104,9 +104,168 @@ var Agent = /** @class */ (function () {
     return Agent;
 }());
 
+/**
+ * Find the sum of an Array of numbers.
+ * @param {Array<number>} arr
+ * @returns {number}
+ */
+function sum(arr) {
+    return arr.reduce(function (a, b) { return a + b; }, 0);
+}
+
+/**
+ * Copies the values of `source` to `arr`
+ * or to a new Array.
+ *
+ * @private
+ * @param {Array} source The Array to copy values from.
+ * @param {Array} [arr=[]] The Array to copy values to.
+ * @returns {Array}
+ */
+function copyArray(source, arr) {
+    var index = -1;
+    var length = source.length;
+    if (!arr)
+        arr = new Array(length);
+    while (++index < length)
+        arr[index] = source[index];
+    return arr;
+}
+
+var Vector = /** @class */ (function () {
+    function Vector() {
+        var data = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            data[_i] = arguments[_i];
+        }
+        this.data = data || [];
+        this.dimension = data ? data.length : 0;
+    }
+    Vector.prototype.index = function (n) {
+        if (this.dimension > n) {
+            return this.data[n];
+        }
+        else {
+            console.warn("Attempted to access index " + n + " on a vector greater than the vector's dimension " + this.dimension + ". Returning 0 by default.");
+        }
+        return 0;
+    };
+    /**
+     * Overwrite the value at a given index or position. If the index is beyond the dimension of this vector,
+     * the dimension will be increased to the dimensionality implied by the index.
+     * @param i {number | string} - The numerical index (0-based) or lowercase string value ('x') to set.
+     * @param value {number} - The value to set at this index/position.
+     */
+    Vector.prototype.set = function (i, value) {
+        var index;
+        if (i === 'x' || i === 'r') {
+            index = 0;
+        }
+        else if (i === 'y' || i === 'g') {
+            index = 1;
+        }
+        else if (i === 'z' || i === 'b') {
+            index = 2;
+        }
+        else if (i === 'w' || i === 'a') {
+            index = 3;
+        }
+        else if (typeof i === 'number') {
+            index = i;
+        }
+        while (this.dimension <= index) {
+            this.data[this.dimension] = 0;
+            this.dimension++;
+        }
+        this.data[index] = value;
+        return this;
+    };
+    Object.defineProperty(Vector.prototype, "x", {
+        get: function () { return this.index(0); },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Vector.prototype, "y", {
+        get: function () { return this.index(1); },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Vector.prototype, "z", {
+        get: function () { return this.index(2); },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Vector.prototype, "w", {
+        get: function () { return this.index(3); },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Vector.prototype, "r", {
+        get: function () { return this.index(0); },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Vector.prototype, "g", {
+        get: function () { return this.index(1); },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Vector.prototype, "b", {
+        get: function () { return this.index(2); },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Vector.prototype, "a", {
+        get: function () { return this.index(3); },
+        enumerable: true,
+        configurable: true
+    });
+    Vector.prototype.add = function (v) {
+        var dimension = Math.max(this.dimension, v.dimension);
+        for (var i = 0; i < dimension; i++) {
+            if (i >= this.dimension) {
+                this.dimension = i;
+                this.set(i, 0);
+            }
+            this.set(i, this.index(i) + v.index(i));
+        }
+        return this;
+    };
+    Vector.prototype.multiplyScalar = function (n) {
+        this.data = this.data.map(function (x) { return x * n; });
+        return this;
+    };
+    Vector.prototype.addScalar = function (n) {
+        this.data = this.data.map(function (x) { return x + n; });
+        return this;
+    };
+    /**
+     * Computes the Euclidean length (straight-line length) from the origin to this vector.
+     */
+    Vector.prototype.length = function () {
+        return Math.sqrt(sum(this.data.map(function (x) { return Math.pow(x, 2); })));
+    };
+    /**
+     * Normalize the vector (turn it into a vector with length = 1).
+     * Has no effect on the 0 vector.
+     */
+    Vector.prototype.normalize = function () {
+        var l = this.length();
+        if (l > 0) {
+            this.multiplyScalar(1 / l);
+        }
+        return this;
+    };
+    Vector.prototype.clone = function () {
+        var data = copyArray(this.data);
+        return new (Vector.bind.apply(Vector, [void 0].concat(data)))();
+    };
+    return Vector;
+}());
+
 /// <reference path="../agents/Agent.d.ts" />
 /// <reference path="../renderers/Renderer.d.ts" />
-/// <reference path="../types/EnvironmentOptions.d.ts" />
+/// <reference path="./EnvironmentOptions.d.ts" />
 var Environment = /** @class */ (function () {
     function Environment(opts) {
         if (opts === void 0) { opts = { torus: true }; }
@@ -200,25 +359,6 @@ function __extends(d, b) {
     extendStatics(d, b);
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-}
-
-/**
- * Copies the values of `source` to `arr`
- * or to a new Array.
- *
- * @private
- * @param {Array} source The Array to copy values from.
- * @param {Array} [arr=[]] The Array to copy values to.
- * @returns {Array}
- */
-function copyArray(source, arr) {
-    var index = -1;
-    var length = source.length;
-    if (!arr)
-        arr = new Array(length);
-    while (++index < length)
-        arr[index] = source[index];
-    return arr;
 }
 
 /**
@@ -726,15 +866,6 @@ function sample(array) {
 }
 
 /**
- * Find the sum of an Array of numbers.
- * @param {Array<number>} arr
- * @returns {number}
- */
-function sum(arr) {
-    return arr.reduce(function (a, b) { return a + b; }, 0);
-}
-
-/**
  * Find the mean value of an Array of numbers.
  * @param {Array<number>} arr
  * @returns {number}
@@ -766,4 +897,4 @@ var utils = {
     stdDev: stdDev
 };
 
-export { Agent, Environment, GridEnvironment, ASCIIRenderer, CanvasRenderer, utils };
+export { Agent, Vector, Environment, GridEnvironment, ASCIIRenderer, CanvasRenderer, utils };

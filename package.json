@@ -1,11 +1,12 @@
 {
   "name": "flocc",
-  "version": "0.0.17",
+  "version": "0.1.0",
   "description": "Agent-based modeling in JavaScript in the browser or server.",
   "main": "flocc.js",
   "module": "flocc.es.js",
   "scripts": {
     "build": "rollup -c",
+    "watch": "rollup -cw",
     "test": "jest",
     "prepublish": "yarn run build"
   },

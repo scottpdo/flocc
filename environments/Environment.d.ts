@@ -1,6 +1,6 @@
 /// <reference path="../src/agents/Agent.d.ts" />
 /// <reference path="../src/renderers/Renderer.d.ts" />
-/// <reference path="../src/types/EnvironmentOptions.d.ts" />
+/// <reference path="../src/environments/EnvironmentOptions.d.ts" />
 declare class Environment {
     /** @member {Agent[]} */
     agents: Array<Agent>;

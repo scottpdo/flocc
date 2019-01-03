@@ -1,4 +1,5 @@
 export { Agent } from './agents/Agent';
+export { Vector } from './helpers/Vector';
 export { Environment } from './environments/Environment';
 export { GridEnvironment } from './environments/GridEnvironment';
 export { ASCIIRenderer } from './renderers/ASCIIRenderer';
