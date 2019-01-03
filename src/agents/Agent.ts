@@ -1,9 +1,8 @@
-// @flow
-import { typeof Environment } from '../environments/Environment';
+/// <reference path="../environments/Environment.d.ts" />
 
-type RuleObj = {
-  rule: Function,
-  args: Array<any>
+interface RuleObj {
+  rule: Function;
+  args: Array<any>;
 };
 
 class Agent {
@@ -24,6 +23,7 @@ class Agent {
     this.rules = [];
     this.queue = [];
     this.data = {};
+    this.whatever = 'asdkjf';
   }
 
   /**
