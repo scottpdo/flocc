@@ -1,16 +1,17 @@
-// @flow
+/// <reference path="../types/Point.d.ts" />
+
 import { Agent } from '../agents/Agent';
-import { typeof Environment } from '../environments/Environment';
 
 /**
- * Finds the distance between `p1` and `p2`. The inputs may be plain objects
+ * Finds the Manhattan distance between `p1` and `p2`.
+ * The inputs may be plain objects
  * with `x`, `y`, and/or `z` keys, or Agent-like objects who have
  * `x`, `y`, and/or `z` data.
- * @param {Object|Agent} p1 
- * @param {Object|Agent} p2 
- * @return {number} The distance between p1 and p2.
+ * @param {Point|Agent} p1
+ * @param {Point|Agent} p2
+ * @return {number} The Manhattan distance between p1 and p2.
  */
-export default function distance(p1: Object | Agent, p2: Object | Agent): number {
+export default function manhattanDistance(p1: Point | Agent, p2: Point | Agent): number {
 
   let x1: number = (p1 instanceof Agent ? p1.get('x') : p1.x) || 0;
   let y1: number = (p1 instanceof Agent ? p1.get('y') : p1.y) || 0;
@@ -26,21 +27,20 @@ export default function distance(p1: Object | Agent, p2: Object | Agent): number
 
   // distance for toroidal environments
   if (
-    p1 instanceof Agent && 
-    p1.environment && 
+    p1 instanceof Agent &&
+    p2 instanceof Agent &&
+    p1.environment &&
     p2.environment &&
     p1.environment === p2.environment &&
-    p1.environment.width && 
+    p1.environment.width &&
     p1.environment.height &&
-    // $FlowFixMe: Why isn't flow reading opts as an instance variable?
     p1.environment.opts.torus
   ) {
     const { environment } = p1;
-    // $FlowFixMe: Why isn't Flow reading these as instance variables?
     const { width, height } = environment;
     if (dx > width / 2) dx = width - dx;
     if (dy > height / 2) dy = height - dy;
   }
 
-  return Math.sqrt(dx * dx + dy * dy + dz * dz);
+  return dx + dy + dz;
 };

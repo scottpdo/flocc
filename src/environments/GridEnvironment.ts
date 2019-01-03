@@ -1,28 +1,18 @@
-// @flow
+/// <reference path="../agents/Cell.d.ts" />
+/// <reference path="../types/Point.d.ts" />
+
 import { Agent } from '../agents/Agent';
 import { Environment } from './Environment';
 
 import sample from '../utils/sample';
 import shuffle from '../utils/shuffle';
 
-type pt = {
-  x: number,
-  y: number
-};
-
 const hash = (x: number, y: number): string => x.toString() + ',' + y.toString();
-const unhash = (str): pt => { 
+const unhash = (str: string): Point => {
   return {
     x: +(str.split(',')[0]),
     y: +(str.split(',')[1])
   };
-};
-
-class Cell extends Agent {
-  constructor(x, y) {
-    super();
-    this.set({ x, y });
-  }
 };
 
 class GridEnvironment extends Environment {
@@ -60,15 +50,15 @@ class GridEnvironment extends Environment {
    * Fill every cell of the grid with an agent
    * and set that agent's position to its x/y coordinate.
    */
-  fill() {
+  fill(): void {
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
-        this.addAgent(x, y);
+        this.addAgentAt(x, y);
       }
     }
   }
 
-  normalize(x: number, y: number): pt {
+  normalize(x: number, y: number): Point {
     while (x < 0) x += this.width;
     while (x >= this.width) x -= this.width;
     while (y < 0) y += this.height;
@@ -79,12 +69,11 @@ class GridEnvironment extends Environment {
   /**
    * For GridEnvironments, `addAgent` takes `x` and `y` values
    * and automatically adds a Agent to that cell coordinate.
-   * @override
    * @param {number} x
    * @param {number} y
    * @returns {Agent} The agent that was added at the specified coordinate.
    */
-  addAgent(x_: number = 0, y_: number = 0, agent: Agent = new Agent()): Agent {
+  addAgentAt(x_: number = 0, y_: number = 0, agent: Agent = new Agent()): Agent {
 
     const { x, y } = this.normalize(x_, y_);
     const id = hash(x, y);
@@ -96,7 +85,7 @@ class GridEnvironment extends Environment {
     // overwrite it (with a warning). Remove the existing agent...
     if (cell.get('agent')) {
       console.warn(`Overwriting agent at ${x}, ${y}.`);
-      this.removeAgent(x, y);
+      this.removeAgentAt(x, y);
     }
 
     // ...and add a new one
@@ -111,15 +100,14 @@ class GridEnvironment extends Environment {
   /**
    * For GridEnvironments, `removeAgent` takes `x` and `y` values
    * and removes the Agent (if there is one) at that cell coordinate.
-   * @override
    * @param {number} x
    * @param {number} y
    */
-  removeAgent(x_: number = 0, y_: number = 0) {
+  removeAgentAt(x_: number = 0, y_: number = 0): void {
 
     const { x, y } = this.normalize(x_, y_);
     const id = hash(x, y);
-    
+
     const cell = this.cells.get(id);
     if (!cell) throw new Error("Can't remove an Agent from a non-existent Cell!");
 
@@ -136,8 +124,8 @@ class GridEnvironment extends Environment {
 
   /**
    * Retrieve the cell at the specified coordinate.
-   * @param {number} x 
-   * @param {number} y 
+   * @param {number} x
+   * @param {number} y
    * @return {Cell}
    */
   getCell(x_: number, y_: number): Cell | null {
@@ -156,8 +144,8 @@ class GridEnvironment extends Environment {
 
   /**
    * Retrieve the agent at the specified cell coordinate.
-   * @param {number} x 
-   * @param {number} y 
+   * @param {number} x
+   * @param {number} y
    * @return {undefined | Agent}
    */
   getAgent(x_: number, y_: number): Agent | null {
@@ -170,13 +158,13 @@ class GridEnvironment extends Environment {
 
   /**
    * `loop` is like `tick`, but the callback is invoked with every
-   * cell coordinate, not every agent. 
-   * 
+   * cell coordinate, not every agent.
+   *
    * The callback is invoked with arguments `x`, `y`, and `agent`
    * (if there is one at that cell coordinate).
-   * @param {Function} callback 
+   * @param {Function} callback
    */
-  loop(callback: Function = function() {}) {
+  loop(callback: Function = function() {}): void {
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
         const agent = this.getAgent(x, y);
@@ -189,12 +177,12 @@ class GridEnvironment extends Environment {
    * Given two pairs of cell coordinates, swap the agents at those cells.
    * If both are empty, nothing happens. If one is empty and the other has an agent,
    * this is equivalent to moving that agent to the new cell coordinate.
-   * @param {number} x1 
-   * @param {number} y1 
-   * @param {number} x2 
-   * @param {number} y2 
+   * @param {number} x1
+   * @param {number} y1
+   * @param {number} x2
+   * @param {number} y2
    */
-  swap(x1_: number, y1_: number, x2_: number, y2_: number) {
+  swap(x1_: number, y1_: number, x2_: number, y2_: number): void {
 
     const a = this.normalize(x1_, y1_);
     const x1 = a.x;
@@ -248,7 +236,7 @@ class GridEnvironment extends Environment {
   }
 
   /**
-   * Override/extend Environment.tick to include the 
+   * Override/extend Environment.tick to include the
    * GridEnvironment's cells.
    * @override
    * @param {number} n - Number of times to tick.

@@ -1,7 +1,7 @@
-// @flow
-import { GridEnvironment } from '../environments/GridEnvironment';
+/// <reference path="./Renderer.d.ts" />
+/// <reference path="../environments/GridEnvironment.d.ts" />
 
-class ASCIIRenderer {
+class ASCIIRenderer implements Renderer {
 
   /** @member GridEnvironment */
   environment: GridEnvironment;
@@ -17,14 +17,14 @@ class ASCIIRenderer {
     this.pre = document.createElement('pre');
   }
 
-  mount(el: string | HTMLElement) {
+  mount(el: string | HTMLElement): void {
     const container = (typeof el === 'string') ? document.querySelector(el) : el;
     if (container) container.appendChild(this.pre);
   }
 
   render() {
     this.pre.innerHTML = '';
-    this.environment.loop((x, y, agent) => {
+    this.environment.loop((x: number, y: number, agent: Agent | null) => {
       let value: string = ' ';
       const cell = this.environment.getCell(x, y);
       if (agent && agent.get('value')) {

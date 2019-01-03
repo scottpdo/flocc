@@ -1,21 +1,16 @@
 /// <reference path="../environments/Environment.d.ts" />
-
-interface RuleObj {
-  rule: Function;
-  args: Array<any>;
-}
+/// <reference path="../types/RuleObj.d.ts" />
+/// <reference path="../types/Data.d.ts" />
 
 declare class Agent {
-
   environment: Environment | null;
   rules: Array<RuleObj>;
   queue: Array<RuleObj>;
-  data: Object;
-  whatever: number;
-  
+  data: Data;
+
   get(name: string): any;
-  getData(): Object;
-  set(name: string | Object, value: any): void;
+  getData(): Data;
+  set(name: string | Data, value?: any): void;
   increment(name: string, n?: number): void;
   decrement(name: string, n?: number): void;
   addRule(rule: Function, ...args: Array<any>): void;

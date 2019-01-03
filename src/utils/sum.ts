@@ -1,7 +1,6 @@
-// @flow
 /**
  * Find the sum of an Array of numbers.
- * @param {Array<number>} arr 
+ * @param {Array<number>} arr
  * @returns {number}
  */
 function sum(arr: Array<number>): number {

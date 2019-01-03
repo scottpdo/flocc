@@ -2,6 +2,7 @@
   "compilerOptions": {
     "declaration": true,
     "declarationDir": "./dist",
+    "lib": ["es2015", "es2017", "dom"],
     "module": "es6",
     "noImplicitAny": true,
     "outDir": "./dist",
