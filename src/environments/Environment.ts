@@ -1,6 +1,6 @@
-/// <reference path="../agents/Agent.d.ts" />
 /// <reference path="../renderers/Renderer.d.ts" />
 /// <reference path="./EnvironmentOptions.d.ts" />
+import { Agent } from '../agents/Agent';
 
 class Environment {
 

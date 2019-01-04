@@ -1,7 +1,7 @@
-/// <reference path="../agents/Cell.d.ts" />
 /// <reference path="../types/Point.d.ts" />
 
 import { Agent } from '../agents/Agent';
+import { Cell } from '../agents/Cell';
 import { Environment } from './Environment';
 
 import sample from '../utils/sample';
@@ -39,7 +39,6 @@ class GridEnvironment extends Environment {
         this._cellHashes.push(id);
 
         const cell = new Cell(x, y);
-        // $FlowFixMe
         cell.environment = this;
         this.cells.set(id, cell);
       }
@@ -148,7 +147,7 @@ class GridEnvironment extends Environment {
    * @param {number} y
    * @return {undefined | Agent}
    */
-  getAgent(x_: number, y_: number): Agent | null {
+  getAgentAt(x_: number, y_: number): Agent | null {
     const { x, y } = this.normalize(x_, y_);
     const id = hash(x, y);
     const cell = this.cells.get(id);
@@ -167,7 +166,7 @@ class GridEnvironment extends Environment {
   loop(callback: Function = function() {}): void {
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
-        const agent = this.getAgent(x, y);
+        const agent = this.getAgentAt(x, y);
         callback(x, y, agent);
       }
     }
@@ -191,8 +190,8 @@ class GridEnvironment extends Environment {
     const x2 = b.x;
     const y2 = b.y;
 
-    const maybeAgent1 = this.getAgent(x1, y1);
-    const maybeAgent2 = this.getAgent(x2, y2);
+    const maybeAgent1 = this.getAgentAt(x1, y1);
+    const maybeAgent2 = this.getAgentAt(x2, y2);
 
     if (maybeAgent1) {
       maybeAgent1.set({

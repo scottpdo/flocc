@@ -1,6 +1,6 @@
-/// <reference path="../environments/Environment.d.ts" />
 /// <reference path="../types/RuleObj.d.ts" />
 /// <reference path="../types/Data.d.ts" />
+import { Environment } from '../environments/Environment';
 
 class Agent {
 

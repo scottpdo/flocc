@@ -1,7 +1,8 @@
+/// <reference path="../types/Point.d.ts" />
 import sum from '../utils/sum';
 import copyArray from '../utils/copyArray';
 
-class Vector {
+class Vector implements Point {
 
   data: Array<number>;
   dimension: number;

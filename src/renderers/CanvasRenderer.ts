@@ -1,6 +1,6 @@
 /// <reference path="./Renderer.d.ts" />
 /// <reference path="./CanvasRendererOptions.d.ts" />
-/// <reference path="../environments/Environment.d.ts" />
+import { Environment } from '../environments/Environment';
 
 class CanvasRenderer implements Renderer {
 

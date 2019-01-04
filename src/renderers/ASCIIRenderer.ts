@@ -1,5 +1,6 @@
 /// <reference path="./Renderer.d.ts" />
-/// <reference path="../environments/GridEnvironment.d.ts" />
+import { GridEnvironment } from '../environments/GridEnvironment';
+import { Agent } from '../agents/Agent';
 
 class ASCIIRenderer implements Renderer {
 
@@ -11,7 +12,6 @@ class ASCIIRenderer implements Renderer {
   constructor(environment: GridEnvironment, opts: Object = {}) {
 
     this.environment = environment;
-    // $FlowFixMe
     environment.renderer = this;
 
     this.pre = document.createElement('pre');
