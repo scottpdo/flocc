@@ -2,7 +2,7 @@
  * Test distance (Euclidean) and Manhattan distance utility functions.
  */
 
-const { Agent, Environment, utils } = require('../flocc');
+const { Agent, Environment, utils } = require('../dist/flocc');
 const { distance, manhattanDistance } = utils;
 
 const nonToroidalEnv = new Environment({ torus: false });
@@ -14,18 +14,18 @@ const p1 = { x: 0, y: 0 };
 const p2 = { x: 1, y: 1 };
 const p3 = { x: 3, y: 4 };
 
-const a1 = new Agent(); 
+const a1 = new Agent();
 a1.set('x', 0);
 a1.set('y', 0);
 
-const a2 = new Agent(); 
+const a2 = new Agent();
 a2.set({ x: 1, y: 1 });
 
-const a3 = new Agent(); 
+const a3 = new Agent();
 a3.set('x', 3);
 a3.set('y', 4);
 
-const a4 = new Agent(); 
+const a4 = new Agent();
 a4.set('x', 9);
 a4.set('y', 9);
 

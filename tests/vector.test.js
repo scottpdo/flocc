@@ -1,4 +1,4 @@
-const { Vector } = require('../flocc');
+const { Vector } = require('../dist/flocc');
 
 const v = new Vector();
 const v2 = new Vector();
