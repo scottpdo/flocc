@@ -6,7 +6,7 @@ const presets = [
     }
   ],
   [
-    "@babel/preset-flow"
+    "@babel/preset-typescript"
   ]
 ];
 
