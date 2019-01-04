@@ -4,12 +4,12 @@ export default {
   input: 'src/main.ts',
   output: [
     {
-      file: 'flocc.js',
+      file: 'dist/flocc.js',
       format: 'umd',
       name: 'flocc'
     },
     {
-      file: 'flocc.es.js',
+      file: 'dist/flocc.es.js',
       format: 'es',
       name: 'flocc'
     }
