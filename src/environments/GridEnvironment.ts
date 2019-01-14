@@ -68,8 +68,8 @@ class GridEnvironment extends Environment {
   /**
    * For GridEnvironments, `addAgent` takes `x` and `y` values
    * and automatically adds a Agent to that cell coordinate.
-   * @param {number} x
-   * @param {number} y
+   * @param {number} x_
+   * @param {number} y_
    * @returns {Agent} The agent that was added at the specified coordinate.
    */
   addAgentAt(x_: number = 0, y_: number = 0, agent: Agent = new Agent()): Agent {
@@ -89,6 +89,7 @@ class GridEnvironment extends Environment {
 
     // ...and add a new one
     agent.set({ x, y });
+    agent.environment = this;
 
     this.agents.push(agent);
     cell.set('agent', agent);
