@@ -4,7 +4,6 @@ import { Agent } from '../agents/Agent';
 import { Cell } from '../agents/Cell';
 import { Environment } from './Environment';
 
-import sample from '../utils/sample';
 import shuffle from '../utils/shuffle';
 
 const hash = (x: number, y: number): string => x.toString() + ',' + y.toString();
@@ -100,8 +99,8 @@ class GridEnvironment extends Environment {
   /**
    * For GridEnvironments, `removeAgent` takes `x` and `y` values
    * and removes the Agent (if there is one) at that cell coordinate.
-   * @param {number} x
-   * @param {number} y
+   * @param {number} x_
+   * @param {number} y_
    */
   removeAgentAt(x_: number = 0, y_: number = 0): void {
 
@@ -124,8 +123,8 @@ class GridEnvironment extends Environment {
 
   /**
    * Retrieve the cell at the specified coordinate.
-   * @param {number} x
-   * @param {number} y
+   * @param {number} x_
+   * @param {number} y_
    * @return {Cell}
    */
   getCell(x_: number, y_: number): Cell | null {
@@ -144,9 +143,9 @@ class GridEnvironment extends Environment {
 
   /**
    * Retrieve the agent at the specified cell coordinate.
-   * @param {number} x
-   * @param {number} y
-   * @return {undefined | Agent}
+   * @param {number} x_
+   * @param {number} y_
+   * @return {null | Agent}
    */
   getAgentAt(x_: number, y_: number): Agent | null {
     const { x, y } = this.normalize(x_, y_);
@@ -177,10 +176,10 @@ class GridEnvironment extends Environment {
    * Given two pairs of cell coordinates, swap the agents at those cells.
    * If both are empty, nothing happens. If one is empty and the other has an agent,
    * this is equivalent to moving that agent to the new cell coordinate.
-   * @param {number} x1
-   * @param {number} y1
-   * @param {number} x2
-   * @param {number} y2
+   * @param {number} x1_
+   * @param {number} y1_
+   * @param {number} x2_
+   * @param {number} y2_
    */
   swap(x1_: number, y1_: number, x2_: number, y2_: number): void {
 
@@ -216,7 +215,7 @@ class GridEnvironment extends Environment {
 
   /**
    * Find a random open cell in the GridEnvironment.
-   * @returns {{ x: number, y: number }} The coordinate of the open cell.
+   * @returns {Cell | null} The coordinate of the open cell.
    */
   getRandomOpenCell(): Cell | null {
 
