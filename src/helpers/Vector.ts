@@ -15,9 +15,8 @@ class Vector implements Point {
   index(n: number): number {
     if (this.dimension > n) {
       return this.data[n];
-    } else {
-      console.warn(`Attempted to access index ${n} on a vector greater than the vector's dimension ${this.dimension}. Returning 0 by default.`);
     }
+    // Attempting to access index ${n} on a vector greater than the vector's dimension returns 0 by default
     return 0;
   }
 
@@ -62,6 +61,16 @@ class Vector implements Point {
   get g(): number { return this.index(1); }
   get b(): number { return this.index(2); }
   get a(): number { return this.index(3); }
+
+  set x(n) { this.set(0, n); }
+  set y(n) { this.set(1, n); }
+  set z(n) { this.set(2, n); }
+  set w(n) { this.set(3, n); }
+  
+  set r(n) { this.set(0, n); }
+  set g(n) { this.set(1, n); }
+  set b(n) { this.set(2, n); }
+  set a(n) { this.set(3, n); }  
 
   add(v: Vector): this {
     const dimension = Math.max(this.dimension, v.dimension);

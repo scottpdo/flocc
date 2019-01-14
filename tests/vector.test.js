@@ -16,6 +16,17 @@ it('Instantiates an empty vector', () => {
   expect(v.dimension).toEqual(0);
 });
 
+it('Correctly instantiates a vector with data', () => {
+  const a = new Vector(1);
+  const b = new Vector(1, 2, 3, 4, 5);
+  expect(a.dimension).toEqual(1);
+  expect(b.dimension).toEqual(5);
+  expect(a.index(0)).toEqual(1);
+  expect(a.x).toEqual(1);
+  expect(b.index(2)).toEqual(3);
+  expect(b.b).toEqual(3);
+})
+
 it('Correctly sets and get indices of a vector', () => {
 
   v.set(2, 5);
@@ -28,6 +39,11 @@ it('Correctly sets and get indices of a vector', () => {
   expect(v.r).toEqual(1);
   v.set(0, 2);
   expect(v.r).toEqual(2);
+
+  v.x = 5;
+  expect(v.x).toEqual(5);
+  v.x -= 2;
+  expect(v.x).toEqual(3);
 });
 
 it('Correctly finds the length of vectors', () => {
@@ -46,9 +62,11 @@ it('Correctly normalizes vectors', () => {
   zero.normalize();
   expect(zero.length()).toEqual(0);
 
+  // Because of floating point numbers, we can't expect that the new
+  // length is going to be EXACTLY 1 (ex. might be 0.9999999999)
   v.normalize();
-  expect(v.length()).toEqual(1);
+  expect(v.length()).toBeCloseTo(1);
 
   v2.normalize();
-  expect(v2.length()).toEqual(1);
+  expect(v2.length()).toBeCloseTo(1);
 });
