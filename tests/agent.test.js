@@ -35,3 +35,12 @@ it('Correctly sets new data.', () => {
 it('Retrieves a null value for data that does not exist.', () => {
   expect(agent.get('notfound')).toBeNull();
 });
+
+it('Increments and decrements data.', () => {
+  const a = new Agent();
+  a.set('x', 4);
+  a.increment('x');
+  expect(a.get('x')).toEqual(5);
+  a.decrement('x');
+  expect(a.get('x')).toEqual(4);
+});
