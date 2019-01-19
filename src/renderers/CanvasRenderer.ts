@@ -1,27 +1,21 @@
-// @flow
+/// <reference path="./Renderer.d.ts" />
+/// <reference path="./CanvasRendererOptions.d.ts" />
 import { Environment } from '../environments/Environment';
 
-type Options = {
-  width: number;
-  height: number;
-  trace: boolean;
-};
-
-class CanvasRenderer {
+class CanvasRenderer implements Renderer {
 
   /** @member Environment */
   environment: Environment;
-  opts: Options;
+  opts: CanvasRendererOptions;
   /** @member HTMLCanvasElement */
   canvas: HTMLCanvasElement;
   context: CanvasRenderingContext2D;
   width: number;
   height: number;
 
-  constructor(environment: Environment, opts: Options = { width: 500, height: 500, trace: false }) {
+  constructor(environment: Environment, opts: CanvasRendererOptions = { width: 500, height: 500, trace: false }) {
 
     this.environment = environment;
-    // $FlowFixMe
     environment.renderer = this;
 
     this.opts = opts;
@@ -36,12 +30,12 @@ class CanvasRenderer {
     this.canvas.height = this.height;
   }
 
-  mount(el: string | HTMLElement) {
+  mount(el: string | HTMLElement): void {
     const container = (typeof el === 'string') ? document.querySelector(el) : el;
     if (container) container.appendChild(this.canvas);
   }
 
-  render() {
+  render(): void {
     const { context, environment, width, height } = this;
 
     // if "trace" is truthy, don't clear the canvas with every frame
@@ -49,9 +43,8 @@ class CanvasRenderer {
     if (!this.opts.trace) context.clearRect(0, 0, width, height);
 
     environment.getAgents().forEach(agent => {
-      
-      // $FlowFixMe -- TODO: not sure why .getData() is reading incorrectly here...?
-      const { x, y, vx, vy, color, shape, size } = agent.getData();
+
+      const { x, y, vx, vy, color, shape, size = 1 } = agent.getData();
 
       context.beginPath();
       context.moveTo(x, y);
@@ -61,8 +54,8 @@ class CanvasRenderer {
       if (shape === 'arrow' && vx !== null && vy !== null) {
 
         const norm = Math.sqrt(vx ** 2 + vy ** 2);
-        const _vx = 6 * (vx / norm);
-        const _vy = 6 * (vy / norm);
+        const _vx = 3 * size * (vx / norm);
+        const _vy = 3 * size * (vy / norm);
 
         context.beginPath();
 
@@ -73,14 +66,14 @@ class CanvasRenderer {
       } else {
 
         context.arc(
-          x, 
-          y, 
-          size || 1,
-          0, 
+          x,
+          y,
+          size,
+          0,
           2 * Math.PI
         );
       }
-      
+
       context.fill();
     });
   }

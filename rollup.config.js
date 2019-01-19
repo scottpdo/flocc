@@ -1,22 +1,22 @@
-import babel from 'rollup-plugin-babel';
+import typescript from 'rollup-plugin-typescript2';
 
 export default {
-  input: 'main.js',
+  input: 'src/main.ts',
   output: [
     {
-      file: 'flocc.js',
+      file: 'dist/flocc.js',
       format: 'umd',
       name: 'flocc'
     },
     {
-      file: 'flocc.es.js',
+      file: 'dist/flocc.es.js',
       format: 'es',
       name: 'flocc'
     }
   ],
   plugins: [
-    babel({
-      exclude: 'node_modules/**' // only transpile our source code
+    typescript({
+      typescript: require('typescript')
     })
   ]
 };

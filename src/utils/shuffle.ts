@@ -1,4 +1,3 @@
-// @flow
 import copyArray from './copyArray';
 
 /**

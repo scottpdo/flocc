@@ -1,24 +1,22 @@
 {
   "name": "flocc",
-  "version": "0.0.17",
+  "version": "0.1.0",
   "description": "Agent-based modeling in JavaScript in the browser or server.",
-  "main": "flocc.js",
-  "module": "flocc.es.js",
+  "main": "dist/flocc.js",
+  "module": "dist/flocc.es.js",
   "scripts": {
     "build": "rollup -c",
+    "watch": "rollup -cw",
     "test": "jest",
     "prepublish": "yarn run build"
   },
   "author": "Scott Donaldson",
   "license": "ISC",
   "devDependencies": {
-    "@babel/core": "^7.1.6",
-    "@babel/preset-env": "^7.1.6",
-    "@babel/preset-flow": "^7.0.0",
-    "flow-bin": "^0.87.0",
     "jest": "^23.6.0",
     "rollup": "^0.67.3",
-    "rollup-plugin-babel": "^4.0.3"
+    "rollup-plugin-typescript2": "^0.18.1",
+    "typescript": "^3.2.2"
   },
   "keywords": [
     "abm",

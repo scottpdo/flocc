@@ -1,23 +1,18 @@
-// @flow
-import { typeof Agent } from '../agents/Agent';
-import { typeof ASCIIRenderer } from '../renderers/ASCIIRenderer';
-import { typeof CanvasRenderer } from '../renderers/CanvasRenderer';
-
-type Options = {
-  torus: boolean
-};
+/// <reference path="../renderers/Renderer.d.ts" />
+/// <reference path="./EnvironmentOptions.d.ts" />
+import { Agent } from '../agents/Agent';
 
 class Environment {
 
   /** @member {Agent[]} */
   agents: Array<Agent>;
-  /** @member {ASCIIRenderer|CanvasRenderer} */
-  renderer: ASCIIRenderer | CanvasRenderer | null;
-  opts: Options;
+  /** @member {Renderer} */
+  renderer: Renderer | null;
+  opts: EnvironmentOptions;
   width: number;
   height: number;
 
-  constructor(opts: Object = { torus: true }) {
+  constructor(opts: EnvironmentOptions = { torus: true }) {
     this.agents = [];
     this.renderer = null;
     this.opts = opts;
@@ -28,19 +23,18 @@ class Environment {
   /**
    * Add an agent to the environment. Automatically sets the
    * agent's environment to be this environment.
-   * @param {Agent} agent 
+   * @param {Agent} agent
    */
-  addAgent(agent: Agent) {
-    // $FlowFixMe
+  addAgent(agent: Agent): void {
     agent.environment = this;
     this.agents.push(agent);
   }
 
   /**
    * Remove an agent from the environment.
-   * @param {Agent} agent 
+   * @param {Agent} agent
    */
-  removeAgent(agent: Agent) {
+  removeAgent(agent: Agent): void {
     // $FlowFixMe
     agent.environment = null;
     const index = this.agents.indexOf(agent);
@@ -62,7 +56,7 @@ class Environment {
    * If `n` is left empty, defaults to 1.
    * @param {number} n - Number of times to tick.
    */
-  tick(n: number = 1) {
+  tick(n: number = 1): void {
 
     this.agents.forEach(agent => {
       agent.rules.forEach(ruleObj => {

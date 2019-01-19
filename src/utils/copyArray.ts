@@ -1,5 +1,3 @@
-// @flow
-
 /**
  * Copies the values of `source` to `arr`
  * or to a new Array.
@@ -9,8 +7,8 @@
  * @param {Array} [arr=[]] The Array to copy values to.
  * @returns {Array}
  */
-export default function copyArray(source: Array<any>, arr: ?Array<any>) {
-  
+export default function copyArray(source: Array<any>, arr?: Array<any>) {
+
   let index: number = -1;
   const length: number = source.length;
 

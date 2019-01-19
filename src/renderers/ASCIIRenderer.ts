@@ -1,7 +1,8 @@
-// @flow
+/// <reference path="./Renderer.d.ts" />
 import { GridEnvironment } from '../environments/GridEnvironment';
+import { Agent } from '../agents/Agent';
 
-class ASCIIRenderer {
+class ASCIIRenderer implements Renderer {
 
   /** @member GridEnvironment */
   environment: GridEnvironment;
@@ -11,20 +12,19 @@ class ASCIIRenderer {
   constructor(environment: GridEnvironment, opts: Object = {}) {
 
     this.environment = environment;
-    // $FlowFixMe
     environment.renderer = this;
 
     this.pre = document.createElement('pre');
   }
 
-  mount(el: string | HTMLElement) {
+  mount(el: string | HTMLElement): void {
     const container = (typeof el === 'string') ? document.querySelector(el) : el;
     if (container) container.appendChild(this.pre);
   }
 
   render() {
     this.pre.innerHTML = '';
-    this.environment.loop((x, y, agent) => {
+    this.environment.loop((x: number, y: number, agent: Agent | null) => {
       let value: string = ' ';
       const cell = this.environment.getCell(x, y);
       if (agent && agent.get('value')) {

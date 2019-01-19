@@ -1,11 +1,11 @@
-const { Agent } = require('../flocc');
+const { Agent } = require('../dist/flocc');
 
 const agent = new Agent();
 agent.set('x', 12);
 agent.set('y', 23);
 
 it('Correctly gets data associated with an agent.', () => {
-  
+
   expect(agent.get('x')).toEqual(12);
   expect(agent.get('y')).toEqual(23);
   expect(agent.getData()).toEqual({ x: 12, y: 23 });
@@ -30,4 +30,17 @@ it('Correctly sets new data.', () => {
   expect(agent.get('y')).toEqual(false);
   expect(agent.getData()).toEqual({ x: 100, y: false });
 
+});
+
+it('Retrieves a null value for data that does not exist.', () => {
+  expect(agent.get('notfound')).toBeNull();
+});
+
+it('Increments and decrements data.', () => {
+  const a = new Agent();
+  a.set('x', 4);
+  a.increment('x');
+  expect(a.get('x')).toEqual(5);
+  a.decrement('x');
+  expect(a.get('x')).toEqual(4);
 });

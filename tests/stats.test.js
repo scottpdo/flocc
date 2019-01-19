@@ -2,7 +2,7 @@
  * Test stats functions (sum, mean, standard deviation).
  */
 
-const { utils } = require('../flocc');
+const { utils } = require('../dist/flocc');
 const { sum, mean, stdDev } = utils;
 
 it('Correctly sums an array.', () => {
