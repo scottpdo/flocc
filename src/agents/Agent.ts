@@ -1,9 +1,9 @@
 /// <reference path="../types/RuleObj.d.ts" />
 /// <reference path="../types/Data.d.ts" />
-import { Environment } from '../environments/Environment';
+/// <reference path="../types/DataObj.d.ts" />
+import { Environment } from "../environments/Environment";
 
-class Agent {
-
+class Agent implements DataObj {
   /**
    * @member {Environment|null} environment
    * @member {RuleObj[]} rules
@@ -49,7 +49,7 @@ class Agent {
    * @param {*} value
    */
   set(name: string | Data, value?: any): void {
-    if (typeof name === 'string') {
+    if (typeof name === "string") {
       this.data[name] = value;
     } else {
       this.data = Object.assign(this.data, name);
@@ -109,6 +109,6 @@ class Agent {
       rule
     });
   }
-};
+}
 
 export { Agent };

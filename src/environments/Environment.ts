@@ -1,11 +1,12 @@
 /// <reference path="../renderers/Renderer.d.ts" />
 /// <reference path="./EnvironmentOptions.d.ts" />
-import { Agent } from '../agents/Agent';
+/// <reference path="../types/Data.d.ts" />
+import { Agent } from "../agents/Agent";
 
-class Environment {
-
+class Environment implements DataObj {
   /** @member {Agent[]} */
   agents: Array<Agent>;
+  data: Data;
   /** @member {Renderer} */
   renderer: Renderer | null;
   opts: EnvironmentOptions;
@@ -14,10 +15,44 @@ class Environment {
 
   constructor(opts: EnvironmentOptions = { torus: true }) {
     this.agents = [];
+    this.data = {};
     this.renderer = null;
     this.opts = opts;
     this.width = 0;
     this.height = 0;
+  }
+
+  /**
+   * Retrieve an arbitrary piece of data associated
+   * with this environment by name.
+   * @param {string} name
+   */
+  get(name: string): any {
+    return this.data.hasOwnProperty(name) ? this.data[name] : null;
+  }
+
+  /**
+   * Retrieve all the data associated with this environment
+   * (useful for destructuring properties).
+   */
+  getData(): Data {
+    return this.data;
+  }
+
+  /**
+   * Set a piece of data associated with this environment.
+   * Name should be a string while value can be any valid type.
+   * Alternatively, the first parameter can be an object, which merges
+   * the current data with the new data (adding new values and overwriting existing).
+   * @param {string|Data} name
+   * @param {*} value
+   */
+  set(name: string | Data, value?: any): void {
+    if (typeof name === "string") {
+      this.data[name] = value;
+    } else {
+      this.data = Object.assign(this.data, name);
+    }
   }
 
   /**
@@ -26,6 +61,7 @@ class Environment {
    * @param {Agent} agent
    */
   addAgent(agent: Agent): void {
+    if (!(agent instanceof Agent)) return;
     agent.environment = this;
     this.agents.push(agent);
   }
@@ -57,7 +93,6 @@ class Environment {
    * @param {number} n - Number of times to tick.
    */
   tick(n: number = 1): void {
-
     this.agents.forEach(agent => {
       agent.rules.forEach(ruleObj => {
         const { rule, args } = ruleObj;
@@ -79,6 +114,6 @@ class Environment {
 
     if (this.renderer !== null) this.renderer.render();
   }
-};
+}
 
 export { Environment };
