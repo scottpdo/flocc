@@ -6,6 +6,7 @@ import { Agent } from "../agents/Agent";
 class Environment implements DataObj {
   /** @member {Agent[]} */
   agents: Array<Agent>;
+  agentsById: Map<string, Agent>;
   data: Data;
   /** @member {Renderer} */
   renderer: Renderer | null;
@@ -15,6 +16,7 @@ class Environment implements DataObj {
 
   constructor(opts: EnvironmentOptions = { torus: true }) {
     this.agents = [];
+    this.agentsById = new Map();
     this.data = {};
     this.renderer = null;
     this.opts = opts;
@@ -64,6 +66,7 @@ class Environment implements DataObj {
     if (!(agent instanceof Agent)) return;
     agent.environment = this;
     this.agents.push(agent);
+    this.agentsById.set(agent.id, agent);
   }
 
   /**
@@ -71,10 +74,20 @@ class Environment implements DataObj {
    * @param {Agent} agent
    */
   removeAgent(agent: Agent): void {
-    // $FlowFixMe
     agent.environment = null;
     const index = this.agents.indexOf(agent);
     this.agents.splice(index, 1);
+    this.agentsById.delete(agent.id);
+  }
+
+  /**
+   * Remove an agent from the environment by its ID.
+   * @param {string} id
+   */
+  removeAgentById(id: string): void {
+    const agent = this.getAgentById(id);
+    if (!agent) return;
+    this.removeAgent(agent);
   }
 
   /**
@@ -83,6 +96,25 @@ class Environment implements DataObj {
    */
   getAgents(): Array<Agent> {
     return this.agents;
+  }
+
+  /**
+   * Get an agent in the environment by its ID.
+   * @param {string} id
+   * @returns {Agent|null}
+   */
+  getAgentById(id: string): Agent | null {
+    return this.agentsById.get(id) || null;
+  }
+
+  /**
+   * Removes all agents from the environment.
+   */
+  clear(): void {
+    while (this.getAgents().length > 0) {
+      const a0 = this.getAgents()[0];
+      this.removeAgent(a0);
+    }
   }
 
   /**

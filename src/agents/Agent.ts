@@ -2,6 +2,7 @@
 /// <reference path="../types/Data.d.ts" />
 /// <reference path="../types/DataObj.d.ts" />
 import { Environment } from "../environments/Environment";
+import uuid from "../utils/uuid";
 
 class Agent implements DataObj {
   /**
@@ -14,12 +15,14 @@ class Agent implements DataObj {
   rules: Array<RuleObj>;
   queue: Array<RuleObj>;
   data: Data;
+  id: string;
 
   constructor() {
     this.environment = null;
     this.rules = [];
     this.queue = [];
     this.data = {};
+    this.id = uuid();
   }
 
   /**

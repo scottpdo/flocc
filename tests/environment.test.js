@@ -3,7 +3,7 @@ const { Agent, Environment } = require("../dist/flocc");
 const environment = new Environment();
 
 it("Has zero agents upon instantiating.", () => {
-  expect(environment.getAgents().length).toEqual(0);
+  expect(environment.getAgents()).toHaveLength(0);
 });
 
 it("Has zero width and height upon instantiating.", () => {
@@ -28,30 +28,44 @@ it("Correctly gets and sets data.", () => {
 it("Correctly adds agents.", () => {
   const a0 = new Agent();
   environment.addAgent(a0);
-  expect(environment.getAgents().length).toEqual(1);
+  expect(environment.getAgents()).toHaveLength(1);
   expect(a0.environment).toEqual(environment);
 
   // does nothing if attempting to add non-agent
   environment.addAgent(null);
-  expect(environment.getAgents().length).toEqual(1);
+  expect(environment.getAgents()).toHaveLength(1);
 
   for (let i = 0; i < 5; i++) environment.addAgent(new Agent());
-  expect(environment.getAgents().length).toEqual(6);
+  expect(environment.getAgents()).toHaveLength(6);
 });
 
 it("Correctly removes agents.", () => {
   const a0 = environment.getAgents()[0];
   environment.removeAgent(a0);
-  expect(environment.getAgents().length).toEqual(5);
+  expect(environment.getAgents()).toHaveLength(5);
   expect(a0.environment).toBe(null);
 
-  while (environment.getAgents().length > 0) {
-    const a = environment.getAgents()[0];
-    environment.removeAgent(a);
-  }
-  expect(environment.getAgents().length).toEqual(0);
+  environment.clear();
+  expect(environment.getAgents()).toHaveLength(0);
 
   // removing an agent not in the environment does nothing
   environment.removeAgent(a0);
-  expect(environment.getAgents().length).toEqual(0);
+  expect(environment.getAgents()).toHaveLength(0);
+});
+
+it("Correctly retrieves agents by ID.", () => {
+  const a0 = new Agent();
+  const { id } = a0;
+  environment.addAgent(a0);
+  expect(environment.getAgentById(id)).toBe(a0);
+  environment.clear();
+});
+
+it("Correctly removes agents by ID.", () => {
+  const a0 = new Agent();
+  const { id } = a0;
+  environment.addAgent(a0);
+  expect(environment.getAgents()).toHaveLength(1);
+  environment.removeAgentById(id);
+  expect(environment.getAgents()).toHaveLength(0);
 });
