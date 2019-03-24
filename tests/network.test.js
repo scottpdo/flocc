@@ -4,6 +4,7 @@ const network = new Network();
 const a0 = new Agent();
 const a1 = new Agent();
 const a2 = new Agent();
+const a3 = new Agent();
 
 it("Correctly instantiates an empty network.", () => {
   expect(network.size()).toEqual(0);
@@ -68,4 +69,15 @@ it("Correctly disconnects agents.", () => {
   // - connecting an agent to an agent not in the network
   const dummy = new Agent();
   expect(network.disconnect(a0, dummy)).toBe(false);
+});
+
+it("Correctly completes a network (connecting every agent).", () => {
+  network.addAgent(a3);
+  network.complete();
+  const agents = [a0, a1, a2, a3];
+  agents.forEach((a, i) => {
+    const next = agents[i + 1 === agents.length ? 0 : i + 1];
+    const areConnected = network.areConnected(a, next);
+    expect(areConnected).toBe(true);
+  });
 });

@@ -174,6 +174,17 @@ class Network {
   neighbors(agent: Agent): Array<Agent> {
     return this.data[agent.id];
   }
+
+  /**
+   * Connect every agent in the network to every other agent.
+   */
+  complete(): void {
+    for (let i = 0; i < this.agents.length; i++) {
+      for (let j = i + 1; j < this.agents.length; j++) {
+        this.connect(this.get(i), this.get(j));
+      }
+    }
+  }
 }
 
 export { Network };
