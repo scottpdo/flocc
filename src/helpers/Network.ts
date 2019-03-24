@@ -1,3 +1,4 @@
+/// <reference path="../environments/EnvironmentHelper.d.ts" />
 import { Agent } from "../agents/Agent";
 import shuffle from "../utils/shuffle";
 
@@ -9,7 +10,7 @@ interface AgentCallback {
   (agent: Agent, index: number): any;
 }
 
-class Network {
+class Network implements EnvironmentHelper {
   /**
    * keys = IDs of agents in the network,
    * values = array of neighboring agents

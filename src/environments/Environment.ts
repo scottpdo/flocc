@@ -1,5 +1,6 @@
 /// <reference path="../renderers/Renderer.d.ts" />
 /// <reference path="./EnvironmentOptions.d.ts" />
+/// <reference path="./EnvironmentHelper.d.ts" />
 /// <reference path="../types/Data.d.ts" />
 import { Agent } from "../agents/Agent";
 
@@ -8,6 +9,7 @@ class Environment implements DataObj {
   agents: Array<Agent>;
   agentsById: Map<string, Agent>;
   data: Data;
+  helpers: Array<EnvironmentHelper>;
   /** @member {Renderer} */
   renderer: Renderer | null;
   opts: EnvironmentOptions;
@@ -145,6 +147,14 @@ class Environment implements DataObj {
     }
 
     if (this.renderer !== null) this.renderer.render();
+  }
+
+  /**
+   * Use a helper with this environment.
+   * @param {EnvironmentHelper} e
+   */
+  use(e: EnvironmentHelper) {
+    if (!this.helpers.includes(e)) this.helpers.push(e);
   }
 }
 
