@@ -49,11 +49,7 @@ class CanvasRenderer implements Renderer {
 
     // if "trace" is truthy, don't clear the canvas with every frame
     // to trace the paths of agents
-    console.log(this.opts.trace);
-    if (!this.opts.trace) {
-      console.log("clearing");
-      context.clearRect(0, 0, width, height);
-    }
+    if (!this.opts.trace) context.clearRect(0, 0, width, height);
 
     // automatically position agents in an environment that uses a network helper
     if (this.opts.autoPosition && this.environment.helpers.network) {
@@ -124,11 +120,6 @@ class CanvasRenderer implements Renderer {
       }
 
       context.fill();
-    });
-
-    // cleanup
-    environment.getAgents().forEach(agent => {
-      agent.set("__tmp", null);
     });
   }
 }
