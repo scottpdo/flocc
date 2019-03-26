@@ -1,5 +1,7 @@
 # Flocc
 
+[![NPM version](https://badge.fury.io/js/flocc.svg)](http://badge.fury.io/js/flocc)
+
 [Agent-based modeling](https://en.wikipedia.org/wiki/Agent-based_model) in JavaScript. Run it in the browser to build interactive simulations that can live on public websites, or on the server or your machine for more computationally intensive modeling.
 
 ## Usage
