@@ -1,11 +1,20 @@
 /// <reference path="../renderers/Renderer.d.ts" />
 /// <reference path="./EnvironmentOptions.d.ts" />
-import { Agent } from '../agents/Agent';
+/// <reference path="./EnvironmentHelper.d.ts" />
+/// <reference path="../types/Data.d.ts" />
+import { Agent } from "../agents/Agent";
+import { Network } from "../helpers/Network";
 
-class Environment {
+interface Helpers {
+  network: Network;
+}
 
+class Environment implements DataObj {
   /** @member {Agent[]} */
   agents: Array<Agent>;
+  agentsById: Map<string, Agent>;
+  data: Data;
+  helpers: Helpers;
   /** @member {Renderer} */
   renderer: Renderer | null;
   opts: EnvironmentOptions;
@@ -14,10 +23,48 @@ class Environment {
 
   constructor(opts: EnvironmentOptions = { torus: true }) {
     this.agents = [];
+    this.agentsById = new Map();
+    this.data = {};
     this.renderer = null;
     this.opts = opts;
     this.width = 0;
     this.height = 0;
+    this.helpers = {
+      network: null
+    };
+  }
+
+  /**
+   * Retrieve an arbitrary piece of data associated
+   * with this environment by name.
+   * @param {string} name
+   */
+  get(name: string): any {
+    return this.data.hasOwnProperty(name) ? this.data[name] : null;
+  }
+
+  /**
+   * Retrieve all the data associated with this environment
+   * (useful for destructuring properties).
+   */
+  getData(): Data {
+    return this.data;
+  }
+
+  /**
+   * Set a piece of data associated with this environment.
+   * Name should be a string while value can be any valid type.
+   * Alternatively, the first parameter can be an object, which merges
+   * the current data with the new data (adding new values and overwriting existing).
+   * @param {string|Data} name
+   * @param {*} value
+   */
+  set(name: string | Data, value?: any): void {
+    if (typeof name === "string") {
+      this.data[name] = value;
+    } else {
+      this.data = Object.assign(this.data, name);
+    }
   }
 
   /**
@@ -26,8 +73,10 @@ class Environment {
    * @param {Agent} agent
    */
   addAgent(agent: Agent): void {
+    if (!(agent instanceof Agent)) return;
     agent.environment = this;
     this.agents.push(agent);
+    this.agentsById.set(agent.id, agent);
   }
 
   /**
@@ -35,10 +84,20 @@ class Environment {
    * @param {Agent} agent
    */
   removeAgent(agent: Agent): void {
-    // $FlowFixMe
     agent.environment = null;
     const index = this.agents.indexOf(agent);
     this.agents.splice(index, 1);
+    this.agentsById.delete(agent.id);
+  }
+
+  /**
+   * Remove an agent from the environment by its ID.
+   * @param {string} id
+   */
+  removeAgentById(id: string): void {
+    const agent = this.getAgentById(id);
+    if (!agent) return;
+    this.removeAgent(agent);
   }
 
   /**
@@ -50,6 +109,25 @@ class Environment {
   }
 
   /**
+   * Get an agent in the environment by its ID.
+   * @param {string} id
+   * @returns {Agent|null}
+   */
+  getAgentById(id: string): Agent | null {
+    return this.agentsById.get(id) || null;
+  }
+
+  /**
+   * Removes all agents from the environment.
+   */
+  clear(): void {
+    while (this.getAgents().length > 0) {
+      const a0 = this.getAgents()[0];
+      this.removeAgent(a0);
+    }
+  }
+
+  /**
    * Moves the environment `n` ticks forward in time,
    * executing all agent's rules sequentially, followed by
    * any enqueued rules (which are removed with every tick).
@@ -57,7 +135,6 @@ class Environment {
    * @param {number} n - Number of times to tick.
    */
   tick(n: number = 1): void {
-
     this.agents.forEach(agent => {
       agent.rules.forEach(ruleObj => {
         const { rule, args } = ruleObj;
@@ -79,6 +156,14 @@ class Environment {
 
     if (this.renderer !== null) this.renderer.render();
   }
-};
+
+  /**
+   * Use a helper with this environment.
+   * @param {EnvironmentHelper} e
+   */
+  use(e: EnvironmentHelper) {
+    if (e instanceof Network) this.helpers.network = e;
+  }
+}
 
 export { Environment };
