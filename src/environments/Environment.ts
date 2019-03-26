@@ -3,13 +3,18 @@
 /// <reference path="./EnvironmentHelper.d.ts" />
 /// <reference path="../types/Data.d.ts" />
 import { Agent } from "../agents/Agent";
+import { Network } from "../helpers/Network";
+
+interface Helpers {
+  network: Network;
+}
 
 class Environment implements DataObj {
   /** @member {Agent[]} */
   agents: Array<Agent>;
   agentsById: Map<string, Agent>;
   data: Data;
-  helpers: Array<EnvironmentHelper>;
+  helpers: Helpers;
   /** @member {Renderer} */
   renderer: Renderer | null;
   opts: EnvironmentOptions;
@@ -24,6 +29,9 @@ class Environment implements DataObj {
     this.opts = opts;
     this.width = 0;
     this.height = 0;
+    this.helpers = {
+      network: null
+    };
   }
 
   /**
@@ -154,7 +162,7 @@ class Environment implements DataObj {
    * @param {EnvironmentHelper} e
    */
   use(e: EnvironmentHelper) {
-    if (!this.helpers.includes(e)) this.helpers.push(e);
+    if (e instanceof Network) this.helpers.network = e;
   }
 }
 
