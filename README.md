@@ -34,4 +34,4 @@ If you're running `flocc` in browser, and don't want to bother with imports and 
 
 ### Documentation
 
-[Visit the documentation site for complete documentation](https://flocc.network/docs/)
+[Visit the documentation site for complete documentation](https://www.flocc.network/docs/)
