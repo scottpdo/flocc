@@ -3,6 +3,7 @@ import distance from "./distance";
 import gaussian from "./gaussian";
 import manhattanDistance from "./manhattanDistance";
 import remap from "./remap";
+import random from "./random";
 import sample from "./sample";
 import shuffle from "./shuffle";
 import sum from "./sum";
@@ -16,6 +17,7 @@ const utils = {
   gaussian,
   manhattanDistance,
   remap,
+  random,
   sample,
   shuffle,
   sum,
