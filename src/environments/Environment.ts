@@ -20,6 +20,7 @@ class Environment implements DataObj {
   opts: EnvironmentOptions;
   width: number;
   height: number;
+  time: number;
 
   constructor(opts: EnvironmentOptions = { torus: true }) {
     this.agents = [];
@@ -32,6 +33,7 @@ class Environment implements DataObj {
     this.helpers = {
       network: null
     };
+    this.time = 0;
   }
 
   /**
@@ -148,6 +150,8 @@ class Environment implements DataObj {
         rule(agent, ...args);
       }
     });
+
+    this.time++;
 
     if (n > 1) {
       this.tick(n - 1);
