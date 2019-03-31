@@ -6,6 +6,17 @@ it("Has zero agents upon instantiating.", () => {
   expect(environment.getAgents()).toHaveLength(0);
 });
 
+it("Has time zero upon instantiating.", () => {
+  expect(environment.time).toEqual(0);
+});
+
+it("Correctly increments time on each tick.", () => {
+  environment.tick();
+  expect(environment.time).toEqual(1);
+  environment.tick(5);
+  expect(environment.time).toEqual(6);
+});
+
 it("Has zero width and height upon instantiating.", () => {
   expect(environment.width).toEqual(0);
   expect(environment.height).toEqual(0);
