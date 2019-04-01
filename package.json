@@ -6,13 +6,16 @@
   "module": "dist/flocc.es.js",
   "scripts": {
     "build": "rollup -c",
-    "watch": "rollup -cw",
+    "browser-sync": "browser-sync start --server --index tests/index.html",
+    "watch": "concurrently \"rollup -cw\" \"npm run browser-sync\"",
     "test": "jest",
     "prepublish": "yarn run build"
   },
   "author": "Scott Donaldson",
   "license": "ISC",
   "devDependencies": {
+    "browser-sync": "^2.26.3",
+    "concurrently": "^4.1.0",
     "jest": "^23.6.0",
     "rollup": "^0.67.3",
     "rollup-plugin-typescript2": "^0.18.1",

@@ -1,26 +1,25 @@
 /// <reference path="../types/Point.d.ts" />
 
-import { Agent } from '../agents/Agent';
-import { Cell } from '../agents/Cell';
-import { Environment } from './Environment';
+import { Agent } from "../agents/Agent";
+import { Cell } from "../agents/Cell";
+import { Environment } from "./Environment";
 
-import shuffle from '../utils/shuffle';
+import shuffle from "../utils/shuffle";
 
-const hash = (x: number, y: number): string => x.toString() + ',' + y.toString();
+const hash = (x: number, y: number): string =>
+  x.toString() + "," + y.toString();
 const unhash = (str: string): Point => {
   return {
-    x: +(str.split(',')[0]),
-    y: +(str.split(',')[1])
+    x: +str.split(",")[0],
+    y: +str.split(",")[1]
   };
 };
 
 class GridEnvironment extends Environment {
-
   cells: Map<string, Cell>;
   _cellHashes: Array<string>;
 
   constructor(width: number = 2, height: number = 2) {
-
     super();
 
     this.height = height;
@@ -33,7 +32,6 @@ class GridEnvironment extends Environment {
 
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
-
         const id = hash(x, y);
         this._cellHashes.push(id);
 
@@ -71,8 +69,11 @@ class GridEnvironment extends Environment {
    * @param {number} y_
    * @returns {Agent} The agent that was added at the specified coordinate.
    */
-  addAgentAt(x_: number = 0, y_: number = 0, agent: Agent = new Agent()): Agent {
-
+  addAgentAt(
+    x_: number = 0,
+    y_: number = 0,
+    agent: Agent = new Agent()
+  ): Agent {
     const { x, y } = this.normalize(x_, y_);
     const id = hash(x, y);
 
@@ -81,7 +82,7 @@ class GridEnvironment extends Environment {
 
     // If there is already an agent at this location,
     // overwrite it (with a warning). Remove the existing agent...
-    if (cell.get('agent')) {
+    if (cell.get("agent")) {
       console.warn(`Overwriting agent at ${x}, ${y}.`);
       this.removeAgentAt(x, y);
     }
@@ -91,7 +92,7 @@ class GridEnvironment extends Environment {
     agent.environment = this;
 
     this.agents.push(agent);
-    cell.set('agent', agent);
+    cell.set("agent", agent);
 
     return agent;
   }
@@ -103,14 +104,14 @@ class GridEnvironment extends Environment {
    * @param {number} y_
    */
   removeAgentAt(x_: number = 0, y_: number = 0): void {
-
     const { x, y } = this.normalize(x_, y_);
     const id = hash(x, y);
 
     const cell = this.cells.get(id);
-    if (!cell) throw new Error("Can't remove an Agent from a non-existent Cell!");
+    if (!cell)
+      throw new Error("Can't remove an Agent from a non-existent Cell!");
 
-    const agent = cell.get('agent');
+    const agent = cell.get("agent");
     if (!agent) return;
 
     agent.environment = null;
@@ -118,7 +119,7 @@ class GridEnvironment extends Environment {
     const indexAmongAgents = this.agents.indexOf(agent);
     this.agents.splice(indexAmongAgents, 1);
 
-    cell.set('agent', null);
+    cell.set("agent", null);
   }
 
   /**
@@ -152,7 +153,7 @@ class GridEnvironment extends Environment {
     const id = hash(x, y);
     const cell = this.cells.get(id);
     if (!cell) return null;
-    return cell.get('agent') || null;
+    return cell.get("agent") || null;
   }
 
   /**
@@ -182,7 +183,6 @@ class GridEnvironment extends Environment {
    * @param {number} y2_
    */
   swap(x1_: number, y1_: number, x2_: number, y2_: number): void {
-
     const a = this.normalize(x1_, y1_);
     const x1 = a.x;
     const y1 = a.y;
@@ -209,8 +209,8 @@ class GridEnvironment extends Environment {
 
     const cell1 = this.cells.get(hash(x1, y1));
     const cell2 = this.cells.get(hash(x2, y2));
-    if (cell1) cell1.set('agent', maybeAgent2);
-    if (cell2) cell2.set('agent', maybeAgent1);
+    if (cell1) cell1.set("agent", maybeAgent2);
+    if (cell2) cell2.set("agent", maybeAgent1);
   }
 
   /**
@@ -218,7 +218,6 @@ class GridEnvironment extends Environment {
    * @returns {Cell | null} The coordinate of the open cell.
    */
   getRandomOpenCell(): Cell | null {
-
     // randomize order of cell hashes
     const hashes = shuffle(this._cellHashes);
 
@@ -226,12 +225,44 @@ class GridEnvironment extends Environment {
     while (hashes.length > 0) {
       const id = hashes.pop();
       const cell = this.cells.get(id);
-      const maybeAgent = cell ? cell.get('agent') : null;
+      const maybeAgent = cell ? cell.get("agent") : null;
       if (cell && !maybeAgent) return cell;
     }
 
     // once there are no hashes left, that means that there are no open cells
     return null;
+  }
+
+  /**
+   * Get the neighbors of an agent within a certain radius.
+   * Depending on the third parameter, retrieves either the von Neumann neighborhood
+   * (https://en.wikipedia.org/wiki/Von_Neumann_neighborhood) or the Moore neighborhood
+   * (https://en.wikipedia.org/wiki/Moore_neighborhood).
+   *
+   * @param {Agent} agent - the agent whose neighbors to retrieve
+   * @param {number} radius - how far to look for neighbors
+   * @param {boolean} moore - whether to use the Moore neighborhood or von Neumann (defaults to von Neumann)
+   */
+  neighbors(
+    agent: Agent,
+    radius: number = 1,
+    moore: boolean = false
+  ): Array<Agent> {
+    const { x, y } = agent.getData();
+    const neighbors: Array<Agent> = [];
+
+    if (radius < 1) return neighbors;
+
+    for (let ny = -radius; ny <= radius; ny++) {
+      for (let nx = -radius; nx <= radius; nx++) {
+        if (nx === 0 && ny === 0) continue;
+        const manhattan = Math.abs(ny) + Math.abs(nx);
+        if (moore || manhattan <= radius) {
+          neighbors.push(this.getAgentAt(x + nx, y + ny));
+        }
+      }
+    }
+    return neighbors;
   }
 
   /**
@@ -241,7 +272,6 @@ class GridEnvironment extends Environment {
    * @param {number} n - Number of times to tick.
    */
   tick(n: number = 1) {
-
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
         const cell = this.getCell(x, y);
@@ -285,6 +315,6 @@ class GridEnvironment extends Environment {
 
     if (this.renderer !== null) this.renderer.render();
   }
-};
+}
 
 export { GridEnvironment };
