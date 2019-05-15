@@ -13,30 +13,62 @@
         </script>
     </head>
     <body>
-        <div id="container"></div>
+        <div id="container-ascii"></div>
+        <div id="container-canvas"></div>
         <script>
-            const environment = new GridEnvironment(5, 5);
-            const renderer = new ASCIIRenderer(environment);
-            renderer.mount("#container");
+            (function() {
+                const environment = new GridEnvironment(5, 5);
+                const renderer = new ASCIIRenderer(environment);
+                renderer.mount("#container-ascii");
 
-            function setup() {
-                environment.fill();
-                environment.getAgents().map(agent => {
-                    agent.set("value", "-");
+                function setup() {
+                    environment.fill();
+                    environment.getAgents().map(agent => {
+                        agent.set("value", "-");
+                    });
+                }
+
+                function draw() {
+                    const center = environment.getAgentAt(4, 4);
+                    center.set("value", "o");
+                    environment.neighbors(center, 1, true).map(agent => {
+                        agent.set("value", "x");
+                    });
+                    environment.tick();
+                }
+
+                setup();
+                draw();
+            })();
+
+            (function() {
+                const environment = new GridEnvironment(5, 5);
+                const renderer = new CanvasRenderer(environment, {
+                    width: 200,
+                    height: 300
                 });
-            }
+                renderer.mount("#container-canvas");
 
-            function draw() {
-                const center = environment.getAgentAt(4, 4);
-                center.set("value", "o");
-                environment.neighbors(center, 1, true).map(agent => {
-                    agent.set("value", "x");
-                });
-                environment.tick();
-            }
+                function setup() {
+                    environment.fill();
+                    environment.getAgents().map(agent => {
+                        agent.set("color", "yellow");
+                    });
+                }
 
-            setup();
-            draw();
+                function draw() {
+                    const center = environment.getAgentAt(4, 4);
+                    center.set("color", "red");
+                    environment.neighbors(center, 1, true).map(agent => {
+                        agent.set("color", "rgb(130, 60, 90)");
+                        agent.set("value", "c");
+                    });
+                    environment.tick();
+                }
+
+                setup();
+                draw();
+            })();
         </script>
     </body>
 </html>
