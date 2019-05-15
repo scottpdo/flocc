@@ -262,6 +262,7 @@ class GridEnvironment extends Environment {
         }
       }
     }
+
     return neighbors;
   }
 
