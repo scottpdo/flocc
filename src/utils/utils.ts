@@ -10,6 +10,7 @@ import sum from "./sum";
 import mean from "./mean";
 import stdDev from "./stdDev";
 import uuid from "./uuid";
+import zfill from "./zfill";
 
 const utils = {
   clamp,
@@ -23,7 +24,8 @@ const utils = {
   sum,
   mean,
   stdDev,
-  uuid
+  uuid,
+  zfill
 };
 
 export { utils };
