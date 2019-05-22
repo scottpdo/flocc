@@ -16,7 +16,7 @@ class Environment implements DataObj {
   data: Data;
   helpers: Helpers;
   /** @member {Renderer} */
-  renderer: Renderer | null;
+  renderers: Renderer[];
   opts: EnvironmentOptions;
   width: number;
   height: number;
@@ -26,7 +26,7 @@ class Environment implements DataObj {
     this.agents = [];
     this.agentsById = new Map();
     this.data = {};
-    this.renderer = null;
+    this.renderers = [];
     this.opts = opts;
     this.width = 0;
     this.height = 0;
@@ -158,7 +158,7 @@ class Environment implements DataObj {
       return;
     }
 
-    if (this.renderer !== null) this.renderer.render();
+    this.renderers.forEach(r => r.render());
   }
 
   /**
