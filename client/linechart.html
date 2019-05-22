@@ -8,21 +8,21 @@
         <script src="../dist/flocc.js"></script>
         <script>
             for (let key in flocc) {
+                console.log(key);
                 window[key] = flocc[key];
             }
         </script>
     </head>
     <body>
-        <div id="canvas"></div>
-        <div id="line"></div>
+        <div id="container-ascii"></div>
+        <div id="container-canvas"></div>
         <script>
             (function() {
-                const environment = new Environment();
-                const renderer = new CanvasRenderer(environment);
-                renderer.mount("#canvas");
+                const environment = new GridEnvironment(5, 5);
+                const renderer = new ASCIIRenderer(environment);
+                renderer.mount("#container-ascii");
                 const chart = new LineChartRenderer(environment);
-                chart.metric("x");
-                chart.metric("y");
+                chart.setMetrics("a", "b", "c");
 
                 function setup() {
                     environment.fill();
