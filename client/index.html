@@ -18,55 +18,32 @@
         <script>
             (function() {
                 const environment = new Environment();
-                const renderer = new CanvasRenderer(environment);
-                renderer.mount("#canvas");
+                // const renderer = new CanvasRenderer(environment);
+                // renderer.mount("#canvas");
+
                 const chart = new LineChartRenderer(environment);
-                chart.metric("x");
-                chart.metric("y");
+                chart.mount("#line");
+                chart.metric("x", "red");
+                chart.metric("y", "blue");
+
+                function meander(agent) {
+                    agent.increment("x", Math.random() > 0.5 ? 1 : -1);
+                    agent.increment("y", Math.random() > 0.5 ? 1 : -1);
+                }
 
                 function setup() {
-                    environment.fill();
-                    environment.getAgents().map(agent => {
-                        agent.set("value", "-");
-                    });
+                    for (let i = 0; i < 5; i++) {
+                        const agent = new Agent();
+                        agent.set("x", utils.random(0, 20));
+                        agent.set("y", utils.random(0, 100));
+                        agent.addRule(meander);
+                        environment.addAgent(agent);
+                    }
                 }
 
                 function draw() {
-                    const center = environment.getAgentAt(4, 4);
-                    center.set("value", "o");
-                    environment.neighbors(center, 1, true).map(agent => {
-                        agent.set("value", "x");
-                    });
                     environment.tick();
-                }
-
-                setup();
-                draw();
-            })();
-
-            (function() {
-                const environment = new GridEnvironment(5, 5);
-                const renderer = new CanvasRenderer(environment, {
-                    width: 200,
-                    height: 300
-                });
-                renderer.mount("#container-canvas");
-
-                function setup() {
-                    environment.fill();
-                    environment.getAgents().map(agent => {
-                        agent.set("color", "yellow");
-                    });
-                }
-
-                function draw() {
-                    const center = environment.getAgentAt(4, 4);
-                    center.set("color", "red");
-                    environment.neighbors(center, 1, true).map(agent => {
-                        agent.set("color", "rgb(130, 60, 90)");
-                        agent.set("value", "c");
-                    });
-                    environment.tick();
+                    window.requestAnimationFrame(draw);
                 }
 
                 setup();
