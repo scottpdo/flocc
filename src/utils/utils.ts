@@ -7,7 +7,10 @@ import random from "./random";
 import sample from "./sample";
 import shuffle from "./shuffle";
 import sum from "./sum";
+import max from "./max";
 import mean from "./mean";
+import median from "./median";
+import min from "./min";
 import stdDev from "./stdDev";
 import uuid from "./uuid";
 import zfill from "./zfill";
@@ -17,12 +20,15 @@ const utils = {
   distance,
   gaussian,
   manhattanDistance,
+  max,
+  mean,
+  median,
+  min,
   remap,
   random,
   sample,
   shuffle,
   sum,
-  mean,
   stdDev,
   uuid,
   zfill
