@@ -24,7 +24,7 @@ class CanvasRenderer implements Renderer {
     this.environment = environment;
     environment.renderers.push(this);
 
-    this.opts = Object.assign(defaultOptions, opts);
+    this.opts = Object.assign({}, defaultOptions, opts);
 
     this.canvas = document.createElement("canvas");
     this.context = this.canvas.getContext("2d");
