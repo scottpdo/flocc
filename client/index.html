@@ -32,6 +32,10 @@
                 chart.metric("x", { fn: utils.max });
                 chart.metric("x", { color: "blue", fn: utils.mean });
                 chart.metric("x", { color: "green", fn: utils.median });
+                chart.metric("x", {
+                    color: "orange",
+                    fn: arr => arr.filter(v => v >= 35).length
+                });
 
                 function meander(agent) {
                     agent.increment("x", Math.random() > 0.5 ? 1 : -1);
@@ -39,9 +43,9 @@
                 }
 
                 function setup() {
-                    for (let i = 0; i < 3000; i++) {
+                    for (let i = 0; i < 12; i++) {
                         const agent = new Agent();
-                        agent.set("x", utils.random(100, 200));
+                        agent.set("x", utils.random(30, 40));
                         agent.set("y", utils.random(0, 100));
                         agent.addRule(meander);
                         environment.addAgent(agent);
