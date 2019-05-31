@@ -58,21 +58,7 @@ class LineChartRenderer implements Renderer {
     this.background.height = height;
     environment.renderers.push(this);
 
-    // draw background and lines
-    const backgroundContext = this.background.getContext("2d");
-    backgroundContext.fillStyle = this.opts.background;
-    backgroundContext.fillRect(0, 0, width, height);
-    const range = {
-      min: 0,
-      max: height
-    };
-    const increment = (range.max - range.min) / 5;
-    for (let y = range.min; y < range.max; y += increment) {
-      backgroundContext.moveTo(0, y);
-      backgroundContext.lineTo(width, y);
-      backgroundContext.setLineDash([10, 10]);
-      backgroundContext.stroke();
-    }
+    this.drawBackground();
   }
 
   mount(el: string | HTMLElement): void {
@@ -100,6 +86,36 @@ class LineChartRenderer implements Renderer {
     return this.canvas.height - value;
   }
 
+  drawBackground() {
+    const { width, height } = this;
+    // draw background and lines
+    const backgroundContext = this.background.getContext("2d");
+    backgroundContext.fillStyle = this.opts.background;
+    backgroundContext.fillRect(0, 0, width, height);
+    const range = {
+      min: 0,
+      max: height
+    };
+    const increment = (range.max - range.min) / 5;
+    let textMaxWidth = 0;
+    // write numbers
+    backgroundContext.font = "16px Helvetica";
+    backgroundContext.fillStyle = "#000";
+    backgroundContext.textBaseline = "middle";
+    for (let y = range.min; y < range.max; y += increment) {
+      const { width } = backgroundContext.measureText(this.y(y).toString());
+      if (width > textMaxWidth) textMaxWidth = width;
+      backgroundContext.fillText(this.y(y).toString(), 5, y);
+    }
+    // draw lines
+    for (let y = range.min; y < range.max; y += increment) {
+      backgroundContext.moveTo(textMaxWidth + 10, y);
+      backgroundContext.lineTo(width, y);
+      backgroundContext.setLineDash([10, 10]);
+      backgroundContext.stroke();
+    }
+  }
+
   render() {
     const { canvas, environment, metrics } = this;
     const { background } = this.opts;
@@ -116,12 +132,12 @@ class LineChartRenderer implements Renderer {
     metrics.forEach(({ key }) => values.set(key, []));
 
     // loop over all the agents and, for each metric, push to the values map
-    agents.forEach(agent => {
+    agents.forEach((agent, i) => {
       metrics.forEach(metric => {
         const { key } = metric;
         const data = agent.get(key);
         if (isNaN(data)) return;
-        values.get(key).push(data);
+        values.get(key)[i] = data;
       });
     });
 
