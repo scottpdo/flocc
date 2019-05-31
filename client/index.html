@@ -19,12 +19,14 @@
             (function() {
                 const environment = new Environment();
                 const renderer = new CanvasRenderer(environment, {
-                    width: 100,
+                    width: 200,
                     height: 100
                 });
                 renderer.mount("#canvas");
 
-                const chart = new LineChartRenderer(environment);
+                const chart = new LineChartRenderer(environment, {
+                    background: "#eee"
+                });
                 chart.mount("#line");
                 chart.metric("x", { color: "red", fn: utils.min });
                 chart.metric("x", { fn: utils.max });
