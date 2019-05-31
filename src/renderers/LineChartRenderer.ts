@@ -40,6 +40,7 @@ class LineChartRenderer implements Renderer {
   environment: Environment;
   /** @member HTMLPreElement */
   canvas: HTMLCanvasElement = document.createElement("canvas");
+  background: HTMLCanvasElement = document.createElement("canvas");
   opts: LineChartRendererOptions;
   metrics: Metric[] = [];
   height: number;
@@ -48,11 +49,30 @@ class LineChartRenderer implements Renderer {
   constructor(environment: Environment, opts?: LineChartRendererOptions) {
     this.environment = environment;
     this.opts = Object.assign({}, defaultRendererOptions, opts);
+    const { width, height } = this.opts;
     this.width = this.opts.width;
     this.height = this.opts.height;
-    this.canvas.width = this.width;
-    this.canvas.height = this.height;
+    this.canvas.width = width;
+    this.canvas.height = height;
+    this.background.width = width;
+    this.background.height = height;
     environment.renderers.push(this);
+
+    // draw background and lines
+    const backgroundContext = this.background.getContext("2d");
+    backgroundContext.fillStyle = this.opts.background;
+    backgroundContext.fillRect(0, 0, width, height);
+    const range = {
+      min: 0,
+      max: height
+    };
+    const increment = (range.max - range.min) / 5;
+    for (let y = range.min; y < range.max; y += increment) {
+      backgroundContext.moveTo(0, y);
+      backgroundContext.lineTo(width, y);
+      backgroundContext.setLineDash([10, 10]);
+      backgroundContext.stroke();
+    }
   }
 
   mount(el: string | HTMLElement): void {
@@ -86,10 +106,8 @@ class LineChartRenderer implements Renderer {
     const context = canvas.getContext("2d");
     const { width, height } = canvas;
 
-    // clear existing canvas
-    context.clearRect(0, 0, width, height);
-    context.fillStyle = background;
-    context.fillRect(0, 0, width, height);
+    // clear existing canvas by drawing background
+    context.drawImage(this.background, 0, 0);
 
     const agents = environment.getAgents();
 
