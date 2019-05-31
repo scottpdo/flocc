@@ -2,7 +2,6 @@
 /// <reference path="../types/Point.d.ts" />
 import { Environment } from "../environments/Environment";
 import { utils } from "../utils/utils";
-import { Agent } from "../agents/Agent";
 
 type MetricFunction = (arr: Array<number>) => number;
 
@@ -20,11 +19,13 @@ interface MetricOptions {
 }
 
 interface LineChartRendererOptions {
+  background: string;
   height: number;
   width: number;
 }
 
 const defaultRendererOptions: LineChartRendererOptions = {
+  background: "transparent",
   height: 500,
   width: 500
 };
@@ -81,11 +82,14 @@ class LineChartRenderer implements Renderer {
 
   render() {
     const { canvas, environment, metrics } = this;
+    const { background } = this.opts;
     const context = canvas.getContext("2d");
     const { width, height } = canvas;
 
     // clear existing canvas
     context.clearRect(0, 0, width, height);
+    context.fillStyle = background;
+    context.fillRect(0, 0, width, height);
 
     const agents = environment.getAgents();
 
