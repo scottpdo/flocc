@@ -5,7 +5,7 @@ import { utils } from "../utils/utils";
 
 type MetricFunction = (arr: Array<number>) => number;
 
-declare interface Metric {
+interface Metric {
   color: string;
   buffer: HTMLCanvasElement;
   fn: MetricFunction;
@@ -18,15 +18,25 @@ interface MetricOptions {
   fn: MetricFunction;
 }
 
+interface Range {
+  min: number;
+  max: number;
+}
+
 interface LineChartRendererOptions {
   background: string;
   height: number;
+  range: Range;
   width: number;
 }
 
 const defaultRendererOptions: LineChartRendererOptions = {
   background: "transparent",
   height: 500,
+  range: {
+    min: 0,
+    max: 500
+  },
   width: 500
 };
 
@@ -83,7 +93,11 @@ class LineChartRenderer implements Renderer {
   }
 
   y(value: number): number {
-    return this.canvas.height - value;
+    const { height } = this;
+    const { range } = this.opts;
+    const { min, max } = range;
+    const pxPerUnit = height / (max - min);
+    return this.canvas.height - (value - min) * pxPerUnit;
   }
 
   drawBackground() {
@@ -92,25 +106,36 @@ class LineChartRenderer implements Renderer {
     const backgroundContext = this.background.getContext("2d");
     backgroundContext.fillStyle = this.opts.background;
     backgroundContext.fillRect(0, 0, width, height);
-    const range = {
-      min: 0,
-      max: height
-    };
-    const increment = (range.max - range.min) / 5;
+
+    const { range } = this.opts;
+    const { min, max } = range;
+    let increment = 10 ** Math.round(Math.log10(max - min) - 1); // start from closest power of 10 difference, over 10
+    let ticker = 0; // 0 = 1, 1 = 2, 2 = 5, etc.
+    while ((max - min) / increment > 8) {
+      increment *= ticker % 3 === 1 ? 2.5 : 2;
+      ticker++;
+    }
+
+    // determine y positions of start and end lines
+    let start = min - ((min + increment) % increment);
+    if (this.y(start) + 7 > height) start += increment; // keep within bounds
+    let end = max - (max % increment);
+    if (this.y(end) - 7 < 0) end -= increment; // same
+
     let textMaxWidth = 0;
     // write numbers
-    backgroundContext.font = "16px Helvetica";
+    backgroundContext.font = "14px Helvetica";
     backgroundContext.fillStyle = "#000";
     backgroundContext.textBaseline = "middle";
-    for (let y = range.min; y < range.max; y += increment) {
-      const { width } = backgroundContext.measureText(this.y(y).toString());
+    for (let y = start; y <= end; y += increment) {
+      const { width } = backgroundContext.measureText(y.toLocaleString());
       if (width > textMaxWidth) textMaxWidth = width;
-      backgroundContext.fillText(this.y(y).toString(), 5, y);
+      backgroundContext.fillText(y.toLocaleString(), 5, this.y(y));
     }
     // draw lines
-    for (let y = range.min; y < range.max; y += increment) {
-      backgroundContext.moveTo(textMaxWidth + 10, y);
-      backgroundContext.lineTo(width, y);
+    for (let y = start; y <= end; y += increment) {
+      backgroundContext.moveTo(textMaxWidth + 10, this.y(y));
+      backgroundContext.lineTo(width, this.y(y));
       backgroundContext.setLineDash([10, 10]);
       backgroundContext.stroke();
     }
@@ -121,6 +146,8 @@ class LineChartRenderer implements Renderer {
     const { background } = this.opts;
     const context = canvas.getContext("2d");
     const { width, height } = canvas;
+    const { range } = this.opts;
+    const { min, max } = range;
 
     // clear existing canvas by drawing background
     context.drawImage(this.background, 0, 0);
