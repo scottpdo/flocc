@@ -60,12 +60,15 @@ class LineChartRenderer implements Renderer {
     this.environment = environment;
     this.opts = Object.assign({}, defaultRendererOptions, opts);
     const { width, height } = this.opts;
-    this.width = this.opts.width;
-    this.height = this.opts.height;
-    this.canvas.width = width;
-    this.canvas.height = height;
-    this.background.width = width * window.devicePixelRatio;
-    this.background.height = height * window.devicePixelRatio;
+    const dpr = window.devicePixelRatio;
+    this.width = this.opts.width * dpr;
+    this.height = this.opts.height * dpr;
+    this.canvas.width = width * dpr;
+    this.canvas.height = height * dpr;
+    this.canvas.style.width = width + "px";
+    this.canvas.style.height = height + "px";
+    this.background.width = width * dpr;
+    this.background.height = height * dpr;
     environment.renderers.push(this);
 
     this.drawBackground();
@@ -81,8 +84,8 @@ class LineChartRenderer implements Renderer {
 
   metric(key: string, opts?: MetricOptions) {
     const buffer = document.createElement("canvas");
-    buffer.width = this.canvas.width * window.devicePixelRatio;
-    buffer.height = this.canvas.height * window.devicePixelRatio;
+    buffer.width = this.canvas.width;
+    buffer.height = this.canvas.height;
     this.metrics.push(
       Object.assign({}, defaultMetricOptions, opts, {
         key,
@@ -93,7 +96,7 @@ class LineChartRenderer implements Renderer {
   }
 
   x(value: number): number {
-    return value * window.devicePixelRatio;
+    return Math.round(value);
   }
 
   y(value: number): number {
@@ -101,9 +104,7 @@ class LineChartRenderer implements Renderer {
     const { range } = this.opts;
     const { min, max } = range;
     const pxPerUnit = height / (max - min);
-    return (
-      (this.canvas.height - (value - min) * pxPerUnit) * window.devicePixelRatio
-    );
+    return Math.round(this.canvas.height - (value - min) * pxPerUnit);
   }
 
   drawBackground() {
