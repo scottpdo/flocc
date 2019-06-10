@@ -64,8 +64,8 @@ class LineChartRenderer implements Renderer {
     this.height = this.opts.height;
     this.canvas.width = width;
     this.canvas.height = height;
-    this.background.width = width;
-    this.background.height = height;
+    this.background.width = width * window.devicePixelRatio;
+    this.background.height = height * window.devicePixelRatio;
     environment.renderers.push(this);
 
     this.drawBackground();
@@ -81,8 +81,8 @@ class LineChartRenderer implements Renderer {
 
   metric(key: string, opts?: MetricOptions) {
     const buffer = document.createElement("canvas");
-    buffer.width = this.canvas.width;
-    buffer.height = this.canvas.height;
+    buffer.width = this.canvas.width * window.devicePixelRatio;
+    buffer.height = this.canvas.height * window.devicePixelRatio;
     this.metrics.push(
       Object.assign({}, defaultMetricOptions, opts, {
         key,
@@ -92,12 +92,18 @@ class LineChartRenderer implements Renderer {
     );
   }
 
+  x(value: number): number {
+    return value * window.devicePixelRatio;
+  }
+
   y(value: number): number {
     const { height } = this;
     const { range } = this.opts;
     const { min, max } = range;
     const pxPerUnit = height / (max - min);
-    return this.canvas.height - (value - min) * pxPerUnit;
+    return (
+      (this.canvas.height - (value - min) * pxPerUnit) * window.devicePixelRatio
+    );
   }
 
   drawBackground() {
@@ -124,7 +130,7 @@ class LineChartRenderer implements Renderer {
 
     let textMaxWidth = 0;
     // write numbers
-    backgroundContext.font = "14px Helvetica";
+    backgroundContext.font = `${14 * window.devicePixelRatio}px Helvetica`;
     backgroundContext.fillStyle = "#000";
     backgroundContext.textBaseline = "middle";
     for (let y = start; y <= end; y += increment) {
@@ -135,7 +141,7 @@ class LineChartRenderer implements Renderer {
     // draw lines
     for (let y = start; y <= end; y += increment) {
       backgroundContext.moveTo(textMaxWidth + 10, this.y(y));
-      backgroundContext.lineTo(width, this.y(y));
+      backgroundContext.lineTo(this.x(width), this.y(y));
       backgroundContext.setLineDash([10, 10]);
       backgroundContext.stroke();
     }
@@ -143,14 +149,11 @@ class LineChartRenderer implements Renderer {
 
   render() {
     const { canvas, environment, metrics } = this;
-    const { background } = this.opts;
+    const { width, height } = this;
     const context = canvas.getContext("2d");
-    const { width, height } = canvas;
-    const { range } = this.opts;
-    const { min, max } = range;
 
     // clear existing canvas by drawing background
-    context.drawImage(this.background, 0, 0);
+    context.drawImage(this.background, 0, 0, width, height);
 
     const agents = environment.getAgents();
 
@@ -177,14 +180,14 @@ class LineChartRenderer implements Renderer {
       const value = fn(values.get(key));
 
       bufferContext.strokeStyle = color;
-      if (x < 0) y = this.y(value);
-      bufferContext.moveTo(x, y);
-      bufferContext.lineTo(x + 1, this.y(value));
+      if (this.x(x) < 0) y = this.y(value);
+      bufferContext.moveTo(this.x(x), y);
+      bufferContext.lineTo(this.x(x + 1), this.y(value));
       bufferContext.stroke();
       location.x++;
       location.y = this.y(value);
 
-      context.drawImage(buffer, 0, 0);
+      context.drawImage(buffer, 0, 0, width, height);
     });
   }
 }
