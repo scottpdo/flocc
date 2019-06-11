@@ -314,7 +314,7 @@ class GridEnvironment extends Environment {
       return;
     }
 
-    if (this.renderer !== null) this.renderer.render();
+    this.renderers.forEach(r => r.render());
   }
 }
 

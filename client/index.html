@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>Client-side Tests</title>
+        <script src="/flocc.js"></script>
+        <script>
+            for (let key in flocc) {
+                window[key] = flocc[key];
+            }
+        </script>
+    </head>
+    <body>
+        <div id="canvas"></div>
+        <div id="line"></div>
+        <script>
+            (function() {
+                const environment = new Environment();
+                const renderer = new CanvasRenderer(environment, {
+                    width: 200,
+                    height: 100
+                });
+                renderer.mount("#canvas");
+
+                const chart = new LineChartRenderer(environment, {
+                    background: "#eee",
+                    range: { min: 0, max: 133 }
+                });
+                chart.mount("#line");
+                chart.metric("x", { color: "red", fn: utils.min });
+                chart.metric("x", { fn: utils.max });
+                chart.metric("x", { color: "blue", fn: utils.mean });
+                chart.metric("x", { color: "green", fn: utils.median });
+                chart.metric("x", {
+                    color: "orange",
+                    fn: arr => arr.filter(v => v >= 35).length
+                });
+
+                function meander(agent) {
+                    agent.increment("x", Math.random() > 0.5 ? 1 : -1);
+                    agent.increment("y", Math.random() > 0.5 ? 1 : -1);
+                }
+
+                function setup() {
+                    for (let i = 0; i < 12; i++) {
+                        const agent = new Agent();
+                        agent.set("x", utils.random(30, 40));
+                        agent.set("y", utils.random(0, 100));
+                        agent.addRule(meander);
+                        environment.addAgent(agent);
+                    }
+                }
+
+                function draw() {
+                    environment.tick();
+                    window.requestAnimationFrame(draw);
+                }
+
+                setup();
+                draw();
+            })();
+        </script>
+    </body>
+</html>

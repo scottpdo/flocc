@@ -10,7 +10,7 @@ class ASCIIRenderer implements Renderer {
 
   constructor(environment: GridEnvironment, opts: Object = {}) {
     this.environment = environment;
-    environment.renderer = this;
+    environment.renderers.push(this);
 
     this.pre = document.createElement("pre");
   }

@@ -1,22 +1,26 @@
 {
   "name": "flocc",
-  "version": "0.1.5",
+  "version": "0.2.0",
   "description": "Agent-based modeling in JavaScript in the browser or server.",
   "main": "dist/flocc.js",
   "module": "dist/flocc.es.js",
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -cw",
+    "dev": "concurrently 'npm run watch' 'browser-sync start --server 'client' --ss 'dist' --watch dist/flocc.js'",
     "test": "jest",
     "prepublish": "yarn run build"
   },
   "author": "Scott Donaldson",
   "license": "ISC",
   "devDependencies": {
-    "jest": "^23.6.0",
-    "rollup": "^0.67.3",
-    "rollup-plugin-typescript2": "^0.18.1",
-    "typescript": "^3.2.2"
+    "browser-sync": "2.26.7",
+    "concurrently": "4.1.0",
+    "jest": "24.8.0",
+    "jest-canvas-mock": "^2.1.0",
+    "rollup": "1.14.6",
+    "rollup-plugin-typescript2": "0.21.1",
+    "typescript": "3.5.1"
   },
   "keywords": [
     "abm",
@@ -25,5 +29,10 @@
     "multiagent",
     "cellular automata",
     "simulation"
-  ]
+  ],
+  "jest": {
+    "setupFiles": [
+      "./__setups__/canvas.js"
+    ]
+  }
 }
