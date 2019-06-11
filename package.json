@@ -7,7 +7,7 @@
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -cw",
-    "dev": "concurrently 'npm run watch' 'browser-sync start --server --index client/index.html --watch dist/flocc.js'",
+    "dev": "concurrently 'npm run watch' 'browser-sync start --server 'client' --ss 'dist' --watch dist/flocc.js'",
     "test": "jest",
     "prepublish": "yarn run build"
   },

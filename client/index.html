@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta http-equiv="X-UA-Compatible" content="ie=edge" />
         <title>Client-side Tests</title>
-        <script src="../dist/flocc.js"></script>
+        <script src="/flocc.js"></script>
         <script>
             for (let key in flocc) {
                 window[key] = flocc[key];
@@ -26,7 +26,7 @@
 
                 const chart = new LineChartRenderer(environment, {
                     background: "#eee",
-                    range: { min: -105, max: 155 }
+                    range: { min: 0, max: 133 }
                 });
                 chart.mount("#line");
                 chart.metric("x", { color: "red", fn: utils.min });
