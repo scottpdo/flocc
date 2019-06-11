@@ -17,6 +17,7 @@
     "browser-sync": "2.26.7",
     "concurrently": "4.1.0",
     "jest": "24.8.0",
+    "jest-canvas-mock": "^2.1.0",
     "rollup": "1.14.6",
     "rollup-plugin-typescript2": "0.21.1",
     "typescript": "3.5.1"
@@ -28,5 +29,10 @@
     "multiagent",
     "cellular automata",
     "simulation"
-  ]
+  ],
+  "jest": {
+    "setupFiles": [
+      "./__setups__/canvas.js"
+    ]
+  }
 }
