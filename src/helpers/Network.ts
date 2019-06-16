@@ -1,5 +1,6 @@
 /// <reference path="../environments/EnvironmentHelper.d.ts" />
 import { Agent } from "../agents/Agent";
+import { Environment } from "../environments/Environment";
 import shuffle from "../utils/shuffle";
 
 interface AdjacencyList {
@@ -40,6 +41,14 @@ class Network implements EnvironmentHelper {
   }
 
   /**
+   * Add all agents in an environment to this network.
+   * @param {Environment} environment
+   */
+  addFromEnvironment(environment: Environment) {
+    environment.getAgents().forEach(agent => this.addAgent(agent));
+  }
+
+  /**
    * Remove an agent from the network.
    * @param {Agent} agent
    */
@@ -52,7 +61,17 @@ class Network implements EnvironmentHelper {
     delete this.data[agent.id];
 
     const idx = this.indexOf(agent);
-    idx >= 0 && this.agents.splice(idx, 1);
+    if (idx >= 0) this.agents.splice(idx, 1);
+  }
+
+  /**
+   * Removes all agents from the network.
+   */
+  clear(): void {
+    while (this.agents.length > 0) {
+      const a0 = this.agents[0];
+      this.removeAgent(a0);
+    }
   }
 
   /**
@@ -86,6 +105,7 @@ class Network implements EnvironmentHelper {
   areConnected(a1: Agent, a2: Agent): boolean {
     const id1 = a1.id;
     const id2 = a2.id;
+    if (!this.isInNetwork(a1) || !this.isInNetwork(a2)) return false;
     return this.data[id1].indexOf(a2) >= 0 && this.data[id2].indexOf(a1) >= 0;
   }
 
