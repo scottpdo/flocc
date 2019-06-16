@@ -9,13 +9,18 @@ interface Helpers {
   network: Network;
 }
 
+/**
+ * An environment provides the space and time in which agents interact.
+ * Environments, like agents, can store data in key-value pairs
+ * that can be updated over time.
+ */
 class Environment implements DataObj {
   /** @member {Agent[]} */
   agents: Array<Agent>;
   agentsById: Map<string, Agent>;
   data: Data;
   helpers: Helpers;
-  /** @member {Renderer} */
+  /** @member {Renderer[]} */
   renderers: Renderer[];
   opts: EnvironmentOptions;
   width: number;
