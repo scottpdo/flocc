@@ -1,6 +1,7 @@
-const { Agent, Network } = require("../dist/flocc");
+const { Agent, Environment, Network } = require("../dist/flocc");
 
 const network = new Network();
+const environment = new Environment();
 const a0 = new Agent();
 const a1 = new Agent();
 const a2 = new Agent();
@@ -80,4 +81,18 @@ it("Correctly completes a network (connecting every agent).", () => {
     const areConnected = network.areConnected(a, next);
     expect(areConnected).toBe(true);
   });
+});
+
+it("Calling .clear() clears the network of all agents.", () => {
+  network.clear();
+  expect(network.agents).toHaveLength(0);
+});
+
+it("Correctly adds agents from an environment.", () => {
+  environment.addAgent(a0);
+  environment.addAgent(a1);
+  network.addFromEnvironment(environment);
+  expect(network.agents).toHaveLength(2);
+  expect(network.agents).toContain(a0);
+  expect(network.agents).toContain(a1);
 });
