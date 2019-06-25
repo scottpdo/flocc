@@ -1,9 +1,8 @@
 /// <reference path="../types/Point.d.ts" />
-import sum from '../utils/sum';
-import copyArray from '../utils/copyArray';
+import sum from "../utils/sum";
+import copyArray from "../utils/copyArray";
 
 class Vector implements Point {
-
   data: Array<number>;
   dimension: number;
 
@@ -27,18 +26,17 @@ class Vector implements Point {
    * @param value {number} - The value to set at this index/position.
    */
   set(i: number | string, value: number): this {
-
     let index: number;
 
-    if (i === 'x' || i === 'r') {
+    if (i === "x" || i === "r") {
       index = 0;
-    } else if (i === 'y' || i === 'g') {
+    } else if (i === "y" || i === "g") {
       index = 1;
-    } else if (i === 'z' || i === 'b') {
+    } else if (i === "z" || i === "b") {
       index = 2;
-    } else if (i === 'w' || i === 'a') {
+    } else if (i === "w" || i === "a") {
       index = 3;
-    } else if (typeof i === 'number') {
+    } else if (typeof i === "number") {
       index = i;
     }
 
@@ -52,25 +50,57 @@ class Vector implements Point {
     return this;
   }
 
-  get x(): number { return this.index(0); }
-  get y(): number { return this.index(1); }
-  get z(): number { return this.index(2); }
-  get w(): number { return this.index(3); }
+  get x(): number {
+    return this.index(0);
+  }
+  get y(): number {
+    return this.index(1);
+  }
+  get z(): number {
+    return this.index(2);
+  }
+  get w(): number {
+    return this.index(3);
+  }
 
-  get r(): number { return this.index(0); }
-  get g(): number { return this.index(1); }
-  get b(): number { return this.index(2); }
-  get a(): number { return this.index(3); }
+  get r(): number {
+    return this.index(0);
+  }
+  get g(): number {
+    return this.index(1);
+  }
+  get b(): number {
+    return this.index(2);
+  }
+  get a(): number {
+    return this.index(3);
+  }
 
-  set x(n) { this.set(0, n); }
-  set y(n) { this.set(1, n); }
-  set z(n) { this.set(2, n); }
-  set w(n) { this.set(3, n); }
-  
-  set r(n) { this.set(0, n); }
-  set g(n) { this.set(1, n); }
-  set b(n) { this.set(2, n); }
-  set a(n) { this.set(3, n); }  
+  set x(n) {
+    this.set(0, n);
+  }
+  set y(n) {
+    this.set(1, n);
+  }
+  set z(n) {
+    this.set(2, n);
+  }
+  set w(n) {
+    this.set(3, n);
+  }
+
+  set r(n) {
+    this.set(0, n);
+  }
+  set g(n) {
+    this.set(1, n);
+  }
+  set b(n) {
+    this.set(2, n);
+  }
+  set a(n) {
+    this.set(3, n);
+  }
 
   add(v: Vector): this {
     const dimension = Math.max(this.dimension, v.dimension);
@@ -116,6 +146,20 @@ class Vector implements Point {
   clone(): Vector {
     const data = copyArray(this.data);
     return new Vector(...data);
+  }
+
+  /**
+   * Rotate a vector about the Z axis.
+   * @param angle {number} - The angle by which to rotate the vector, in radians
+   */
+  rotateZ(angle: number): this {
+    const sin = Math.sin(angle);
+    const cos = Math.cos(angle);
+    const x = this.x * cos - this.y * sin;
+    const y = this.x * sin + this.y * cos;
+    this.x = x;
+    this.y = y;
+    return this;
   }
 }
 
