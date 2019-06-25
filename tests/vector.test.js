@@ -1,10 +1,9 @@
-const { Vector } = require('../dist/flocc');
+const { Vector } = require("../dist/flocc");
 
 const v = new Vector();
 const v2 = new Vector();
 
-it('Instantiates an empty vector', () => {
-
+it("Instantiates an empty vector", () => {
   expect(v.dimension).toEqual(0);
 
   // Non-existent indices should return 0 by default
@@ -16,7 +15,7 @@ it('Instantiates an empty vector', () => {
   expect(v.dimension).toEqual(0);
 });
 
-it('Correctly instantiates a vector with data', () => {
+it("Correctly instantiates a vector with data", () => {
   const a = new Vector(1);
   const b = new Vector(1, 2, 3, 4, 5);
   expect(a.dimension).toEqual(1);
@@ -25,17 +24,16 @@ it('Correctly instantiates a vector with data', () => {
   expect(a.x).toEqual(1);
   expect(b.index(2)).toEqual(3);
   expect(b.b).toEqual(3);
-})
+});
 
-it('Correctly sets and get indices of a vector', () => {
-
+it("Correctly sets and get indices of a vector", () => {
   v.set(2, 5);
   expect(v.index(2)).toEqual(5);
   expect(v.z).toEqual(5);
   expect(v.b).toEqual(5);
   expect(v.dimension).toEqual(3);
 
-  v.set('x', 1);
+  v.set("x", 1);
   expect(v.r).toEqual(1);
   v.set(0, 2);
   expect(v.r).toEqual(2);
@@ -46,8 +44,7 @@ it('Correctly sets and get indices of a vector', () => {
   expect(v.x).toEqual(3);
 });
 
-it('Correctly finds the length of vectors', () => {
-
+it("Correctly finds the length of vectors", () => {
   v2.set(0, 100);
   expect(v2.length()).toEqual(100);
 
@@ -56,8 +53,7 @@ it('Correctly finds the length of vectors', () => {
   expect(v2.length()).toEqual(5); // 3-4-5 right triangle
 });
 
-it('Correctly normalizes vectors', () => {
-
+it("Correctly normalizes vectors", () => {
   const zero = new Vector();
   zero.normalize();
   expect(zero.length()).toEqual(0);
@@ -69,4 +65,20 @@ it('Correctly normalizes vectors', () => {
 
   v2.normalize();
   expect(v2.length()).toBeCloseTo(1);
+});
+
+it("Correctly rotates a vector about the Z-axis.", () => {
+  const v = new Vector(1, 0);
+  v.rotateZ(Math.PI / 2);
+  expect(v.x).toBeCloseTo(0);
+  expect(v.y).toBeCloseTo(1);
+
+  // reset
+  v.x = 1;
+  v.y = 0;
+
+  // shouldn't change
+  v.rotateZ(2 * Math.PI);
+  expect(v.x).toBeCloseTo(1);
+  expect(v.y).toBeCloseTo(0);
 });
