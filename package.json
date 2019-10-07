@@ -7,7 +7,7 @@
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -cw",
-    "dev": "concurrently 'npm run watch' 'browser-sync start --server 'client' --ss 'dist' --watch dist/flocc.js'",
+    "dev": "concurrently 'npm run watch' 'node client/app.js' 'browser-sync start --watch dist/flocc.js'",
     "test": "jest",
     "prepublish": "yarn run build"
   },
@@ -16,6 +16,7 @@
   "devDependencies": {
     "browser-sync": "2.26.7",
     "concurrently": "4.1.2",
+    "express": "^4.17.1",
     "jest": "24.9.0",
     "jest-canvas-mock": "^2.1.0",
     "rollup": "1.20.3",
