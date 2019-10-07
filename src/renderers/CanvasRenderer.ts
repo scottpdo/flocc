@@ -1,12 +1,14 @@
 /// <reference path="./Renderer.d.ts" />
 /// <reference path="./CanvasRendererOptions.d.ts" />
 import { Environment } from "../environments/Environment";
-import { Network } from "../helpers/Network";
 
 const defaultOptions: CanvasRendererOptions = {
   autoPosition: false,
+  background: "transparent",
+  origin: { x: 0, y: 0 },
   width: 500,
   height: 500,
+  scale: 1,
   trace: false
 };
 
@@ -34,6 +36,10 @@ class CanvasRenderer implements Renderer {
 
     this.canvas.width = this.width;
     this.canvas.height = this.height;
+
+    const context = this.canvas.getContext("2d");
+    context.fillStyle = opts.background;
+    context.fillRect(0, 0, this.width, this.height);
   }
 
   mount(el: string | HTMLElement): void {
@@ -45,14 +51,20 @@ class CanvasRenderer implements Renderer {
   }
 
   render(): void {
-    const { context, environment, width, height } = this;
+    const { context, environment, width, height, opts } = this;
+
+    context.translate(-opts.origin.x, -opts.origin.y);
 
     // if "trace" is truthy, don't clear the canvas with every frame
     // to trace the paths of agents
-    if (!this.opts.trace) context.clearRect(0, 0, width, height);
+    if (!opts.trace) {
+      context.clearRect(opts.origin.x, opts.origin.y, width, height);
+      context.fillStyle = opts.background;
+      context.fillRect(opts.origin.x, opts.origin.y, width, height);
+    }
 
     // automatically position agents in an environment that uses a network helper
-    if (this.opts.autoPosition && this.environment.helpers.network) {
+    if (opts.autoPosition && environment.helpers.network) {
       environment.getAgents().forEach(agent => {
         const { network } = this.environment.helpers;
         const { width, height } = this;
@@ -121,6 +133,8 @@ class CanvasRenderer implements Renderer {
 
       context.fill();
     });
+
+    context.setTransform(1, 0, 0, 1, 0, 0);
   }
 }
 
