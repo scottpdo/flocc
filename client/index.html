@@ -20,11 +20,11 @@
                 const environment = new Environment();
                 const renderer = new CanvasRenderer(environment, {
                     background: "#eef",
-                    width: 100,
-                    height: 100,
+                    width: 300,
+                    height: 300,
                     scale: 2,
                     origin: {
-                        x: 275,
+                        x: 300,
                         y: 200
                     }
                 });
@@ -54,6 +54,10 @@
                         const agent = new Agent();
                         agent.set("x", utils.random(300, 305));
                         agent.set("y", utils.random(200, 230));
+                        agent.set("size", 2);
+                        agent.set("shape", "arrow");
+                        agent.set("vx", 1);
+                        agent.set("vy", 1);
                         agent.addRule(meander);
                         environment.addAgent(agent);
                     }
