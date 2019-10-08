@@ -1,12 +1,14 @@
 /// <reference path="./Renderer.d.ts" />
 /// <reference path="./CanvasRendererOptions.d.ts" />
 import { Environment } from "../environments/Environment";
-import { Network } from "../helpers/Network";
 
 const defaultOptions: CanvasRendererOptions = {
   autoPosition: false,
+  background: "transparent",
+  origin: { x: 0, y: 0 },
   width: 500,
   height: 500,
+  scale: 1,
   trace: false
 };
 
@@ -34,6 +36,10 @@ class CanvasRenderer implements Renderer {
 
     this.canvas.width = this.width;
     this.canvas.height = this.height;
+
+    const context = this.canvas.getContext("2d");
+    context.fillStyle = opts.background;
+    context.fillRect(0, 0, this.width, this.height);
   }
 
   mount(el: string | HTMLElement): void {
@@ -45,14 +51,22 @@ class CanvasRenderer implements Renderer {
   }
 
   render(): void {
-    const { context, environment, width, height } = this;
+    const { context, environment, width, height, opts } = this;
+    const { origin, scale, trace } = opts;
+
+    const canvasX = (v: number): number => scale * (v - origin.x);
+    const canvasY = (v: number): number => scale * (v - origin.y);
 
     // if "trace" is truthy, don't clear the canvas with every frame
     // to trace the paths of agents
-    if (!this.opts.trace) context.clearRect(0, 0, width, height);
+    if (!trace) {
+      context.clearRect(0, 0, width, height);
+      context.fillStyle = opts.background;
+      context.fillRect(0, 0, width, height);
+    }
 
     // automatically position agents in an environment that uses a network helper
-    if (this.opts.autoPosition && this.environment.helpers.network) {
+    if (opts.autoPosition && environment.helpers.network) {
       environment.getAgents().forEach(agent => {
         const { network } = this.environment.helpers;
         const { width, height } = this;
@@ -77,7 +91,7 @@ class CanvasRenderer implements Renderer {
       const { x, y, vx, vy, color, shape, size = 1 } = agent.getData();
 
       context.beginPath();
-      context.moveTo(x, y);
+      context.moveTo(canvasX(x), canvasY(y));
 
       // always draw connections to other agents
       if (this.environment.helpers.network) {
@@ -112,11 +126,14 @@ class CanvasRenderer implements Renderer {
 
         context.beginPath();
 
-        context.moveTo(x + 1.5 * _vx, y + 1.5 * _vy);
-        context.lineTo(x + _vy / 2, y - _vx / 2);
-        context.lineTo(x - _vy / 2, y + _vx / 2);
+        context.save();
+        context.translate(canvasX(x), canvasY(y));
+        context.moveTo(1.5 * _vx, 1.5 * _vy);
+        context.lineTo(_vy / 2, -_vx / 2);
+        context.lineTo(-_vy / 2, _vx / 2);
+        context.restore();
       } else {
-        context.arc(x, y, size, 0, 2 * Math.PI);
+        context.arc(canvasX(x), canvasY(y), size, 0, 2 * Math.PI);
       }
 
       context.fill();
