@@ -4,6 +4,12 @@
 import { Environment } from "../environments/Environment";
 import uuid from "../utils/uuid";
 
+// Given a data object, a name, and a function value,
+// force the object to call the function whenever data[name] is referenced
+const setFunctionValue = (data: Data, name: string, fn: Function) => {
+  Object.defineProperty(data, name, { get: () => fn() });
+};
+
 class Agent implements DataObj {
   /**
    * @member {Environment|null} environment
@@ -33,9 +39,6 @@ class Agent implements DataObj {
   get(name: string): any {
     // return null if it doesn't exist
     if (!this.data.hasOwnProperty(name)) return null;
-    // if the piece of data is a function, invoke it
-    if (typeof this.data[name] === "function") return this.data[name]();
-    // otherwise, just return the piece of data
     return this.data[name];
   }
 
@@ -57,10 +60,26 @@ class Agent implements DataObj {
    * @param {*} value
    */
   set(name: string | Data, value?: any): void {
+    // helper function to set key-value pair depending on whether value
+    // is a function (callable) or not
+    const setKeyValue = (key: string, value: any) => {
+      if (typeof value === "function") {
+        setFunctionValue(this.data, key, value);
+      } else {
+        this.data[key] = value;
+      }
+    };
+
+    // if just receiving a single key-value pair, simply set it
     if (typeof name === "string") {
-      this.data[name] = value;
+      setKeyValue(name, value);
+      // if receiving an object of key-value pairs (i.e. data object),
+      // loop over keys and call setKeyValue for each
     } else {
-      this.data = Object.assign(this.data, name);
+      Object.keys(name).forEach(key => {
+        const value = name[key];
+        setKeyValue(key, value);
+      });
     }
   }
 
