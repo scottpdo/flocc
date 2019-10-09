@@ -1,0 +1,55 @@
+<div id="chart"></div>
+
+<script>
+    const environment = new Environment();
+    const x = new Agent();
+    const y = new Agent();
+    const z = new Agent();
+
+    const chart = new LineChartRenderer(environment, {
+        background: "#eee",
+        range: { min: -10, max: 100 },
+        width: 1200
+    });
+    chart.mount("#chart");
+    const fn = values => values.filter(v => v !== null)[0];
+    chart.metric("x", { color: "red", fn });
+    chart.metric("y", { color: "blue", fn });
+    chart.metric("z", { color: "green", fn });
+
+    const timeFactor = 0.0001;
+
+    function tickX() {
+        const i = 10 * (y.get("y") - x.get("x"));
+        x.enqueue(() => x.increment("x", i * timeFactor));
+    }
+
+    function tickY() {
+        const i = x.get("x") * (28 - z.get("z")) - y.get("y");
+        y.enqueue(() => y.increment("y", i * timeFactor));
+    }
+
+    function tickZ() {
+        const i = x.get("x") * y.get("y") - (8 / 3) * z.get("z");
+        z.enqueue(() => z.increment("z", i * timeFactor));
+    }
+
+    (function setup() {
+        x.addRule(tickX);
+        y.addRule(tickY);
+        z.addRule(tickZ);
+
+        x.set("x", 1);
+        y.set("y", 1);
+        z.set("z", 3);
+
+        environment.addAgent(x);
+        environment.addAgent(y);
+        environment.addAgent(z);
+    })();
+
+    (function draw() {
+        environment.tick(300);
+        window.setTimeout(draw, 0);
+    })();
+</script>
