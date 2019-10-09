@@ -82,3 +82,7 @@ it("Correctly rotates a vector about the Z-axis.", () => {
   expect(v.x).toBeCloseTo(1);
   expect(v.y).toBeCloseTo(0);
 });
+
+it("Correctly finds the dot product of two vectors.", () => {});
+
+it("Correctly linearly interpolates between two vectors.", () => {});

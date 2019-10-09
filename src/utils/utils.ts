@@ -2,6 +2,7 @@ import clamp from "./clamp";
 import distance from "./distance";
 import gaussian from "./gaussian";
 import manhattanDistance from "./manhattanDistance";
+import lerp from "./lerp";
 import remap from "./remap";
 import random from "./random";
 import sample from "./sample";
@@ -19,6 +20,7 @@ const utils = {
   clamp,
   distance,
   gaussian,
+  lerp,
   manhattanDistance,
   max,
   mean,
