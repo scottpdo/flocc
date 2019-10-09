@@ -7,7 +7,7 @@ import uuid from "../utils/uuid";
 // Given a data object, a name, and a function value,
 // force the object to call the function whenever data[name] is referenced
 const setFunctionValue = (data: Data, name: string, fn: Function) => {
-  Object.defineProperty(data, name, { get: () => fn() });
+  Object.defineProperty(data, name, { get: () => fn(), configurable: true });
 };
 
 class Agent implements DataObj {
