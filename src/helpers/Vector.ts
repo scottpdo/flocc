@@ -1,5 +1,6 @@
 /// <reference path="../types/Point.d.ts" />
 import sum from "../utils/sum";
+import lerp from "../utils/lerp";
 import copyArray from "../utils/copyArray";
 
 class Vector implements Point {
@@ -63,6 +64,20 @@ class Vector implements Point {
     return this.index(3);
   }
 
+  get xy(): Array<number> {
+    return [this.index(0), this.index(1)];
+  }
+  get xz(): Array<number> {
+    return [this.index(0), this.index(2)];
+  }
+  get yz(): Array<number> {
+    return [this.index(1), this.index(2)];
+  }
+
+  get xyz(): Array<number> {
+    return [this.index(0), this.index(1), this.index(2)];
+  }
+
   get r(): number {
     return this.index(0);
   }
@@ -74,6 +89,13 @@ class Vector implements Point {
   }
   get a(): number {
     return this.index(3);
+  }
+
+  get rgb(): Array<number> {
+    return [this.index(0), this.index(1), this.index(2)];
+  }
+  get rgba(): Array<number> {
+    return [this.index(0), this.index(1), this.index(2), this.index(3)];
   }
 
   set x(n) {
@@ -160,6 +182,33 @@ class Vector implements Point {
     this.x = x;
     this.y = y;
     return this;
+  }
+
+  /**
+   * Get the dot product of this vector with another.
+   * @param {Vector} v - The other vector.
+   */
+  dot(v: Vector): number {
+    const dimension = Math.max(this.dimension, v.dimension);
+    let sum = 0;
+    for (let i = 0; i < dimension; i++) sum += this.index(i) * v.index(i);
+    return sum;
+  }
+
+  /**
+   * Linearly interpolate between this vector and another vector.
+   * Note that this method returns a new vector and does not mutate the vector on which it is called!
+   * @param {Vector} v - The other vector.
+   * @param {number} t - The amount by which to interpolate.
+   * @returns {Vector} - The new, interpolated vector.
+   */
+  lerp(v: Vector, t: number): Vector {
+    const longerVector = this.dimension > v.dimension ? this : v;
+    const shorterVector = this.dimension > v.dimension ? v : this;
+    const lerpedData = longerVector.data.map((x, i) =>
+      lerp(x, shorterVector.index(i), t)
+    );
+    return new Vector(...lerpedData);
   }
 }
 
