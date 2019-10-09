@@ -24,6 +24,9 @@ it("Correctly instantiates a vector with data", () => {
   expect(a.x).toEqual(1);
   expect(b.index(2)).toEqual(3);
   expect(b.b).toEqual(3);
+  expect(b.xy).toEqual([1, 2]);
+  expect(b.yz).toEqual([2, 3]);
+  expect(b.xyz).toEqual([1, 2, 3]);
 });
 
 it("Correctly sets and get indices of a vector", () => {
@@ -83,6 +86,23 @@ it("Correctly rotates a vector about the Z-axis.", () => {
   expect(v.y).toBeCloseTo(0);
 });
 
-it("Correctly finds the dot product of two vectors.", () => {});
+it("Correctly finds the dot product of two vectors.", () => {
+  const a = new Vector(1, 3, -5);
+  const b = new Vector(4, -2, -1);
+  expect(a.dot(b)).toEqual(3);
 
-it("Correctly linearly interpolates between two vectors.", () => {});
+  const c = new Vector();
+  const d = new Vector(1, 1, 1, 1, 1);
+  expect(c.dot(d)).toEqual(0);
+});
+
+it("Correctly linearly interpolates between two vectors.", () => {
+  const a = new Vector(1, 3, -5);
+  const b = new Vector(4, -2);
+  const ab0 = a.lerp(b, 0);
+  const ab05 = a.lerp(b, 0.5);
+  const ab1 = a.lerp(b, 1);
+  expect(ab0.xyz).toEqual(a.xyz);
+  expect(ab05.xyz).toEqual([2.5, 0.5, -2.5]);
+  expect(ab1.xyz).toEqual(b.xyz);
+});
