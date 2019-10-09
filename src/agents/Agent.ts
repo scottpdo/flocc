@@ -31,7 +31,12 @@ class Agent implements DataObj {
    * @param {string} name
    */
   get(name: string): any {
-    return this.data.hasOwnProperty(name) ? this.data[name] : null;
+    // return null if it doesn't exist
+    if (!this.data.hasOwnProperty(name)) return null;
+    // if the piece of data is a function, invoke it
+    if (typeof this.data[name] === "function") return this.data[name]();
+    // otherwise, just return the piece of data
+    return this.data[name];
   }
 
   /**
