@@ -23,12 +23,19 @@ class Agent implements DataObj {
   data: Data;
   id: string;
 
+  // When agent.get('key') is called, this pseudo-private member is set to 'key'.
+  // Once it is retrieved, it is reset to null. If agent.get('key') is called before
+  // this has been reset, that means that there is an infinite loop, and the call
+  // will throw an error.
+  __retrievingData: string | null;
+
   constructor() {
     this.environment = null;
     this.rules = [];
     this.queue = [];
     this.data = {};
     this.id = uuid();
+    this.__retrievingData = null;
   }
 
   /**
@@ -39,7 +46,18 @@ class Agent implements DataObj {
   get(name: string): any {
     // return null if it doesn't exist
     if (!this.data.hasOwnProperty(name)) return null;
-    return this.data[name];
+    // avoid infinite loops and give the user a hint if one is encountered
+    if (this.__retrievingData === name) {
+      throw new Error(
+        `A reference to an agent's \`${name}\` resulted in a recursive call to get that same data.\n\nThis results in an infinite loop, since the agent will keep requesting that data, which requests itself, and so on forever. You should probably try to restructure your data function so this doesn't happen!`
+      );
+    }
+    this.__retrievingData = name;
+    const data = this.data[name];
+
+    // Once the data has been retrieved, reset the pseudo-private member
+    this.__retrievingData = null;
+    return data;
   }
 
   /**
