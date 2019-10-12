@@ -46,3 +46,11 @@ it("Increments and decrements data.", () => {
   a.decrement("x");
   expect(a.get("x")).toEqual(4);
 });
+
+it(`Throws an error if an agent's data tries to call itself.`, () => {
+  const a = new Agent();
+  const b = new Agent();
+  a.set("value", () => b.get("value"));
+  b.set("value", () => a.get("value"));
+  expect(() => a.get("value")).toThrow();
+});
