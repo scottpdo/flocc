@@ -34,6 +34,15 @@ it("Correctly sets new data.", () => {
   expect([x, y, z]).toEqual([100, false, "asdf"]);
 });
 
+it("Correctly retrieves function values that reference other values.", () => {
+  agent.set("alias", agt => agt.get("z"));
+  expect(agent.get("alias")).toBe("asdf");
+  expect(agent.get("alias")).toBe(agent.get("z"));
+  agent.set("z", () => 9999);
+  expect(agent.get("alias")).toBe(9999);
+  expect(agent.get("alias")).toBe(agent.get("z"));
+});
+
 it("Retrieves a null value for data that does not exist.", () => {
   expect(agent.get("notfound")).toBeNull();
 });
