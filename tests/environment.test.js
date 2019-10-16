@@ -2,6 +2,17 @@ const { Agent, Environment } = require("../dist/flocc");
 
 const environment = new Environment();
 
+it("Inherits all agent methods.", () => {
+  environment.set("test", 1);
+  expect(environment.get("test")).toBe(1);
+  const { test } = environment.getData();
+  expect(test).toBe(1);
+  environment.increment("test");
+  expect(environment.get("test")).toBe(2);
+
+  expect(environment.get("nada")).toBeNull();
+});
+
 it("Has zero agents upon instantiating.", () => {
   expect(environment.getAgents()).toHaveLength(0);
 });
@@ -20,20 +31,6 @@ it("Correctly increments time on each tick.", () => {
 it("Has zero width and height upon instantiating.", () => {
   expect(environment.width).toEqual(0);
   expect(environment.height).toEqual(0);
-});
-
-it("Correctly gets and sets data.", () => {
-  environment.set("x", 12);
-  environment.set("y", 23);
-
-  expect(environment.get("x")).toEqual(12);
-  expect(environment.get("y")).toEqual(23);
-  expect(environment.getData()).toEqual({ x: 12, y: 23 });
-
-  expect(environment.get("z")).toBeNull();
-
-  const { x } = environment.getData();
-  expect(x).toBe(12);
 });
 
 it("Correctly adds agents.", () => {
