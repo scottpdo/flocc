@@ -4,12 +4,6 @@
 import { Environment } from "../environments/Environment";
 import uuid from "../utils/uuid";
 
-// Given a data object, a name, and a function value,
-// force the object to call the function whenever data[name] is referenced
-const setFunctionValue = (data: Data, name: string, fn: Function) => {
-  Object.defineProperty(data, name, { get: () => fn(), configurable: true });
-};
-
 class Agent implements DataObj {
   /**
    * @member {Environment|null} environment
@@ -36,6 +30,15 @@ class Agent implements DataObj {
     this.data = {};
     this.id = uuid();
     this.__retrievingData = null;
+  }
+
+  // Given a data object, a name, and a function value,
+  // force the object to call the function whenever data[name] is referenced
+  _setFunctionValue(data: Data, name: string, fn: Function): void {
+    Object.defineProperty(data, name, {
+      get: () => fn(this),
+      configurable: true
+    });
   }
 
   /**
@@ -82,7 +85,7 @@ class Agent implements DataObj {
     // is a function (callable) or not
     const setKeyValue = (key: string, value: any) => {
       if (typeof value === "function") {
-        setFunctionValue(this.data, key, value);
+        this._setFunctionValue(this.data, key, value);
       } else {
         this.data[key] = value;
       }

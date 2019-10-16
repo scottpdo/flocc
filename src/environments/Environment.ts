@@ -14,7 +14,7 @@ interface Helpers {
  * Environments, like agents, can store data in key-value pairs
  * that can be updated over time.
  */
-class Environment implements DataObj {
+class Environment extends Agent {
   /** @member {Agent[]} */
   agents: Array<Agent>;
   agentsById: Map<string, Agent>;
@@ -28,6 +28,7 @@ class Environment implements DataObj {
   time: number;
 
   constructor(opts: EnvironmentOptions = { torus: true }) {
+    super();
     this.agents = [];
     this.agentsById = new Map();
     this.data = {};
@@ -39,39 +40,6 @@ class Environment implements DataObj {
       network: null
     };
     this.time = 0;
-  }
-
-  /**
-   * Retrieve an arbitrary piece of data associated
-   * with this environment by name.
-   * @param {string} name
-   */
-  get(name: string): any {
-    return this.data.hasOwnProperty(name) ? this.data[name] : null;
-  }
-
-  /**
-   * Retrieve all the data associated with this environment
-   * (useful for destructuring properties).
-   */
-  getData(): Data {
-    return this.data;
-  }
-
-  /**
-   * Set a piece of data associated with this environment.
-   * Name should be a string while value can be any valid type.
-   * Alternatively, the first parameter can be an object, which merges
-   * the current data with the new data (adding new values and overwriting existing).
-   * @param {string|Data} name
-   * @param {*} value
-   */
-  set(name: string | Data, value?: any): void {
-    if (typeof name === "string") {
-      this.data[name] = value;
-    } else {
-      this.data = Object.assign(this.data, name);
-    }
   }
 
   /**
