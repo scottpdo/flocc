@@ -5,10 +5,15 @@ const environment = new Environment();
 it("Inherits all agent methods.", () => {
   environment.set("test", 1);
   expect(environment.get("test")).toBe(1);
+
   const { test } = environment.getData();
   expect(test).toBe(1);
+
   environment.increment("test");
   expect(environment.get("test")).toBe(2);
+
+  environment.decrement("test");
+  expect(environment.get("test")).toBe(1);
 
   expect(environment.get("nada")).toBeNull();
 });
