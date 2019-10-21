@@ -27,19 +27,23 @@ class CanvasRenderer implements Renderer {
     environment.renderers.push(this);
 
     this.opts = Object.assign({}, defaultOptions, opts);
+    const { width, height } = this.opts;
 
     this.canvas = document.createElement("canvas");
     this.context = this.canvas.getContext("2d");
 
-    this.width = this.opts.width;
-    this.height = this.opts.height;
+    const dpr = window.devicePixelRatio;
+    this.width = width * dpr;
+    this.height = height * dpr;
 
-    this.canvas.width = this.width;
-    this.canvas.height = this.height;
+    this.canvas.width = width * dpr;
+    this.canvas.height = height * dpr;
+    this.canvas.style.width = width + "px";
+    this.canvas.style.height = height + "px";
 
     const context = this.canvas.getContext("2d");
     context.fillStyle = opts.background;
-    context.fillRect(0, 0, this.width, this.height);
+    context.fillRect(0, 0, width, height);
   }
 
   mount(el: string | HTMLElement): void {
@@ -50,19 +54,27 @@ class CanvasRenderer implements Renderer {
     }
   }
 
+  x(v: number): number {
+    const { origin, scale } = this.opts;
+    return scale * v - origin.x;
+  }
+
+  y(v: number): number {
+    const { origin, scale } = this.opts;
+    return scale * v - origin.x;
+  }
+
   render(): void {
     const { context, environment, width, height, opts } = this;
-    const { origin, scale, trace } = opts;
-
-    const canvasX = (v: number): number => scale * (v - origin.x);
-    const canvasY = (v: number): number => scale * (v - origin.y);
+    const { trace } = opts;
+    const dpr = window.devicePixelRatio;
 
     // if "trace" is truthy, don't clear the canvas with every frame
     // to trace the paths of agents
     if (!trace) {
-      context.clearRect(0, 0, width, height);
+      context.clearRect(0, 0, width * dpr, height * dpr);
       context.fillStyle = opts.background;
-      context.fillRect(0, 0, width, height);
+      context.fillRect(0, 0, width * dpr, height * dpr);
     }
 
     // automatically position agents in an environment that uses a network helper
@@ -88,10 +100,15 @@ class CanvasRenderer implements Renderer {
     const connectionsDrawn = new Map();
 
     environment.getAgents().forEach(agent => {
-      const { x, y, vx, vy, color, shape, size = 1 } = agent.getData();
+      let { x, y, vx, vy, color, shape, size = 1 } = agent.getData();
+
+      if (!(opts.autoPosition && environment.helpers.network)) {
+        x *= dpr;
+        y *= dpr;
+      }
 
       context.beginPath();
-      context.moveTo(canvasX(x), canvasY(y));
+      context.moveTo(this.x(x), this.y(y));
 
       // always draw connections to other agents
       if (this.environment.helpers.network) {
@@ -121,19 +138,26 @@ class CanvasRenderer implements Renderer {
 
       if (shape === "arrow" && vx !== null && vy !== null) {
         const norm = Math.sqrt(vx ** 2 + vy ** 2);
-        const _vx = 3 * size * (vx / norm);
-        const _vy = 3 * size * (vy / norm);
+        const _vx = 3 * size * (vx / norm) * dpr;
+        const _vy = 3 * size * (vy / norm) * dpr;
 
         context.beginPath();
 
         context.save();
-        context.translate(canvasX(x), canvasY(y));
+        context.translate(this.x(x), this.y(y));
         context.moveTo(1.5 * _vx, 1.5 * _vy);
         context.lineTo(_vy / 2, -_vx / 2);
         context.lineTo(-_vy / 2, _vx / 2);
         context.restore();
+      } else if (shape === "rect") {
+        context.fillRect(
+          this.x(x),
+          this.y(y),
+          (agent.get("width") || 1) * dpr,
+          (agent.get("height") || 1) * dpr
+        );
       } else {
-        context.arc(canvasX(x), canvasY(y), size, 0, 2 * Math.PI);
+        context.arc(this.x(x), this.y(y), size * dpr, 0, 2 * Math.PI);
       }
 
       context.fill();
