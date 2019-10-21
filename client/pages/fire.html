@@ -1,0 +1,79 @@
+<div id="container"></div>
+<script>
+    /*
+The fire model simulates how fire spreads through a forest. It starts with a wave of trees simultaneously catching fire, and with every tick of the simulation, a tree with at least one neighboring tree (to the north, south, east, or west) on fire will also catch fire.
+
+The PERCENT_FULL parameter determines how crowded the forest is. Set to 1.0 (100% full), every cell in the grid will be occupied by a tree, and the fire will deterministically sweep across the entire forest. However, around 0.59 (59% full), there is a threshold, and value below 0.59 will rarely result in the entire forest being burned, while above 0.59 the entire forest will almost always catch fire.
+
+Read more at https://en.wikipedia.org/wiki/Forest-fire_model
+*/
+    const {
+        Agent,
+        Environment,
+        GridEnvironment,
+        ASCIIRenderer,
+        CanvasRenderer,
+        utils,
+        Vector,
+        Network,
+        LineChartRenderer
+    } = flocc;
+
+    const PERCENT_FULL = 0.57;
+    const environment = new GridEnvironment(100, 100);
+    const renderer = new CanvasRenderer(environment, {
+        background: "#494949",
+        scale: 6,
+        width: 600,
+        height: 600
+    });
+    renderer.mount("#container");
+
+    function tick(agent) {
+        const neighbors = environment.neighbors(agent, 1);
+        if (agent.get("x") === 0 && environment.time === 0) agent.set("r", 255);
+        if (neighbors.filter(n => !!n && n.get("r") > 0).length > 0) {
+            agent.enqueue(() => {
+                agent.set("r", 255);
+                if (agent.get("a") > 0.33) agent.decrement("a", 0.01);
+            });
+        }
+    }
+
+    // this function allows us to use the 'color' key as an alias to the
+    // agent's individual r/g/b/a values
+    function getColor(agent) {
+        return `rgb(
+    ${agent.get("r")},
+    ${agent.get("g")},
+    ${agent.get("b")},
+    ${agent.get("a")}
+  )`;
+    }
+
+    function setup() {
+        // add agents here
+        environment.loop((x, y) => {
+            if (Math.random() > PERCENT_FULL) return;
+            const agent = new Agent();
+            agent.set("width", 5);
+            agent.set("height", 5);
+            agent.set("shape", "rect");
+            agent.set("r", 0);
+            agent.set("g", 0);
+            agent.set("b", 0);
+            agent.set("a", 1);
+            agent.set("color", getColor);
+            agent.addRule(tick);
+            environment.addAgentAt(x, y, agent);
+        });
+    }
+
+    function run() {
+        environment.tick();
+        window.requestAnimationFrame(run);
+    }
+
+    setup();
+    run();
+</script>
