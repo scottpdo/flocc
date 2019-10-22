@@ -7,6 +7,7 @@ export { GridEnvironment } from "./environments/GridEnvironment";
 
 export { ASCIIRenderer } from "./renderers/ASCIIRenderer";
 export { CanvasRenderer } from "./renderers/CanvasRenderer";
+export { Histogram } from "./renderers/Histogram";
 export { LineChartRenderer } from "./renderers/LineChartRenderer";
 
 export { utils } from "./utils/utils";

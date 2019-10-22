@@ -1,4 +1,11 @@
+<style>
+    #container,
+    #histogram {
+        display: inline-block;
+    }
+</style>
 <div id="container"></div>
+<div id="histogram"></div>
 <script>
     /*
 The fire model simulates how fire spreads through a forest. It starts with a wave of trees simultaneously catching fire, and with every tick of the simulation, a tree with at least one neighboring tree (to the north, south, east, or west) on fire will also catch fire.
@@ -12,6 +19,7 @@ Read more at https://en.wikipedia.org/wiki/Forest-fire_model
         Environment,
         GridEnvironment,
         ASCIIRenderer,
+        Histogram,
         CanvasRenderer,
         utils,
         Vector,
@@ -28,6 +36,12 @@ Read more at https://en.wikipedia.org/wiki/Forest-fire_model
         height: 600
     });
     renderer.mount("#container");
+
+    const histogram = new Histogram(environment);
+    histogram.mount("#histogram");
+    histogram.metric("a", {
+        buckets: 10
+    });
 
     function tick(agent) {
         const neighbors = environment.neighbors(agent, 1);
