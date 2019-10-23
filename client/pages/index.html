@@ -33,7 +33,10 @@
                 const agent = new Agent();
                 agent.set("x", utils.random(30, 40));
                 agent.set("y", utils.random(0, 100));
-                agent.addRule(meander);
+                agent.set("shape", "rect");
+                agent.set("width", 5);
+                agent.set("height", 2);
+                // agent.addRule(meander);
                 environment.addAgent(agent);
             }
         }

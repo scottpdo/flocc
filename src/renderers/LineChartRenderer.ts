@@ -1,5 +1,6 @@
 /// <reference path="./Renderer.d.ts" />
 /// <reference path="../types/Point.d.ts" />
+/// <reference path="../types/NRange.d.ts" />
 import { Environment } from "../environments/Environment";
 import { utils } from "../utils/utils";
 
@@ -18,15 +19,10 @@ interface MetricOptions {
   fn: MetricFunction;
 }
 
-interface Range {
-  min: number;
-  max: number;
-}
-
 interface LineChartRendererOptions {
   background: string;
   height: number;
-  range: Range;
+  range: NRange;
   width: number;
 }
 
@@ -48,7 +44,7 @@ const defaultMetricOptions: MetricOptions = {
 class LineChartRenderer implements Renderer {
   /** @member Environment */
   environment: Environment;
-  /** @member HTMLPreElement */
+  /** @member HTMLCanvasElement */
   canvas: HTMLCanvasElement = document.createElement("canvas");
   background: HTMLCanvasElement = document.createElement("canvas");
   opts: LineChartRendererOptions;

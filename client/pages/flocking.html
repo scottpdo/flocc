@@ -1,0 +1,99 @@
+<div id="container"></div>
+<script>
+    /*
+Each agent in this model begins with a random direction, but is constantly shifting its direction to be closer to the average of its closest neighbors. Eventually, all agents will be moving in roughly the same direction.
+*/
+
+    const {
+        Agent,
+        Environment,
+        GridEnvironment,
+        ASCIIRenderer,
+        CanvasRenderer,
+        utils,
+        Vector
+    } = flocc;
+
+    /* ------- PARAMETERS --------- */
+
+    const flockSize = 250;
+    const width = 600;
+    const height = 600;
+
+    /* ---------------------------- */
+
+    /* ------- SET UP ENVIRONMENT, RENDERER --------- */
+
+    const environment = new Environment();
+    const renderer = new CanvasRenderer(environment, { width, height });
+    const container = document.getElementById("container");
+    renderer.mount(container);
+
+    function setup() {
+        for (let i = 0; i < flockSize; i++) {
+            const agent = new Agent();
+
+            agent.set("x", Math.random() * width);
+            agent.set("y", Math.random() * height);
+            agent.set("shape", "arrow");
+            agent.set("size", 2.5);
+
+            const angle = 2 * Math.random() * Math.PI;
+            agent.set("vx", Math.cos(angle));
+            agent.set("vy", Math.sin(angle));
+
+            agent.addRule(tick);
+
+            environment.addAgent(agent);
+        }
+    }
+
+    function tick(agent) {
+        var x = agent.get("x");
+        var y = agent.get("y");
+
+        x += agent.get("vx");
+        y += agent.get("vy");
+
+        while (x < 0) x += width;
+        while (x >= width) x -= width;
+        while (y < 0) y += height;
+        while (y >= height) y -= height;
+
+        agent.set("x", x);
+        agent.set("y", y);
+
+        // update direction
+        var neighbors = environment.getAgents().filter(function(neighbor) {
+            var d = utils.distance(agent, neighbor);
+            return d < 20 && d > 0;
+        });
+
+        if (neighbors.length === 0) return;
+
+        var meanVel = neighbors.reduce(
+            function(a, b) {
+                return {
+                    x: a.x + b.get("vx"),
+                    y: a.y + b.get("vy")
+                };
+            },
+            { x: 0, y: 0 }
+        );
+
+        const norm = utils.distance(meanVel, { x: 0, y: 0 });
+        meanVel.x /= norm;
+        meanVel.y /= norm;
+
+        agent.set("vx", (99 * agent.get("vx") + meanVel.x) / 100);
+        agent.set("vy", (99 * agent.get("vy") + meanVel.y) / 100);
+    }
+
+    function render() {
+        environment.tick();
+        requestAnimationFrame(render);
+    }
+
+    setup();
+    render();
+</script>
