@@ -8,12 +8,12 @@
 <div id="histogram"></div>
 <script>
     /*
-The fire model simulates how fire spreads through a forest. It starts with a wave of trees simultaneously catching fire, and with every tick of the simulation, a tree with at least one neighboring tree (to the north, south, east, or west) on fire will also catch fire.
+    The fire model simulates how fire spreads through a forest. It starts with a wave of trees simultaneously catching fire, and with every tick of the simulation, a tree with at least one neighboring tree (to the north, south, east, or west) on fire will also catch fire.
 
-The PERCENT_FULL parameter determines how crowded the forest is. Set to 1.0 (100% full), every cell in the grid will be occupied by a tree, and the fire will deterministically sweep across the entire forest. However, around 0.59 (59% full), there is a threshold, and value below 0.59 will rarely result in the entire forest being burned, while above 0.59 the entire forest will almost always catch fire.
+    The PERCENT_FULL parameter determines how crowded the forest is. Set to 1.0 (100% full), every cell in the grid will be occupied by a tree, and the fire will deterministically sweep across the entire forest. However, around 0.59 (59% full), there is a threshold, and value below 0.59 will rarely result in the entire forest being burned, while above 0.59 the entire forest will almost always catch fire.
 
-Read more at https://en.wikipedia.org/wiki/Forest-fire_model
-*/
+    Read more at https://en.wikipedia.org/wiki/Forest-fire_model
+    */
     const {
         Agent,
         Environment,
@@ -37,11 +37,12 @@ Read more at https://en.wikipedia.org/wiki/Forest-fire_model
     });
     renderer.mount("#container");
 
-    const histogram = new Histogram(environment);
-    histogram.mount("#histogram");
-    histogram.metric("a", {
-        buckets: 10
+    const histogram = new Histogram(environment, {
+        buckets: 6,
+        scale: "relative"
     });
+    histogram.mount("#histogram");
+    histogram.metric("a");
 
     function tick(agent) {
         const neighbors = environment.neighbors(agent, 1);
@@ -58,11 +59,11 @@ Read more at https://en.wikipedia.org/wiki/Forest-fire_model
     // agent's individual r/g/b/a values
     function getColor(agent) {
         return `rgb(
-    ${agent.get("r")},
-    ${agent.get("g")},
-    ${agent.get("b")},
-    ${agent.get("a")}
-  )`;
+                ${agent.get("r")},
+                ${agent.get("g")},
+                ${agent.get("b")},
+                ${agent.get("a")}
+            )`;
     }
 
     function setup() {

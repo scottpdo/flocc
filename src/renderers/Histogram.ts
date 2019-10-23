@@ -3,27 +3,36 @@
 /// <reference path="../types/NRange.d.ts" />
 import { Environment } from "../environments/Environment";
 import remap from "../utils/remap";
+import max from "../utils/max";
 
-interface Metric extends NRange {
-  aboveMax: boolean;
+interface MetricOptions extends NRange {
   color: string;
-  belowMin: boolean;
-  buckets: number;
+}
+
+interface Metric extends MetricOptions {
   key: string;
 }
 
-interface MetricOptions extends NRange {
+interface HistogramOptions {
   aboveMax: boolean;
-  color: string;
   belowMin: boolean;
   buckets: number;
+  height: number;
+  width: number;
+  scale: "relative" | "fixed";
 }
 
-const defaultMetricOptions: MetricOptions = {
+const defaultHistogramOptions: HistogramOptions = {
   aboveMax: false,
-  color: "#000",
   belowMin: false,
   buckets: 1,
+  height: 500,
+  width: 500,
+  scale: "fixed"
+};
+
+const defaultMetricOptions: MetricOptions = {
+  color: "#000",
   min: 0,
   max: 1
 };
@@ -35,13 +44,18 @@ class Histogram implements Renderer {
   canvas: HTMLCanvasElement = document.createElement("canvas");
   background: HTMLCanvasElement = document.createElement("canvas");
   metrics: Metric[] = [];
+  opts: HistogramOptions = defaultHistogramOptions;
   height: number;
   width: number;
 
-  constructor(environment: Environment) {
+  constructor(environment: Environment, opts?: HistogramOptions) {
     this.environment = environment;
-    this.canvas.width = 500;
-    this.canvas.height = 500;
+    this.opts = Object.assign(this.opts, opts);
+    const { width, height } = this.opts;
+    this.width = width;
+    this.height = height;
+    this.canvas.width = width;
+    this.canvas.height = height;
     environment.renderers.push(this);
   }
 
@@ -63,6 +77,7 @@ class Histogram implements Renderer {
 
   render(): void {
     const { canvas, environment, metrics } = this;
+    const { buckets, scale } = this.opts;
     const width = 500;
     const height = 200;
     const context = canvas.getContext("2d");
@@ -71,24 +86,43 @@ class Histogram implements Renderer {
 
     context.clearRect(0, 0, width, height);
 
-    this.metrics.forEach(metric => {
-      const { buckets, color, key, max, min } = metric;
-      context.fillStyle = color;
-      const bucketValues = new Array(buckets).fill(0);
-      agents.forEach(agent => {
+    // initialize map of bucket values -- for each metric, a pairing of `key` and an
+    // array of length `buckets`, initialized to all zeros
+    const mapOfBucketValues: Map<string, Array<number>> = new Map();
+    metrics.forEach(({ key }) =>
+      mapOfBucketValues.set(key, new Array(buckets).fill(0))
+    );
+
+    agents.forEach(agent => {
+      metrics.forEach(({ key }) => {
+        // ignore this agent if it doesn't have the metric key in question
         if (agent.get(key) === null) return;
-        const value = agent.get(key);
+
+        // get reference to array of bucket values
+        const bucketValues = mapOfBucketValues.get(key);
+
+        // calculate index of bucket this agent's value says it belongs in
         const bucketIndex = Math.floor(
-          remap(value, min, max, 0, 0.999999) * buckets
+          remap(agent.get(key), min, max, 0, 0.999999) * buckets
         );
+
+        // increment the corresponding value in the bucketValues array
         bucketValues[bucketIndex]++;
       });
+    });
+
+    metrics.forEach(({ color, key }) => {
+      context.fillStyle = color;
+
+      const bucketValues = mapOfBucketValues.get(key);
+      const maxValue = scale === "fixed" ? agents.length : max(bucketValues);
       bucketValues.forEach((value, i) => {
+        const mappedValue = remap(value, 0, maxValue, 0, 1);
         context.fillRect(
           i * (width / buckets),
-          height - value,
+          remap(mappedValue, 0, 1, height, 0),
           width / buckets,
-          value
+          remap(mappedValue, 0, 1, 0, height)
         );
       });
     });
