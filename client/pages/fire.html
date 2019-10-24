@@ -38,8 +38,11 @@
     renderer.mount("#container");
 
     const histogram = new Histogram(environment, {
+        color: "fuchsia",
         buckets: 6,
-        scale: "relative"
+        // scale: "relative",
+        width: 500,
+        height: 250
     });
     histogram.mount("#histogram");
     histogram.metric("a");
