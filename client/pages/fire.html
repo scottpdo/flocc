@@ -74,6 +74,15 @@
     ];
 
     const rule = new Rule(environment, steps);
+    const histogram = new Histogram(environment, {
+        color: "fuchsia",
+        buckets: 6,
+        // scale: "relative",
+        width: 500,
+        height: 250
+    });
+    histogram.mount("#histogram");
+    histogram.metric("a");
 
     function tick(agent) {
         const neighbors = environment.neighbors(agent, 1);
