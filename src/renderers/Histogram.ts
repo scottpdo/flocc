@@ -6,6 +6,8 @@ import remap from "../utils/remap";
 import { default as getMax } from "../utils/max";
 import extractRoundNumbers from "../utils/extractRoundNumbers";
 
+const lineDash = [10, 10];
+
 interface HistogramOptions {
   aboveMax: boolean;
   belowMin: boolean;
@@ -83,7 +85,6 @@ class Histogram implements Renderer {
   drawMarkers(bucketValues: Array<number>): void {
     const context = this.canvas.getContext("2d");
     const { environment, height, width } = this;
-    const metric = this._metric;
     const agents = environment.getAgents();
     const { buckets, scale, min, max } = this.opts;
     const yMin = 0;
@@ -91,19 +92,25 @@ class Histogram implements Renderer {
     const markers = extractRoundNumbers({ min: yMin, max: yMax });
     context.fillStyle = "black";
     context.font = `${14 * window.devicePixelRatio}px Helvetica`;
+    // determine the width of the longest marker
     markers.forEach(marker => {
       const { width } = context.measureText(marker.toLocaleString());
       if (width > this.markerWidth) this.markerWidth = width;
-      context.textAlign = "left";
-      context.textBaseline = "middle";
-      context.fillText(marker.toLocaleString(), 0, this.y(marker, yMax));
     });
 
     // draw lines
     markers.forEach(marker => {
+      context.textAlign = "right";
+      context.textBaseline = "middle";
+      context.fillText(
+        marker.toLocaleString(),
+        this.markerWidth,
+        this.y(marker, yMax)
+      );
+      context.beginPath();
       context.moveTo(this.markerWidth + 10, this.y(marker, yMax));
       context.lineTo(this.width, this.y(marker, yMax));
-      context.setLineDash([10, 10]);
+      context.setLineDash(lineDash);
       context.stroke();
     });
 
