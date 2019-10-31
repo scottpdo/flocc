@@ -5,6 +5,7 @@ import { Cell } from "../agents/Cell";
 import { Environment } from "./Environment";
 
 import shuffle from "../utils/shuffle";
+import { Rule } from "../helpers/Rule";
 
 const hash = (x: number, y: number): string =>
   x.toString() + "," + y.toString();
@@ -279,7 +280,11 @@ class GridEnvironment extends Environment {
         if (!cell) continue;
         cell.rules.forEach(ruleObj => {
           const { rule, args } = ruleObj;
-          rule(cell, ...args);
+          if (rule instanceof Rule) {
+            rule.call(cell);
+          } else {
+            rule(cell, ...args);
+          }
         });
       }
     }
@@ -287,7 +292,11 @@ class GridEnvironment extends Environment {
     this.agents.forEach(agent => {
       agent.rules.forEach(ruleObj => {
         const { rule, args } = ruleObj;
-        rule(agent, ...args);
+        if (rule instanceof Rule) {
+          rule.call(agent);
+        } else {
+          rule(agent, ...args);
+        }
       });
     });
 
@@ -297,7 +306,11 @@ class GridEnvironment extends Environment {
         if (!cell) continue;
         while (cell.queue.length > 0) {
           const { rule, args } = cell.queue.shift();
-          rule(cell, ...args);
+          if (rule instanceof Rule) {
+            rule.call(cell);
+          } else {
+            rule(cell, ...args);
+          }
         }
       }
     }
@@ -305,7 +318,11 @@ class GridEnvironment extends Environment {
     this.agents.forEach(agent => {
       while (agent.queue.length > 0) {
         const { rule, args } = agent.queue.shift();
-        rule(agent, ...args);
+        if (rule instanceof Rule) {
+          rule.call(agent);
+        } else {
+          rule(agent, ...args);
+        }
       }
     });
 
