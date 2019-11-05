@@ -1,0 +1,51 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/16.10.2/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.10.2/umd/react-dom.production.min.js"></script>
+
+<div id="container"></div>
+<script>
+    const { Agent, Environment, Rule } = flocc;
+
+    const environment = new Environment();
+    const steps = [
+        ["local", "x", 2],
+        ["local", "y", 3],
+        ["add", ["local", "x"], ["local", "y"]]
+    ];
+    const rule = new Rule(environment, steps, arr => {
+        container.innerHTML += arr.join(" ") + "<br />";
+    });
+
+    function parseLeaves(contents) {
+        if (!(contents instanceof Array)) return contents;
+        return contents.map(token => {
+            if (token instanceof Array) return parseLeaves(token);
+            return new Leaf(token);
+        });
+    }
+
+    function traverse(leaf, level) {
+        const dash = level > 2 ? new Array(level - 2).fill("-").join("") : "";
+        if (leaf.leaves instanceof Array) {
+            return leaf.leaves.map(l => traverse(l, level + 1));
+        } else if (leaf.leaves) {
+            return traverse(leaf.leaves, level + 1);
+        }
+        if (leaf instanceof Array) return leaf.map(l => traverse(l, level + 1));
+        console.log(dash, leaf);
+    }
+
+    class Leaf {
+        constructor(contents) {
+            this.leaves = parseLeaves(contents);
+        }
+    }
+
+    const tree = new Leaf(steps);
+    traverse(tree, 0);
+
+    const agent = new Agent();
+    agent.addRule(rule);
+    environment.addAgent(agent);
+
+    environment.tick();
+</script>

@@ -148,3 +148,37 @@ it("Correctly does numeric comparisons.", () => {
   rule = new Rule(environment, steps);
   expect(rule.call()).toBe(true);
 });
+
+it("Correctly maps arrays.", () => {
+  const arr = [1, 2, 3];
+  let rule = new Rule(environment, arr);
+
+  // when given an array, returns the same object
+  expect(rule.call()).toBe(arr);
+
+  let steps = ["map", arr, ["add", 2]];
+  rule = new Rule(environment, steps);
+  expect(rule.call()).toEqual([3, 4, 5]);
+
+  // does not mutate original
+  expect(arr).toEqual([1, 2, 3]);
+
+  steps = ["map", arr, ["multiply", ["add", 1, 1]]];
+  rule = new Rule(environment, steps);
+  expect(rule.call()).toEqual([2, 4, 6]);
+});
+
+it("Correctly filters arrays.", () => {
+  const arr = [1, 2, 3, 4, 5];
+
+  let steps = ["filter", arr, ["gte", 2]];
+  let rule = new Rule(environment, steps);
+  expect(rule.call()).toEqual([2, 3, 4, 5]);
+
+  // does not mutate original
+  expect(arr).toEqual([1, 2, 3, 4, 5]);
+
+  steps = ["filter", arr, ["eq", 1, ["mod", 2]]];
+  rule = new Rule(environment, steps);
+  expect(rule.call()).toEqual([1]);
+});
