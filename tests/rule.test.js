@@ -1,4 +1,4 @@
-const { Agent, Environment, Rule } = require("../dist/flocc");
+const { Agent, Environment, Rule, Vector } = require("../dist/flocc");
 
 const agent = new Agent();
 const environment = new Environment();
@@ -111,6 +111,26 @@ it("Correctly matches conditionals.", () => {
   expect(rule.call()).toBe(2);
 });
 
+it("Correctly matches 'and' statements.", () => {
+  let steps = ["and", true, true];
+  let rule = new Rule(environment, steps);
+  expect(rule.call()).toBe(true);
+
+  steps = ["and", ["gt", 2, 3], ["gt", 2, 1]];
+  rule = new Rule(environment, steps);
+  expect(rule.call()).toBe(false);
+});
+
+it("Correctly matches 'or' statements.", () => {
+  let steps = ["or", false, false];
+  let rule = new Rule(environment, steps);
+  expect(rule.call()).toBe(false);
+
+  steps = ["or", ["gt", ["add", 2, 2], 1], ["gt", 2, 1]];
+  rule = new Rule(environment, steps);
+  expect(rule.call()).toBe(true);
+});
+
 it("Correctly does numeric comparisons.", () => {
   let steps = ["gt", 1, 2];
   let rule = new Rule(environment, steps);
@@ -139,6 +159,10 @@ it("Correctly does numeric comparisons.", () => {
   steps = ["lte", 3, 2];
   rule = new Rule(environment, steps);
   expect(rule.call()).toBe(false);
+
+  steps = ["eq", 0, ["subtract", 1, 1]];
+  rule = new Rule(environment, steps);
+  expect(rule.call()).toBe(true);
 
   steps = ["eq", 2, 3];
   rule = new Rule(environment, steps);
@@ -181,4 +205,52 @@ it("Correctly filters arrays.", () => {
   steps = ["filter", arr, ["eq", 1, ["mod", 2]]];
   rule = new Rule(environment, steps);
   expect(rule.call()).toEqual([1]);
+});
+
+it(`Correctly retrieves values from an object's key.`, () => {
+  let steps = ["key", { abc: "123" }, "abc"];
+  let rule = new Rule(environment, steps);
+  expect(rule.call()).toEqual("123");
+
+  steps = ["map", [{ a: 1 }, { a: 2 }, { a: 3 }], ["key", "a"]];
+  rule = new Rule(environment, steps);
+  expect(rule.call()).toEqual([1, 2, 3]);
+});
+
+it("Correctly calls methods on an object.", () => {
+  let steps = [
+    [
+      "local",
+      "obj",
+      {
+        double(a) {
+          return 2 * a;
+        }
+      }
+    ],
+    ["method", ["local", "obj"], "double", 10]
+  ];
+  let rule = new Rule(environment, steps);
+  expect(rule.call()).toEqual(20);
+
+  steps = [["set", "x", 5], ["key", ["method", ["agent"], "getData"], "x"]];
+  rule = new Rule(environment, steps);
+  expect(rule.call(agent)).toEqual(5);
+
+  steps = [
+    ["set", "v", new Vector(3, 4)],
+    ["local", "dummy", ["method", ["get", "v"], "rotateZ", Math.PI]],
+    ["key", ["get", "v"], "x"]
+  ];
+  rule = new Rule(environment, steps);
+  expect(rule.call(agent)).toBeCloseTo(-3);
+});
+
+it("Correctly instantiates Vectors.", () => {
+  let steps = [
+    ["local", "v", ["vector", 2, 3, 4]],
+    ["key", ["local", "v"], "yz"]
+  ];
+  let rule = new Rule(environment, steps);
+  expect(rule.call()).toEqual([3, 4]);
 });

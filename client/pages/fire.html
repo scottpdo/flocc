@@ -1,0 +1,111 @@
+<div id="container"></div>
+<script>
+    const {
+        Agent,
+        Environment,
+        GridEnvironment,
+        ASCIIRenderer,
+        CanvasRenderer,
+        utils,
+        Vector,
+        Rule
+    } = flocc;
+
+    const PERCENT_FULL = 0.57;
+    const environment = new GridEnvironment(60, 60);
+    const renderer = new CanvasRenderer(environment, {
+        background: "#494949",
+        scale: 6,
+        width: 600,
+        height: 600
+    });
+    renderer.mount("#container");
+
+    const steps = [
+        [
+            "if",
+            [
+                "and",
+                ["eq", ["get", "x"], 0],
+                ["eq", ["key", ["environment"], "time"], 0]
+            ],
+            ["set", "r", 255]
+        ],
+        [
+            /* set local var for this agent's neighbors */
+            "set",
+            "neighbors",
+            ["method", "environment", "neighbors", "agent", 1]
+        ],
+        [
+            /* only use neighbors that exist (some might be null) */
+            "set",
+            "existingNeighbors",
+            ["filter", ["get", "neighbors"], ["or", false]]
+        ],
+        [
+            /* get data of neighors */
+            "set",
+            "existingNeighborsData",
+            ["map", ["get", "existingNeighbors"], ["method", "getData"]]
+        ],
+        [
+            "set",
+            "neighborsR",
+            ["map", ["get", "existingNeighborsData"], ["key", "r"]]
+        ],
+        ["set", "neighborsRGt0", ["filter", ["get", "neighborsR"], ["gt", 0]]],
+        [
+            "if",
+            ["gt", ["key", ["get", "neighborsRGt0"], "length"], 0],
+            [
+                ["enqueue", "r", 255],
+                [
+                    "if",
+                    ["gt", ["get", "a"], 0.33],
+                    ["set", "a", ["subtract", ["get", "a"], 0.01]]
+                ]
+            ]
+        ]
+    ];
+
+    const rule = new Rule(environment, steps);
+
+    // this function allows us to use the 'color' key as an alias to the
+    // agent's individual r/g/b/a values
+    function getColor(agent) {
+        return `rgb(
+      ${agent.get("r")},
+      ${agent.get("g")},
+      ${agent.get("b")},
+      ${agent.get("a")}
+    )`;
+    }
+
+    function setup() {
+        // add agents here
+        environment.loop((x, y) => {
+            if (Math.random() > PERCENT_FULL) return;
+            const agent = new Agent();
+            agent.set("width", 5);
+            agent.set("height", 5);
+            agent.set("shape", "rect");
+            agent.set("r", 0);
+            agent.set("g", 0);
+            agent.set("b", 0);
+            agent.set("a", 1);
+            agent.set("color", getColor);
+            agent.addRule(rule);
+            environment.addAgentAt(x, y, agent);
+        });
+    }
+
+    function run() {
+        environment.tick();
+        window.requestAnimationFrame(run);
+        // setTimeout(run, 250);
+    }
+
+    setup();
+    run();
+</script>
