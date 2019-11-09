@@ -54,7 +54,7 @@ const method = (
   name: string,
   ...args: any[]
 ): any => {
-  if (!obj[name] || !(obj[name] instanceof Function)) return null;
+  if (!obj || !obj[name] || !(obj[name] instanceof Function)) return null;
   return obj[name](...args);
 };
 
@@ -121,7 +121,7 @@ class Rule {
       const key = this.evaluate(agent, a);
       const value = this.evaluate(agent, b);
       // get
-      if (!value) return this.evaluate(agent, [this.locals[key]]);
+      if (!value) return this.locals[key];
       // set
       this.locals[key] = value;
       return null;

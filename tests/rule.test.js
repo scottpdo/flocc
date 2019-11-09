@@ -86,6 +86,18 @@ it("Correctly sets agent data.", () => {
   expect(agent.get("x")).toBe(999);
 });
 
+it("Correctly enqueues setting agent data.", () => {
+  let steps = ["enqueue", "x", 999];
+  let rule = new Rule(environment, steps);
+  const a = new Agent();
+  a.set("x", 100);
+  a.addRule(rule);
+  environment.addAgent(a);
+  expect(a.get("x")).toBe(100);
+  environment.tick();
+  expect(a.get("x")).toBe(999);
+});
+
 it("Correctly sets and gets local variables.", () => {
   let steps = [["local", "i", 1], ["local", "i"]];
   let rule = new Rule(environment, steps);
@@ -99,6 +111,16 @@ it("Correctly sets and gets local variables.", () => {
   ];
   rule = new Rule(environment, steps);
   expect(rule.call()).toBe(4);
+
+  const obj = { key1: 10, key2: 25 };
+  steps = [["local", "obj", obj], ["local", "obj"]];
+  rule = new Rule(environment, steps);
+  expect(rule.call()).toEqual(obj);
+
+  const arr = [1, 2, 3, 4, 5];
+  steps = [["local", "arr", arr], ["local", "arr"]];
+  rule = new Rule(environment, steps);
+  expect(rule.call()).toEqual(arr);
 });
 
 it("Correctly matches conditionals.", () => {

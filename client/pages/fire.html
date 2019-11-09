@@ -12,7 +12,7 @@
     } = flocc;
 
     const PERCENT_FULL = 0.57;
-    const environment = new GridEnvironment(60, 60);
+    const environment = new GridEnvironment(100, 100);
     const renderer = new CanvasRenderer(environment, {
         background: "#494949",
         scale: 6,
@@ -33,31 +33,35 @@
         ],
         [
             /* set local var for this agent's neighbors */
-            "set",
+            "local",
             "neighbors",
             ["method", "environment", "neighbors", "agent", 1]
         ],
         [
             /* only use neighbors that exist (some might be null) */
-            "set",
+            "local",
             "existingNeighbors",
-            ["filter", ["get", "neighbors"], ["or", false]]
+            ["filter", ["local", "neighbors"], ["or", false]]
         ],
         [
             /* get data of neighors */
-            "set",
+            "local",
             "existingNeighborsData",
-            ["map", ["get", "existingNeighbors"], ["method", "getData"]]
+            ["map", ["local", "existingNeighbors"], ["method", "getData"]]
         ],
         [
-            "set",
+            "local",
             "neighborsR",
-            ["map", ["get", "existingNeighborsData"], ["key", "r"]]
+            ["map", ["local", "existingNeighborsData"], ["key", "r"]]
         ],
-        ["set", "neighborsRGt0", ["filter", ["get", "neighborsR"], ["gt", 0]]],
+        [
+            "local",
+            "neighborsRGt0",
+            ["filter", ["local", "neighborsR"], ["gt", 0]]
+        ],
         [
             "if",
-            ["gt", ["key", ["get", "neighborsRGt0"], "length"], 0],
+            ["gt", ["key", ["local", "neighborsRGt0"], "length"], 0],
             [
                 ["enqueue", "r", 255],
                 [
@@ -70,6 +74,17 @@
     ];
 
     const rule = new Rule(environment, steps);
+
+    function tick(agent) {
+        const neighbors = environment.neighbors(agent, 1);
+        if (agent.get("x") === 0 && environment.time === 0) agent.set("r", 255);
+        if (neighbors.filter(n => !!n && n.get("r") > 0).length > 0) {
+            agent.enqueue(() => {
+                agent.set("r", 255);
+                if (agent.get("a") > 0.33) agent.decrement("a", 0.01);
+            });
+        }
+    }
 
     // this function allows us to use the 'color' key as an alias to the
     // agent's individual r/g/b/a values
@@ -103,6 +118,7 @@
     function run() {
         environment.tick();
         window.requestAnimationFrame(run);
+        // console.log("ticking");
         // setTimeout(run, 250);
     }
 
