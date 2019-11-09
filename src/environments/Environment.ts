@@ -4,6 +4,7 @@
 /// <reference path="../types/Data.d.ts" />
 import { Agent } from "../agents/Agent";
 import { Network } from "../helpers/Network";
+import { Rule } from "../helpers/Rule";
 
 interface Helpers {
   network: Network;
@@ -113,14 +114,22 @@ class Environment extends Agent {
     this.agents.forEach(agent => {
       agent.rules.forEach(ruleObj => {
         const { rule, args } = ruleObj;
-        rule(agent, ...args);
+        if (rule instanceof Rule) {
+          rule.call(agent);
+        } else {
+          rule(agent, ...args);
+        }
       });
     });
 
     this.agents.forEach(agent => {
       while (agent.queue.length > 0) {
         const { rule, args } = agent.queue.shift();
-        rule(agent, ...args);
+        if (rule instanceof Rule) {
+          rule.call(agent);
+        } else {
+          rule(agent, ...args);
+        }
       }
     });
 

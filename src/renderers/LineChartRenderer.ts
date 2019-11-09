@@ -2,7 +2,8 @@
 /// <reference path="../types/Point.d.ts" />
 /// <reference path="../types/NRange.d.ts" />
 import { Environment } from "../environments/Environment";
-import { utils } from "../utils/utils";
+import mean from "../utils/mean";
+import extractRoundNumbers from "../utils/extractRoundNumbers";
 
 type MetricFunction = (arr: Array<number>) => number;
 
@@ -38,7 +39,7 @@ const defaultRendererOptions: LineChartRendererOptions = {
 
 const defaultMetricOptions: MetricOptions = {
   color: "#000",
-  fn: utils.mean
+  fn: mean
 };
 
 class LineChartRenderer implements Renderer {
@@ -111,6 +112,8 @@ class LineChartRenderer implements Renderer {
     backgroundContext.fillRect(0, 0, width, height);
 
     const { range } = this.opts;
+    const markers = extractRoundNumbers(range);
+
     const { min, max } = range;
     let increment = 10 ** Math.round(Math.log10(max - min) - 1); // start from closest power of 10 difference, over 10
     let ticker = 0; // 0 = 1, 1 = 2, 2 = 5, etc.
@@ -119,29 +122,25 @@ class LineChartRenderer implements Renderer {
       ticker++;
     }
 
-    // determine y positions of start and end lines
-    let start = min - ((min + increment) % increment);
-    if (this.y(start) + 7 > height) start += increment; // keep within bounds
-    let end = max - (max % increment);
-    if (this.y(end) - 7 < 0) end -= increment; // same
-
     let textMaxWidth = 0;
     // write numbers
     backgroundContext.font = `${14 * window.devicePixelRatio}px Helvetica`;
     backgroundContext.fillStyle = "#000";
     backgroundContext.textBaseline = "middle";
-    for (let y = start; y <= end; y += increment) {
-      const { width } = backgroundContext.measureText(y.toLocaleString());
+
+    markers.forEach(marker => {
+      const { width } = backgroundContext.measureText(marker.toLocaleString());
       if (width > textMaxWidth) textMaxWidth = width;
-      backgroundContext.fillText(y.toLocaleString(), 5, this.y(y));
-    }
+      backgroundContext.fillText(marker.toLocaleString(), 5, this.y(marker));
+    });
+
     // draw lines
-    for (let y = start; y <= end; y += increment) {
-      backgroundContext.moveTo(textMaxWidth + 10, this.y(y));
-      backgroundContext.lineTo(this.x(width), this.y(y));
+    markers.forEach(marker => {
+      backgroundContext.moveTo(textMaxWidth + 10, this.y(marker));
+      backgroundContext.lineTo(this.x(width), this.y(marker));
       backgroundContext.setLineDash([10, 10]);
       backgroundContext.stroke();
-    }
+    });
   }
 
   render() {

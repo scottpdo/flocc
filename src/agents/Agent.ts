@@ -1,8 +1,13 @@
-/// <reference path="../types/RuleObj.d.ts" />
 /// <reference path="../types/Data.d.ts" />
 /// <reference path="../types/DataObj.d.ts" />
 import { Environment } from "../environments/Environment";
 import uuid from "../utils/uuid";
+import { Rule } from "../helpers/Rule";
+
+declare interface RuleObj {
+  rule: Function | Rule;
+  args: Array<any>;
+}
 
 class Agent implements DataObj {
   /**
@@ -130,9 +135,9 @@ class Agent implements DataObj {
   /**
    * Add a rule to be executed during the agent's
    * environment's tick cycle. When executed, the
-   * @param {Function} rule
+   * @param {Function | Rule} rule
    */
-  addRule(rule: Function, ...args: Array<any>): void {
+  addRule(rule: Function | Rule, ...args: Array<any>): void {
     this.rules.push({
       args,
       rule

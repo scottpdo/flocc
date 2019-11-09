@@ -1,13 +1,16 @@
 <div id="container"></div>
+<div id="histogram-vx"></div>
+<div id="histogram-vy"></div>
 <script>
     /*
-Each agent in this model begins with a random direction, but is constantly shifting its direction to be closer to the average of its closest neighbors. Eventually, all agents will be moving in roughly the same direction.
-*/
+    Each agent in this model begins with a random direction, but is constantly shifting its direction to be closer to the average of its closest neighbors. Eventually, all agents will be moving in roughly the same direction.
+    */
 
     const {
         Agent,
         Environment,
         GridEnvironment,
+        Histogram,
         ASCIIRenderer,
         CanvasRenderer,
         utils,
@@ -16,7 +19,7 @@ Each agent in this model begins with a random direction, but is constantly shift
 
     /* ------- PARAMETERS --------- */
 
-    const flockSize = 250;
+    const flockSize = 150;
     const width = 600;
     const height = 600;
 
@@ -29,18 +32,41 @@ Each agent in this model begins with a random direction, but is constantly shift
     const container = document.getElementById("container");
     renderer.mount(container);
 
+    const histogramVX = new Histogram(environment, {
+        buckets: 10,
+        height: 200,
+        min: -1,
+        max: 1,
+        width: 800
+    });
+    histogramVX.mount("#histogram-vx");
+    histogramVX.metric("vx");
+
+    const histogramVY = new Histogram(environment, {
+        buckets: 10,
+        height: 200,
+        min: -1,
+        max: 1,
+        width: 800
+    });
+    histogramVY.mount("#histogram-vy");
+    histogramVY.metric("vy");
+
     function setup() {
         for (let i = 0; i < flockSize; i++) {
             const agent = new Agent();
 
             agent.set("x", Math.random() * width);
             agent.set("y", Math.random() * height);
+
+            const angle = 2 * Math.random() * Math.PI;
+            agent.set("v", new Vector(Math.cos(angle), Math.sin(angle)));
+
             agent.set("shape", "arrow");
             agent.set("size", 2.5);
 
-            const angle = 2 * Math.random() * Math.PI;
-            agent.set("vx", Math.cos(angle));
-            agent.set("vy", Math.sin(angle));
+            agent.set("vx", a => a.get("v").x);
+            agent.set("vy", a => a.get("v").y);
 
             agent.addRule(tick);
 
@@ -49,11 +75,10 @@ Each agent in this model begins with a random direction, but is constantly shift
     }
 
     function tick(agent) {
-        var x = agent.get("x");
-        var y = agent.get("y");
+        let { x, y, v } = agent.getData();
 
-        x += agent.get("vx");
-        y += agent.get("vy");
+        x += v.x;
+        y += v.y;
 
         while (x < 0) x += width;
         while (x >= width) x -= width;
@@ -71,26 +96,22 @@ Each agent in this model begins with a random direction, but is constantly shift
 
         if (neighbors.length === 0) return;
 
-        var meanVel = neighbors.reduce(
-            function(a, b) {
-                return {
-                    x: a.x + b.get("vx"),
-                    y: a.y + b.get("vy")
-                };
-            },
-            { x: 0, y: 0 }
+        const meanVel = neighbors.reduce(
+            (a, b) => a.add(b.get("v")),
+            new Vector()
         );
+        const norm = utils.distance(meanVel, new Vector());
+        meanVel.multiplyScalar(1 / norm);
 
-        const norm = utils.distance(meanVel, { x: 0, y: 0 });
-        meanVel.x /= norm;
-        meanVel.y /= norm;
-
-        agent.set("vx", (99 * agent.get("vx") + meanVel.x) / 100);
-        agent.set("vy", (99 * agent.get("vy") + meanVel.y) / 100);
+        v.add(meanVel.multiplyScalar(0.01)).normalize();
     }
+
+    let t = new Date();
 
     function render() {
         environment.tick();
+        console.log(`${new Date() - t} since last render`);
+        t = new Date();
         requestAnimationFrame(render);
     }
 
