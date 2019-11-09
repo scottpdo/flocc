@@ -1,4 +1,5 @@
 <div id="container"></div>
+<div id="histogram"></div>
 <script>
     const {
         Agent,
@@ -12,10 +13,10 @@
     } = flocc;
 
     const PERCENT_FULL = 0.57;
-    const environment = new GridEnvironment(100, 100);
+    const environment = new GridEnvironment(60, 60);
     const renderer = new CanvasRenderer(environment, {
         background: "#494949",
-        scale: 6,
+        scale: 10,
         width: 600,
         height: 600
     });
@@ -111,8 +112,8 @@
         environment.loop((x, y) => {
             if (Math.random() > PERCENT_FULL) return;
             const agent = new Agent();
-            agent.set("width", 5);
-            agent.set("height", 5);
+            agent.set("width", 8);
+            agent.set("height", 8);
             agent.set("shape", "rect");
             agent.set("r", 0);
             agent.set("g", 0);
