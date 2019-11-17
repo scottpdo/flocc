@@ -7,7 +7,7 @@
  * @param {Array} [arr=[]] The Array to copy values to.
  * @returns {Array}
  */
-export default function copyArray<T>(source: Array<T>, arr?: Array<T>) {
+export default function copyArray<T>(source: T[], arr?: T[]) {
   let index: number = -1;
   const length: number = source.length;
 
