@@ -72,6 +72,43 @@ it("Correctly removes agents.", () => {
   expect(environment.getAgents()).toHaveLength(0);
 });
 
+it("Correctly loops over agents in the order they were added.", () => {
+  const order = [];
+  function tick(agent) {
+    order.push(agent.get("i"));
+  }
+  for (let i = 0; i < 10; i++) {
+    const agent = new Agent();
+    agent.set("i", i);
+    agent.addRule(tick);
+    environment.addAgent(agent);
+  }
+  environment.tick();
+  expect(order).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+
+  environment.clear();
+});
+
+it("Correctly loops over agents in random order.", () => {
+  const order = [];
+  function tick(agent) {
+    order.push(agent.get("i"));
+  }
+  for (let i = 0; i < 10; i++) {
+    const agent = new Agent();
+    agent.set("i", i);
+    agent.addRule(tick);
+    environment.addAgent(agent);
+  }
+  environment.tick({ randomizeOrder: true });
+
+  /**
+   * NOTE: Since this tests for randomness, there is a 1 / (10 factorial)
+   * ~ 1 in a million chance that this might not pass.
+   */
+  expect(order).not.toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+});
+
 it("Correctly retrieves agents by ID.", () => {
   const a0 = new Agent();
   const { id } = a0;

@@ -297,7 +297,11 @@ class GridEnvironment extends Environment {
     }
 
     let randomizeOrder: boolean = false;
-    if (typeof opts !== "number" && opts.hasOwnProperty("randomizeOrder"))
+    if (
+      opts &&
+      typeof opts !== "number" &&
+      opts.hasOwnProperty("randomizeOrder")
+    )
       randomizeOrder = opts.randomizeOrder;
 
     // execute all agent rules

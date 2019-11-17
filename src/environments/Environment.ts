@@ -131,7 +131,11 @@ class Environment extends Agent {
     }
 
     let randomizeOrder: boolean = false;
-    if (typeof opts !== "number" && opts.hasOwnProperty("randomizeOrder"))
+    if (
+      opts &&
+      typeof opts !== "number" &&
+      opts.hasOwnProperty("randomizeOrder")
+    )
       randomizeOrder = opts.randomizeOrder;
 
     (randomizeOrder ? shuffle(this.agents) : this.agents).forEach(agent => {
