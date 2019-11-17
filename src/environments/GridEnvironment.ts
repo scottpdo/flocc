@@ -6,6 +6,7 @@ import { Environment, TickOptions, defaultTickOptions } from "./Environment";
 
 import shuffle from "../utils/shuffle";
 import { Rule } from "../helpers/Rule";
+import { utils } from "../utils/utils";
 
 const hash = (x: number, y: number): string =>
   x.toString() + "," + y.toString();
@@ -295,7 +296,12 @@ class GridEnvironment extends Environment {
       }
     }
 
-    this.agents.forEach(agent => {
+    let randomizeOrder: boolean = false;
+    if (typeof opts !== "number" && opts.hasOwnProperty("randomizeOrder"))
+      randomizeOrder = opts.randomizeOrder;
+
+    // execute all agent rules
+    (randomizeOrder ? shuffle(this.agents) : this.agents).forEach(agent => {
       agent.rules.forEach(ruleObj => {
         const { rule, args } = ruleObj;
         if (rule instanceof Rule) {
@@ -306,10 +312,12 @@ class GridEnvironment extends Environment {
       });
     });
 
-    for (let y = 0; y < this.height; y++) {
-      for (let x = 0; x < this.width; x++) {
+    // execute all cell rules
+    if (randomizeOrder) {
+      utils.shuffle(this._cellHashes).forEach(hash => {
+        const { x, y } = unhash(hash);
         const cell = this.getCell(x, y);
-        if (!cell) continue;
+        if (!cell) return;
         while (cell.queue.length > 0) {
           const { rule, args } = cell.queue.shift();
           if (rule instanceof Rule) {
@@ -318,10 +326,26 @@ class GridEnvironment extends Environment {
             rule(cell, ...args);
           }
         }
+      });
+    } else {
+      for (let y = 0; y < this.height; y++) {
+        for (let x = 0; x < this.width; x++) {
+          const cell = this.getCell(x, y);
+          if (!cell) continue;
+          while (cell.queue.length > 0) {
+            const { rule, args } = cell.queue.shift();
+            if (rule instanceof Rule) {
+              rule.call(cell);
+            } else {
+              rule(cell, ...args);
+            }
+          }
+        }
       }
     }
 
-    this.agents.forEach(agent => {
+    // execute all enqueued agent rules
+    (randomizeOrder ? shuffle(this.agents) : this.agents).forEach(agent => {
       while (agent.queue.length > 0) {
         const { rule, args } = agent.queue.shift();
         if (rule instanceof Rule) {

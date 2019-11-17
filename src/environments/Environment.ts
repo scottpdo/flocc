@@ -5,6 +5,7 @@
 import { Agent } from "../agents/Agent";
 import { Network } from "../helpers/Network";
 import { Rule } from "../helpers/Rule";
+import shuffle from "../utils/shuffle";
 
 interface Helpers {
   network: Network;
@@ -122,13 +123,18 @@ class Environment extends Agent {
    * @param {number | TickOptions} opts
    */
   tick(opts?: number | TickOptions): void {
-    let count = 1;
+    let count: number = 1;
     if (typeof opts === "number") {
       count = opts;
     } else if (!!opts) {
       count = opts.count || 1;
     }
-    this.agents.forEach(agent => {
+
+    let randomizeOrder: boolean = false;
+    if (typeof opts !== "number" && opts.hasOwnProperty("randomizeOrder"))
+      randomizeOrder = opts.randomizeOrder;
+
+    (randomizeOrder ? shuffle(this.agents) : this.agents).forEach(agent => {
       agent.rules.forEach(ruleObj => {
         const { rule, args } = ruleObj;
         if (rule instanceof Rule) {
@@ -139,7 +145,7 @@ class Environment extends Agent {
       });
     });
 
-    this.agents.forEach(agent => {
+    (randomizeOrder ? shuffle(this.agents) : this.agents).forEach(agent => {
       while (agent.queue.length > 0) {
         const { rule, args } = agent.queue.shift();
         if (rule instanceof Rule) {
