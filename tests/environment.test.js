@@ -31,6 +31,12 @@ it("Correctly increments time on each tick.", () => {
   expect(environment.time).toEqual(1);
   environment.tick(5);
   expect(environment.time).toEqual(6);
+
+  environment.tick({ count: 1 });
+  expect(environment.time).toEqual(7);
+
+  environment.tick({ count: 10 });
+  expect(environment.time).toEqual(17);
 });
 
 it("Has zero width and height upon instantiating.", () => {

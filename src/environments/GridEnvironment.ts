@@ -2,7 +2,7 @@
 
 import { Agent } from "../agents/Agent";
 import { Cell } from "../agents/Cell";
-import { Environment } from "./Environment";
+import { Environment, TickOptions, defaultTickOptions } from "./Environment";
 
 import shuffle from "../utils/shuffle";
 import { Rule } from "../helpers/Rule";
@@ -271,9 +271,15 @@ class GridEnvironment extends Environment {
    * Override/extend Environment.tick to include the
    * GridEnvironment's cells.
    * @override
-   * @param {number} n - Number of times to tick.
+   * @param {number} opts
    */
-  tick(n: number = 1) {
+  tick(opts?: number | TickOptions) {
+    let count = 1;
+    if (typeof opts === "number") {
+      count = opts;
+    } else if (!!opts) {
+      count = opts.count || 1;
+    }
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
         const cell = this.getCell(x, y);
@@ -326,8 +332,10 @@ class GridEnvironment extends Environment {
       }
     });
 
-    if (n > 1) {
-      this.tick(n - 1);
+    this.time++;
+
+    if (count > 1) {
+      this.tick(count - 1);
       return;
     }
 

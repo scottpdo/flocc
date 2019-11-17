@@ -21,6 +21,19 @@ it("Has 4 (2x2) cells upon instantiating.", () => {
   expect(grid.getCells()).toHaveLength(4);
 });
 
+it("Correctly increments time on each tick.", () => {
+  grid.tick();
+  expect(grid.time).toEqual(1);
+  grid.tick(5);
+  expect(grid.time).toEqual(6);
+
+  grid.tick({ count: 1 });
+  expect(grid.time).toEqual(7);
+
+  grid.tick({ count: 10 });
+  expect(grid.time).toEqual(17);
+});
+
 it("Correctly fills the environment with agents.", () => {
   grid.fill();
   expect(grid.getAgents()).toHaveLength(4);

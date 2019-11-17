@@ -10,6 +10,16 @@ interface Helpers {
   network: Network;
 }
 
+export interface TickOptions {
+  count?: number;
+  randomizeOrder?: boolean;
+}
+
+export const defaultTickOptions: TickOptions = {
+  count: 1,
+  randomizeOrder: false
+};
+
 /**
  * An environment provides the space and time in which agents interact.
  * Environments, like agents, can store data in key-value pairs
@@ -104,13 +114,20 @@ class Environment extends Agent {
   }
 
   /**
-   * Moves the environment `n` ticks forward in time,
+   * Moves the environment forward in time,
    * executing all agent's rules sequentially, followed by
    * any enqueued rules (which are removed with every tick).
-   * If `n` is left empty, defaults to 1.
-   * @param {number} n - Number of times to tick.
+   * Can take either a number or a configuration object as a parameter.
+   * If a number, the environment will tick forward that many times.
+   * @param {number | TickOptions} opts
    */
-  tick(n: number = 1): void {
+  tick(opts?: number | TickOptions): void {
+    let count = 1;
+    if (typeof opts === "number") {
+      count = opts;
+    } else if (!!opts) {
+      count = opts.count || 1;
+    }
     this.agents.forEach(agent => {
       agent.rules.forEach(ruleObj => {
         const { rule, args } = ruleObj;
@@ -135,8 +152,8 @@ class Environment extends Agent {
 
     this.time++;
 
-    if (n > 1) {
-      this.tick(n - 1);
+    if (count > 1) {
+      this.tick(count - 1);
       return;
     }
 
