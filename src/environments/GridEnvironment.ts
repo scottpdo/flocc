@@ -2,10 +2,11 @@
 
 import { Agent } from "../agents/Agent";
 import { Cell } from "../agents/Cell";
-import { Environment } from "./Environment";
+import { Environment, TickOptions, defaultTickOptions } from "./Environment";
 
 import shuffle from "../utils/shuffle";
 import { Rule } from "../helpers/Rule";
+import { utils } from "../utils/utils";
 
 const hash = (x: number, y: number): string =>
   x.toString() + "," + y.toString();
@@ -244,11 +245,7 @@ class GridEnvironment extends Environment {
    * @param {number} radius - how far to look for neighbors
    * @param {boolean} moore - whether to use the Moore neighborhood or von Neumann (defaults to von Neumann)
    */
-  neighbors(
-    agent: Agent,
-    radius: number = 1,
-    moore: boolean = false
-  ): Array<Agent> {
+  neighbors(agent: Agent, radius: number = 1, moore: boolean = false): Agent[] {
     const { x, y } = agent.getData();
     const neighbors: Array<Agent> = [];
 
@@ -268,66 +265,76 @@ class GridEnvironment extends Environment {
   }
 
   /**
+   * Execute all cell rules.
+   * @param { boolean } randomizeOrder
+   */
+  _executeCellRules(randomizeOrder: boolean) {
+    if (randomizeOrder) {
+      utils.shuffle(this._cellHashes).forEach(hash => {
+        const { x, y } = unhash(hash);
+        const cell = this.getCell(x, y);
+        if (!cell) return;
+        cell.executeRules();
+      });
+    } else {
+      for (let y = 0; y < this.height; y++) {
+        for (let x = 0; x < this.width; x++) {
+          const cell = this.getCell(x, y);
+          if (!cell) continue;
+          cell.executeRules();
+        }
+      }
+    }
+  }
+
+  /**
+   * Execute all enqueued cell rules.
+   * @param { boolean } randomizeOrder
+   */
+  _executeEnqueuedCellRules(randomizeOrder: boolean) {
+    if (randomizeOrder) {
+      utils.shuffle(this._cellHashes).forEach(hash => {
+        const { x, y } = unhash(hash);
+        const cell = this.getCell(x, y);
+        if (!cell) return;
+        cell.executeEnqueuedRules();
+      });
+    } else {
+      for (let y = 0; y < this.height; y++) {
+        for (let x = 0; x < this.width; x++) {
+          const cell = this.getCell(x, y);
+          if (!cell) continue;
+          cell.executeEnqueuedRules();
+        }
+      }
+    }
+  }
+
+  /**
    * Override/extend Environment.tick to include the
    * GridEnvironment's cells.
    * @override
-   * @param {number} n - Number of times to tick.
+   * @param {number} opts
    */
-  tick(n: number = 1) {
-    for (let y = 0; y < this.height; y++) {
-      for (let x = 0; x < this.width; x++) {
-        const cell = this.getCell(x, y);
-        if (!cell) continue;
-        cell.rules.forEach(ruleObj => {
-          const { rule, args } = ruleObj;
-          if (rule instanceof Rule) {
-            rule.call(cell);
-          } else {
-            rule(cell, ...args);
-          }
-        });
-      }
-    }
+  tick(opts?: number | TickOptions) {
+    const { count, randomizeOrder } = this._getTickOptions(opts);
 
-    this.agents.forEach(agent => {
-      agent.rules.forEach(ruleObj => {
-        const { rule, args } = ruleObj;
-        if (rule instanceof Rule) {
-          rule.call(agent);
-        } else {
-          rule(agent, ...args);
-        }
-      });
-    });
+    // execute all cell rules
+    this._executeCellRules(randomizeOrder);
 
-    for (let y = 0; y < this.height; y++) {
-      for (let x = 0; x < this.width; x++) {
-        const cell = this.getCell(x, y);
-        if (!cell) continue;
-        while (cell.queue.length > 0) {
-          const { rule, args } = cell.queue.shift();
-          if (rule instanceof Rule) {
-            rule.call(cell);
-          } else {
-            rule(cell, ...args);
-          }
-        }
-      }
-    }
+    // execute all agent rules
+    this._executeAgentRules(randomizeOrder);
 
-    this.agents.forEach(agent => {
-      while (agent.queue.length > 0) {
-        const { rule, args } = agent.queue.shift();
-        if (rule instanceof Rule) {
-          rule.call(agent);
-        } else {
-          rule(agent, ...args);
-        }
-      }
-    });
+    // execute all enqueued cell rules
+    this._executeEnqueuedCellRules(randomizeOrder);
 
-    if (n > 1) {
-      this.tick(n - 1);
+    // execute all enqueued agent rules
+    this._executeEnqueuedAgentRules(randomizeOrder);
+
+    this.time++;
+
+    if (count > 1) {
+      this.tick(count - 1);
       return;
     }
 

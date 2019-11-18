@@ -5,10 +5,21 @@
 import { Agent } from "../agents/Agent";
 import { Network } from "../helpers/Network";
 import { Rule } from "../helpers/Rule";
+import shuffle from "../utils/shuffle";
 
 interface Helpers {
   network: Network;
 }
+
+export interface TickOptions {
+  count?: number;
+  randomizeOrder?: boolean;
+}
+
+export const defaultTickOptions: TickOptions = {
+  count: 1,
+  randomizeOrder: false
+};
 
 /**
  * An environment provides the space and time in which agents interact.
@@ -104,39 +115,66 @@ class Environment extends Agent {
   }
 
   /**
-   * Moves the environment `n` ticks forward in time,
+   * From the parameter passed to .tick, get a structured TickOptions object.
+   * @param {number | TickOptions} opts
+   */
+  _getTickOptions(opts?: number | TickOptions): TickOptions {
+    let count: number = 1;
+    if (typeof opts === "number") {
+      count = opts;
+    } else if (!!opts) {
+      count = opts.count || 1;
+    }
+    let randomizeOrder: boolean = false;
+    if (
+      opts &&
+      typeof opts !== "number" &&
+      opts.hasOwnProperty("randomizeOrder")
+    )
+      randomizeOrder = opts.randomizeOrder;
+
+    return { count, randomizeOrder };
+  }
+
+  /**
+   * Execute all agent rules.
+   * @param { boolean } randomizeOrder
+   */
+  _executeAgentRules(randomizeOrder: boolean): void {
+    (randomizeOrder ? shuffle(this.agents) : this.agents).forEach(agent =>
+      agent.executeRules()
+    );
+  }
+
+  /**
+   * Execute all enqueued agent rules.
+   * @param { boolean } randomizeOrder
+   */
+  _executeEnqueuedAgentRules(randomizeOrder: boolean): void {
+    (randomizeOrder ? shuffle(this.agents) : this.agents).forEach(agent =>
+      agent.executeEnqueuedRules()
+    );
+  }
+
+  /**
+   * Moves the environment forward in time,
    * executing all agent's rules sequentially, followed by
    * any enqueued rules (which are removed with every tick).
-   * If `n` is left empty, defaults to 1.
-   * @param {number} n - Number of times to tick.
+   * Can take either a number or a configuration object as a parameter.
+   * If a number, the environment will tick forward that many times.
+   * @param {number | TickOptions} opts
    */
-  tick(n: number = 1): void {
-    this.agents.forEach(agent => {
-      agent.rules.forEach(ruleObj => {
-        const { rule, args } = ruleObj;
-        if (rule instanceof Rule) {
-          rule.call(agent);
-        } else {
-          rule(agent, ...args);
-        }
-      });
-    });
+  tick(opts?: number | TickOptions): void {
+    const { count, randomizeOrder } = this._getTickOptions(opts);
 
-    this.agents.forEach(agent => {
-      while (agent.queue.length > 0) {
-        const { rule, args } = agent.queue.shift();
-        if (rule instanceof Rule) {
-          rule.call(agent);
-        } else {
-          rule(agent, ...args);
-        }
-      }
-    });
+    this._executeAgentRules(randomizeOrder);
+
+    this._executeEnqueuedAgentRules(randomizeOrder);
 
     this.time++;
 
-    if (n > 1) {
-      this.tick(n - 1);
+    if (count > 1) {
+      this.tick(count - 1);
       return;
     }
 

@@ -162,6 +162,36 @@ class Agent implements DataObj {
       rule
     });
   }
+
+  /**
+   * From a RuleObj, execute a single rule (function or structured Rule).
+   * @param {RuleObj} ruleObj
+   */
+  executeRule(ruleObj: RuleObj) {
+    const { rule, args } = ruleObj;
+    if (rule instanceof Rule) {
+      rule.call(this);
+    } else {
+      rule(this, ...args);
+    }
+  }
+
+  /**
+   * Execute all rules.
+   */
+  executeRules() {
+    this.rules.forEach(ruleObj => this.executeRule(ruleObj));
+  }
+
+  /**
+   * Execute all enqueued rules.
+   */
+  executeEnqueuedRules() {
+    while (this.queue.length > 0) {
+      const ruleObj = this.queue.shift();
+      this.executeRule(ruleObj);
+    }
+  }
 }
 
 export { Agent };
