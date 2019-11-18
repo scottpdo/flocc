@@ -99,3 +99,41 @@ it("Correctly finds both von Neumann and Moore neighbors.", () => {
   expect(grid2.neighbors(a, 2, true)).toHaveLength(24);
   expect(grid2.neighbors(a, 3, true)).toHaveLength(48);
 });
+
+const grid3 = new GridEnvironment(3, 3);
+
+it("Correctly loops over all cells in random order.", () => {
+  const order = [];
+  function tick(cell) {
+    order.push(cell.get("i"));
+  }
+  grid3.getCells().forEach((cell, i) => {
+    cell.set("i", i);
+    cell.addRule(tick);
+  });
+  grid3.tick({ randomizeOrder: true });
+  /**
+   * NOTE: Since this tests for randomness, there is a 1 / (9 factorial)
+   * ~ 3 in a million chance that this might not pass.
+   */
+  expect(order).not.toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+});
+
+it("Correctly loops over all agents in random order.", () => {
+  const order = [];
+  function tick(agent) {
+    order.push(agent.get("i"));
+  }
+  grid3.getCells().forEach((cell, i) => {
+    const agent = new Agent();
+    agent.set("i", i);
+    agent.addRule(tick);
+    grid3.addAgentAt(cell.get("x"), cell.get("y"), agent);
+  });
+  grid3.tick({ randomizeOrder: true });
+  /**
+   * NOTE: Since this tests for randomness, there is a 1 / (9 factorial)
+   * ~ 3 in a million chance that this might not pass.
+   */
+  expect(order).not.toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+});

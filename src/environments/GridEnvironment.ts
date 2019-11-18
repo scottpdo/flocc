@@ -281,10 +281,20 @@ class GridEnvironment extends Environment {
     } else if (!!opts) {
       count = opts.count || 1;
     }
-    for (let y = 0; y < this.height; y++) {
-      for (let x = 0; x < this.width; x++) {
+    let randomizeOrder: boolean = false;
+    if (
+      opts &&
+      typeof opts !== "number" &&
+      opts.hasOwnProperty("randomizeOrder")
+    )
+      randomizeOrder = opts.randomizeOrder;
+
+    // execute all cell rules
+    if (randomizeOrder) {
+      utils.shuffle(this._cellHashes).forEach(hash => {
+        const { x, y } = unhash(hash);
         const cell = this.getCell(x, y);
-        if (!cell) continue;
+        if (!cell) return;
         cell.rules.forEach(ruleObj => {
           const { rule, args } = ruleObj;
           if (rule instanceof Rule) {
@@ -293,16 +303,23 @@ class GridEnvironment extends Environment {
             rule(cell, ...args);
           }
         });
+      });
+    } else {
+      for (let y = 0; y < this.height; y++) {
+        for (let x = 0; x < this.width; x++) {
+          const cell = this.getCell(x, y);
+          if (!cell) continue;
+          cell.rules.forEach(ruleObj => {
+            const { rule, args } = ruleObj;
+            if (rule instanceof Rule) {
+              rule.call(cell);
+            } else {
+              rule(cell, ...args);
+            }
+          });
+        }
       }
     }
-
-    let randomizeOrder: boolean = false;
-    if (
-      opts &&
-      typeof opts !== "number" &&
-      opts.hasOwnProperty("randomizeOrder")
-    )
-      randomizeOrder = opts.randomizeOrder;
 
     // execute all agent rules
     (randomizeOrder ? shuffle(this.agents) : this.agents).forEach(agent => {
@@ -316,7 +333,7 @@ class GridEnvironment extends Environment {
       });
     });
 
-    // execute all cell rules
+    // execute all enqueued cell rules
     if (randomizeOrder) {
       utils.shuffle(this._cellHashes).forEach(hash => {
         const { x, y } = unhash(hash);
