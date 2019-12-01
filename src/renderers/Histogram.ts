@@ -86,7 +86,7 @@ class Histogram implements Renderer {
     const context = this.canvas.getContext("2d");
     const { environment, height, width } = this;
     const agents = environment.getAgents();
-    const { buckets, scale, min, max } = this.opts;
+    const { aboveMax, belowMin, buckets, scale, min, max } = this.opts;
     const yMin = 0;
     const yMax = scale === "fixed" ? agents.length : getMax(bucketValues);
     const markers = extractRoundNumbers({ min: yMin, max: yMax });
@@ -114,12 +114,21 @@ class Histogram implements Renderer {
       context.stroke();
     });
 
+    const numBuckets =
+      bucketValues.length - (aboveMax ? 1 : 0) - (belowMin ? 1 : 0);
+
     bucketValues
       .map((v, i) => {
+        if (i === 0 && belowMin) {
+          return `< ${min}`;
+        } else if (i === bucketValues.length - 1 && aboveMax) {
+          return `> ${max}`;
+        }
+        const currentIndex = i - (belowMin ? 1 : 0);
         return (
-          remap(i, 0, bucketValues.length, min, max).toLocaleString() +
+          remap(currentIndex, 0, numBuckets, min, max).toLocaleString() +
           "–" +
-          remap(i + 1, 0, bucketValues.length, min, max).toLocaleString()
+          remap(currentIndex + 1, 0, numBuckets, min, max).toLocaleString()
         );
       })
       .forEach((label, i) => {
@@ -127,7 +136,10 @@ class Histogram implements Renderer {
         context.textBaseline = "alphabetic";
         context.fillText(
           label,
-          this.x((i * width) / buckets + (0.5 * width) / buckets),
+          this.x(
+            (i * width) / bucketValues.length +
+              (0.5 * width) / bucketValues.length
+          ),
           height - 3
         );
       });
@@ -137,7 +149,7 @@ class Histogram implements Renderer {
     if (!this._metric) return;
     const { canvas, environment, width, height } = this;
     const metric = this._metric;
-    const { buckets, color, scale, max, min } = this.opts;
+    const { aboveMax, belowMin, buckets, color, scale, max, min } = this.opts;
     const context = canvas.getContext("2d");
 
     const agents = environment.getAgents();
@@ -145,8 +157,10 @@ class Histogram implements Renderer {
     context.clearRect(0, 0, width, height);
 
     // initialize map of bucket values --
-    // array of length `buckets`, initialized to all zeros
-    const bucketValues = new Array(buckets).fill(0);
+    // array of length `buckets`, initialized to all zeros,
+    // plus 1 if aboveMax, plus another 1 if belowMin
+    const numBuckets = buckets + (aboveMax ? 1 : 0) + (belowMin ? 1 : 0);
+    const bucketValues = new Array(numBuckets).fill(0);
 
     agents.forEach(agent => {
       // ignore this agent if it doesn't have the metric in question
@@ -158,9 +172,16 @@ class Histogram implements Renderer {
       );
 
       // increment the corresponding value in the bucketValues array
-      bucketValues[bucketIndex]++;
+      if (bucketIndex >= 0 && bucketIndex < bucketValues.length - 1) {
+        bucketValues[bucketIndex + (belowMin ? 1 : 0)]++;
+      } else if (bucketIndex >= bucketValues.length - 1 && aboveMax) {
+        bucketValues[bucketValues.length - 1]++;
+      } else if (bucketIndex < 0 && belowMin) {
+        bucketValues[0]++;
+      }
     });
 
+    console.log(bucketValues);
     this.drawMarkers(bucketValues);
 
     context.fillStyle = color;
@@ -169,9 +190,9 @@ class Histogram implements Renderer {
     bucketValues.forEach((value, i) => {
       const mappedValue = remap(value, 0, maxValue, 0, 1);
       context.fillRect(
-        this.x(((i + 0.1) * width) / buckets),
+        this.x(((i + 0.1) * width) / numBuckets),
         remap(mappedValue, 0, 1, height - 30, 0),
-        (0.8 * (width - this.markerWidth)) / buckets,
+        (0.8 * (width - this.markerWidth)) / numBuckets,
         remap(mappedValue, 0, 1, 0, height - 30)
       );
     });
