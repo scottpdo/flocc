@@ -1,0 +1,191 @@
+<div id="container"></div>
+<script>
+    const { Agent, Environment, utils, Histogram } = flocc;
+    let environment = null;
+
+    const SECONDS_PER_TICK = 10;
+    const MINUTES_PER_TICK = SECONDS_PER_TICK / 60;
+    const HOURS_PER_TICK = MINUTES_PER_TICK / 60;
+
+    const AMOUNT_TO_EAT = 0.7;
+    // eat AMOUNT_TO_EAT in 10 minutes
+    const TURNS_TO_EAT = 10 / MINUTES_PER_TICK;
+
+    // recover fully in 8 hours
+    const RATE_OF_REST = (1 / 8) * HOURS_PER_TICK;
+
+    const HUNGER_GAIN = 0.0002;
+    const HUNGER_GAIN_WHILE_SLEEPING = 0.00005;
+    const TIRED_GAIN = 0.0001;
+
+    class SocialAgent extends Agent {
+        constructor() {
+            super();
+            this.set({
+                eating: -1,
+                hunger: utils.random(-1.5, 1.5, true),
+                tired: utils.random(0, 0.5, true),
+                sleeping: -1,
+                auto: true,
+                relationships: new Map()
+            });
+        }
+    }
+
+    class Eatery {
+        static MAX_SIZE = 5;
+
+        constructor() {
+            this.agents = [];
+        }
+
+        addAgent(agent) {
+            if (!this.isFull()) this.agents.push(agent);
+        }
+
+        removeAgent(agent) {
+            if (this.agents.indexOf(agent) >= 0) {
+                this.agents.splice(this.agents.indexOf(agent), 1);
+            }
+        }
+
+        isFull() {
+            return this.agents.length === Eatery.MAX_SIZE;
+        }
+    }
+
+    class Relationship {
+        constructor(a, b) {
+            this.a = a;
+            this.b = b;
+            this.atob = 0;
+            this.btoa = 0;
+        }
+
+        incrementA() {
+            this.atob++;
+        }
+
+        incrementB() {
+            this.btoa++;
+        }
+
+        incrementBoth() {
+            this.incrementA();
+            this.incrementB();
+        }
+    }
+
+    function attemptToEat(agent) {
+        const eatery = agent.environment.get("eatery");
+        if (eatery.isFull()) return false;
+        eatery.addAgent(agent);
+        agent.set("eating", 0);
+
+        // when a new agent begins eating, they form a relationship
+        // with agents already at the eatery
+        if (eatery.agents.length > 1) {
+            eatery.agents
+                .filter(a => a !== agent)
+                .forEach(a => {
+                    if (
+                        !a.get("relationships").get(agent) &&
+                        !agent.get("relationships").get(a)
+                    ) {
+                        const r = new Relationship(agent, a);
+                        a.get("relationships").set(agent, r);
+                        agent.get("relationships").set(a, r);
+                    } else {
+                        agent
+                            .get("relationships")
+                            .get(a)
+                            .incrementBoth();
+                    }
+                });
+        }
+
+        return true;
+    }
+
+    function eat(agent) {
+        agent.increment("eating");
+        agent.decrement("hunger", AMOUNT_TO_EAT / TURNS_TO_EAT);
+        agent.set("hunger", Math.max(agent.get("hunger"), 0));
+    }
+
+    function stopEating(agent) {
+        agent.environment.get("eatery").removeAgent(agent);
+        agent.set("eating", -1);
+    }
+
+    function sleep(agent) {
+        agent.increment("sleeping");
+        agent.decrement("tired", RATE_OF_REST);
+        agent.set("tired", Math.max(agent.get("tired"), 0));
+    }
+
+    function wakeUp(agent) {
+        agent.set("sleeping", -1);
+    }
+
+    function tick(agent) {
+        if (agent.get("eating") < 0) {
+            agent.increment(
+                "hunger",
+                agent.get("sleeping") < 0
+                    ? HUNGER_GAIN
+                    : HUNGER_GAIN_WHILE_SLEEPING
+            );
+        }
+        if (agent.get("sleeping") < 0) agent.increment("tired", TIRED_GAIN);
+
+        const hunger = agent.get("hunger");
+        const mightEat = utils.remap(hunger, 0.7, 1, 0, 1) ** 4;
+        if (agent.get("auto") && hunger > 0.7 && Math.random() < mightEat) {
+            attemptToEat(agent);
+        } else if (agent.get("eating") >= 0) {
+            eat(agent);
+        }
+
+        if (agent.get("eating") === TURNS_TO_EAT) {
+            stopEating(agent);
+        }
+
+        if (agent.get("sleeping") >= 0 && agent.get("tired") === 0) {
+            wakeUp(agent);
+        } else if (
+            agent.get("sleeping") >= 0 ||
+            (agent.get("tired") > 0.9 && agent.get("auto"))
+        ) {
+            sleep(agent);
+        }
+    }
+
+    function setup() {
+        environment = new Environment();
+        environment.set("eatery", new Eatery());
+        for (let i = 0; i < 100; i++) {
+            const agent = new SocialAgent();
+            agent.addRule(tick);
+            environment.addAgent(agent);
+            if (i === 100 - 1) {
+                agent.set("auto", false);
+            }
+        }
+        const histogram = new Histogram(environment, {
+            aboveMax: true,
+            belowMin: true,
+            buckets: 5
+        });
+        histogram.mount("#container");
+        histogram.metric("hunger");
+    }
+
+    function run() {
+        environment.tick({ randomizeOrder: true });
+        requestAnimationFrame(run);
+    }
+
+    setup();
+    run();
+</script>
