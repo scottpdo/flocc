@@ -181,7 +181,6 @@ class Histogram implements Renderer {
       }
     });
 
-    console.log(bucketValues);
     this.drawMarkers(bucketValues);
 
     context.fillStyle = color;
