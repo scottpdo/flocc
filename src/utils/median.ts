@@ -1,6 +1,7 @@
 import copyArray from "./copyArray";
 
 export default function median(arr: Array<number>): number {
+  if (arr.length === 0) return null;
   const copy = copyArray(arr);
   copy.sort();
   const len = copy.length;
