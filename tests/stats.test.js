@@ -21,10 +21,10 @@ it("Correctly finds the standard deviation of an array.", () => {
 });
 
 it("Correctly finds max, min, and median values.", () => {
-  const arr1 = [5, 1, 2, 3, 4];
+  const arr1 = [5, 100, 2, 3, 4];
   const arr2 = [4, 1, 2, 3];
-  expect(min(arr1)).toBe(1);
-  expect(max(arr1)).toBe(5);
-  expect(median(arr1)).toBe(3);
+  expect(min(arr1)).toBe(2);
+  expect(max(arr1)).toBe(100);
+  expect(median(arr1)).toBe(4);
   expect(median(arr2)).toBe(2.5);
 });
