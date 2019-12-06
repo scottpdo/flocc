@@ -3,7 +3,7 @@ import copyArray from "./copyArray";
 export default function median(arr: Array<number>): number {
   if (arr.length === 0) return null;
   const copy = copyArray(arr);
-  copy.sort();
+  copy.sort((a, b) => (a < b ? -1 : 1));
   const len = copy.length;
   if (len % 2 === 0) {
     return (copy[len / 2 - 1] + copy[len / 2]) / 2;
