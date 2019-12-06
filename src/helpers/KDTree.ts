@@ -6,7 +6,7 @@ class KDTree {
   agents: Agent[];
   depth: number = 0;
   dimension: number = 2;
-  median: number;
+  median: number = null;
   left: KDTree = null;
   right: KDTree = null;
 
@@ -16,9 +16,9 @@ class KDTree {
     this.dimension = dimension;
 
     if (agents.length < 5) {
-      console.log(
-        this.agents.map(a => a.get("x") + "," + a.get("y") + "," + a.get("z"))
-      );
+      // console.log(
+      //   this.agents.map(a => a.get("x") + "," + a.get("y") + "," + a.get("z"))
+      // );
       return;
     }
 
@@ -32,10 +32,7 @@ class KDTree {
         .fill(0)
         .map(() => sample(agents).get(axis))
     );
-    console.log("median", this.median);
-    if (this.median === null) {
-      return;
-    }
+    if (this.median === null) return;
 
     const left: Agent[] = [];
     const right: Agent[] = [];

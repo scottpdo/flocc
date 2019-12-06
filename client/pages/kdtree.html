@@ -1,0 +1,74 @@
+<div id="container"></div>
+<div id="histogram"></div>
+<script>
+    const PERCENT_FULL = 0.57;
+    const environment = new Environment();
+    const renderer = new CanvasRenderer(environment, {
+        background: "#ccc",
+        width: 600,
+        height: 600
+    });
+    renderer.mount("#container");
+
+    let tree;
+
+    function setup() {
+        // add agents here
+        for (let i = 0; i < 100; i++) {
+            const agent = new Agent();
+            agent.set("size", 2);
+            agent.set({
+                x: utils.random(0, 600),
+                y: utils.random(0, 600)
+            });
+            environment.addAgent(agent);
+        }
+        tree = new KDTree(environment.getAgents(), 2);
+    }
+
+    function draw(tree, min, max, history = "", color = "black") {
+        const axis = tree.axis();
+        renderer.context.beginPath();
+        const median = tree.median * window.devicePixelRatio;
+        renderer.context.strokeStyle = color;
+        if (axis === "x") {
+            // console.log(`x axis: (${median}, ${min}) to (${median}, ${max})`);
+            renderer.context.moveTo(median, min);
+            renderer.context.lineTo(median, max);
+        } else if (axis === "y") {
+            // console.log(`y axis: (${min}, ${median}) to (${max}, ${median})`);
+            renderer.context.moveTo(min, median);
+            renderer.context.lineTo(max, median);
+        }
+        if (history === "llr")
+            console.log(`y axis: (${min}, ${median}) to (${max}, ${median})`);
+        renderer.context.stroke();
+        if (tree.left)
+            draw(
+                tree.left,
+                min,
+                median,
+                history + "l",
+                history === "llr" ? "green" : "blue"
+            );
+        if (tree.right)
+            draw(
+                tree.right,
+                median,
+                max,
+                history + "r",
+                history === "llr" ? "green" : "red"
+            );
+    }
+
+    function run() {
+        environment.tick();
+        // window.requestAnimationFrame(run);
+        draw(tree, 0, renderer.context.canvas.height);
+        // console.log("ticking");
+        // setTimeout(run, 250);
+    }
+
+    setup();
+    run();
+</script>
