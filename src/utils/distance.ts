@@ -1,6 +1,6 @@
 /// <reference path="../types/Point.d.ts" />
 
-import { Agent } from '../agents/Agent';
+import { Agent } from "../agents/Agent";
 
 /**
  * Finds the distance between `p1` and `p2`. The inputs may be plain objects
@@ -11,14 +11,13 @@ import { Agent } from '../agents/Agent';
  * @return {number} The distance between p1 and p2.
  */
 export default function distance(p1: Point | Agent, p2: Point | Agent): number {
+  let x1: number = (p1 instanceof Agent ? p1.get("x") : p1.x) || 0;
+  let y1: number = (p1 instanceof Agent ? p1.get("y") : p1.y) || 0;
+  let z1: number = (p1 instanceof Agent ? p1.get("z") : p1.z) || 0;
 
-  let x1: number = (p1 instanceof Agent ? p1.get('x') : p1.x) || 0;
-  let y1: number = (p1 instanceof Agent ? p1.get('y') : p1.y) || 0;
-  let z1: number = (p1 instanceof Agent ? p1.get('z') : p1.z) || 0;
-
-  let x2: number = (p2 instanceof Agent ? p2.get('x') : p2.x) || 0;
-  let y2: number = (p2 instanceof Agent ? p2.get('y') : p2.y) || 0;
-  let z2: number = (p2 instanceof Agent ? p2.get('z') : p2.z) || 0;
+  let x2: number = (p2 instanceof Agent ? p2.get("x") : p2.x) || 0;
+  let y2: number = (p2 instanceof Agent ? p2.get("y") : p2.y) || 0;
+  let z2: number = (p2 instanceof Agent ? p2.get("z") : p2.z) || 0;
 
   let dx: number = Math.abs(x2 - x1);
   let dy: number = Math.abs(y2 - y1);
@@ -42,4 +41,4 @@ export default function distance(p1: Point | Agent, p2: Point | Agent): number {
   }
 
   return Math.sqrt(dx * dx + dy * dy + dz * dz);
-};
+}

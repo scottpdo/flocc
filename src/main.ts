@@ -2,6 +2,7 @@ export { Agent } from "./agents/Agent";
 export { Vector } from "./helpers/Vector";
 export { Network } from "./helpers/Network";
 export { Rule } from "./helpers/Rule";
+export { KDTree } from "./helpers/KDTree";
 
 export { Environment } from "./environments/Environment";
 export { GridEnvironment } from "./environments/GridEnvironment";
