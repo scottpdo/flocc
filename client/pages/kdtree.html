@@ -14,9 +14,9 @@
 
     function setup() {
         // add agents here
-        for (let i = 0; i < 100; i++) {
+        for (let i = 0; i < 600; i++) {
             const agent = new Agent();
-            agent.set("size", 2);
+            // agent.set("size", 1);
             agent.set({
                 x: utils.random(0, 600),
                 y: utils.random(0, 600)
@@ -26,45 +26,71 @@
         tree = new KDTree(environment.getAgents(), 2);
     }
 
-    function draw(tree, min, max, history = "", color = "black") {
+    class BBox {
+        constructor(minX, minY, maxX, maxY) {
+            this.minX = minX;
+            this.minY = minY;
+            this.maxX = maxX;
+            this.maxY = maxY;
+        }
+
+        clone() {
+            return new BBox(this.minX, this.minY, this.maxX, this.maxY);
+        }
+    }
+
+    function draw(tree, bbox, history = "", color = "black") {
         const axis = tree.axis();
         renderer.context.beginPath();
         const median = tree.median * window.devicePixelRatio;
         renderer.context.strokeStyle = color;
+        renderer.context.lineWidth = Math.max(10 - history.length, 0.25);
         if (axis === "x") {
             // console.log(`x axis: (${median}, ${min}) to (${median}, ${max})`);
-            renderer.context.moveTo(median, min);
-            renderer.context.lineTo(median, max);
+            renderer.context.moveTo(median, bbox.minY);
+            renderer.context.lineTo(median, bbox.maxY);
         } else if (axis === "y") {
             // console.log(`y axis: (${min}, ${median}) to (${max}, ${median})`);
-            renderer.context.moveTo(min, median);
-            renderer.context.lineTo(max, median);
+            renderer.context.moveTo(bbox.minX, median);
+            renderer.context.lineTo(bbox.maxX, median);
         }
-        if (history === "llr")
-            console.log(`y axis: (${min}, ${median}) to (${max}, ${median})`);
         renderer.context.stroke();
-        if (tree.left)
+        if (tree.left) {
+            const bb = bbox.clone();
+            if (axis === "x") bb.maxX = median;
+            if (axis === "y") bb.maxY = median;
             draw(
                 tree.left,
-                min,
-                median,
+                bb,
                 history + "l",
                 history === "llr" ? "green" : "blue"
             );
-        if (tree.right)
+        }
+        if (tree.right) {
+            const bb = bbox.clone();
+            if (axis === "x") bb.minX = median;
+            if (axis === "y") bb.minY = median;
             draw(
                 tree.right,
-                median,
-                max,
+                bb,
                 history + "r",
                 history === "llr" ? "green" : "red"
             );
+        }
     }
 
     function run() {
         environment.tick();
         // window.requestAnimationFrame(run);
-        draw(tree, 0, renderer.context.canvas.height);
+        draw(
+            tree,
+            new BBox(
+                0,
+                0,
+                renderer.context.canvas.width,
+                renderer.context.canvas.height
+            )
+        );
         // console.log("ticking");
         // setTimeout(run, 250);
     }

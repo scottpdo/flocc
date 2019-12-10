@@ -15,12 +15,7 @@ class KDTree {
     this.depth = depth;
     this.dimension = dimension;
 
-    if (agents.length < 5) {
-      // console.log(
-      //   this.agents.map(a => a.get("x") + "," + a.get("y") + "," + a.get("z"))
-      // );
-      return;
-    }
+    if (agents.length < 5) return;
 
     const axis = this.axis();
     if (axis === null) {
