@@ -1,3 +1,5 @@
 declare interface EnvironmentOptions {
-  torus: boolean
+  torus: boolean;
+  width: number;
+  height: number;
 }
