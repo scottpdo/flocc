@@ -21,6 +21,12 @@ export const defaultTickOptions: TickOptions = {
   randomizeOrder: false
 };
 
+const defaultEnvironmentOptions: EnvironmentOptions = {
+  torus: true,
+  height: 500,
+  width: 500
+};
+
 /**
  * An environment provides the space and time in which agents interact.
  * Environments, like agents, can store data in key-value pairs
@@ -39,15 +45,15 @@ class Environment extends Agent {
   height: number;
   time: number;
 
-  constructor(opts: EnvironmentOptions = { torus: true }) {
+  constructor(opts: EnvironmentOptions = defaultEnvironmentOptions) {
     super();
     this.agents = [];
     this.agentsById = new Map();
     this.data = {};
     this.renderers = [];
-    this.opts = opts;
-    this.width = 0;
-    this.height = 0;
+    this.opts = Object.assign({}, defaultEnvironmentOptions, opts);
+    this.width = this.opts.width;
+    this.height = this.opts.height;
     this.helpers = {
       network: null
     };
