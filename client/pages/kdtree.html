@@ -15,6 +15,13 @@
     renderer.mount("#container");
 
     let tree;
+    let rando;
+
+    function tick(agent) {
+        agent.set("size", agent === rando ? 6 : 1);
+        agent.increment("x", agent === rando ? 1 : utils.random(0, 1) * 6 - 3);
+        agent.increment("y", utils.random(0, 1) * 6 - 3);
+    }
 
     function setup() {
         // add agents here
@@ -25,22 +32,13 @@
                 x: utils.random(0, 600),
                 y: utils.random(0, 600)
             });
+            agent.addRule(tick);
             environment.addAgent(agent);
         }
         tree = new KDTree(environment.getAgents(), 2);
-    }
+        environment.use(tree);
 
-    class BBox {
-        constructor(minX, minY, maxX, maxY) {
-            this.minX = minX;
-            this.minY = minY;
-            this.maxX = maxX;
-            this.maxY = maxY;
-        }
-
-        clone() {
-            return new BBox(this.minX, this.minY, this.maxX, this.maxY);
-        }
+        rando = utils.sample(environment.getAgents());
     }
 
     function draw(tree, color = "black") {
@@ -62,23 +60,13 @@
     }
 
     function run() {
-        // window.requestAnimationFrame(run);
-
-        let rando = utils.sample(environment.getAgents());
-        while (rando.get("y") < 590 && rando.get("x") < 590) {
-            rando = utils.sample(environment.getAgents());
-        }
-        rando.set("color", "red");
-        rando.set("size", 5);
-
+        environment.tick();
         tree.agentsWithinDistance(rando, 100).forEach(a => a.set("size", 3));
 
-        environment.tick();
+        renderer.render();
+        // draw(tree);
 
-        draw(tree);
-
-        // console.log("ticking");
-        // setTimeout(run, 250);
+        requestAnimationFrame(run);
     }
 
     setup();

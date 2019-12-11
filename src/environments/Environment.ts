@@ -6,8 +6,10 @@ import { Agent } from "../agents/Agent";
 import { Network } from "../helpers/Network";
 import { Rule } from "../helpers/Rule";
 import shuffle from "../utils/shuffle";
+import { KDTree } from "../helpers/KDTree";
 
 interface Helpers {
+  kdtree: KDTree;
   network: Network;
 }
 
@@ -55,6 +57,7 @@ class Environment extends Agent {
     this.width = this.opts.width;
     this.height = this.opts.height;
     this.helpers = {
+      kdtree: null,
       network: null
     };
     this.time = 0;
@@ -177,6 +180,8 @@ class Environment extends Agent {
 
     this._executeEnqueuedAgentRules(randomizeOrder);
 
+    if (this.helpers.kdtree) this.helpers.kdtree.rebalance(this.agents);
+
     this.time++;
 
     if (count > 1) {
@@ -192,6 +197,7 @@ class Environment extends Agent {
    * @param {EnvironmentHelper} e
    */
   use(e: EnvironmentHelper) {
+    if (e instanceof KDTree) this.helpers.kdtree = e;
     if (e instanceof Network) this.helpers.network = e;
   }
 }

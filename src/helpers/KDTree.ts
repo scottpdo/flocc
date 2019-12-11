@@ -19,7 +19,7 @@ const arrayOfTreesToAgents = (trees: KDTree[]): Agent[] => {
 };
 
 class KDTree {
-  agents: Agent[];
+  agents: Agent[] = null;
   bbox: BBox;
   depth: number = 0;
   dimension: number = 2;
@@ -35,69 +35,21 @@ class KDTree {
     depth: number = 0,
     bbox?: BBox
   ) {
-    this.agents = agents;
     this.depth = depth;
     this.dimension = dimension;
     this.bbox = bbox;
+
     // if not given a bounding box, instantiate to a 0-dimensional bbox
     // and update
     if (!this.bbox) {
       this.bbox = new BBox(
-        new Vector(...new Array(dimension).fill(0)),
-        new Vector(...new Array(dimension).fill(0))
+        new Vector(...new Array(this.dimension).fill(0)),
+        new Vector(...new Array(this.dimension).fill(0))
       );
       this.needsUpdating = true;
     }
 
-    if (agents.length <= MAX_IN_LEAF) return;
-
-    const axis = this.axis();
-    if (axis === null) {
-      console.error("Can only construct 1, 2, or 3-dimensional KD trees");
-    }
-
-    this.median = median(
-      new Array(Math.min(agents.length, 11))
-        .fill(0)
-        .map(() => sample(agents).get(axis))
-    );
-    if (this.median === null) return;
-
-    const left: Agent[] = [];
-    const right: Agent[] = [];
-    agents.forEach(agent => {
-      if (this.needsUpdating) {
-        for (let i = 0; i < this.dimension; i++) {
-          const coord = getCoord(i);
-          if (agent.get(coord) < this.bbox.min[coord])
-            this.bbox.min[coord] = agent.get(coord);
-          if (agent.get(coord) > this.bbox.max[coord])
-            this.bbox.max[coord] = agent.get(coord);
-        }
-      }
-      if (agent.get(axis) < this.median) {
-        left.push(agent);
-      } else {
-        right.push(agent);
-      }
-    });
-
-    this.needsUpdating = false;
-
-    if (left.length > 0) {
-      const leftBBox = this.bbox.clone();
-      if (axis === "x") leftBBox.max.x = this.median;
-      if (axis === "y") leftBBox.max.y = this.median;
-      this.left = new KDTree(left, dimension, depth + 1, leftBBox);
-      this.left.parent = this;
-    }
-    if (right.length > 0) {
-      const rightBBox = this.bbox.clone();
-      if (axis === "x") rightBBox.min.x = this.median;
-      if (axis === "y") rightBBox.min.y = this.median;
-      this.right = new KDTree(right, dimension, depth + 1, rightBBox);
-      this.right.parent = this;
-    }
+    this.rebalance(agents);
   }
 
   axis(): "x" | "y" | "z" | null {
@@ -114,6 +66,8 @@ class KDTree {
   }
 
   locateSubtree(pt: Agent | Point): KDTree {
+    // create a position vector to correspond to the
+    // given point or agent
     const position = new Vector();
     for (let i = 0; i < this.dimension; i++) {
       const coord = getCoord(i);
@@ -205,6 +159,68 @@ class KDTree {
     });
 
     return candidates[0];
+  }
+
+  balance(): void {}
+
+  rebalance(agents: Agent[]): void {
+    this.agents = agents;
+
+    if (agents.length <= MAX_IN_LEAF) {
+      // console.log(
+      //   "leaf",
+      //   this.agents.map(a => a.getData())
+      // );
+      return;
+    }
+
+    const axis = this.axis();
+    if (axis === null) {
+      console.error("Can only construct 1, 2, or 3-dimensional KD trees");
+    }
+
+    this.median = median(
+      new Array(Math.min(agents.length, 11))
+        .fill(0)
+        .map(() => sample(agents).get(axis))
+    );
+    if (this.median === null) return;
+
+    const left: Agent[] = [];
+    const right: Agent[] = [];
+    agents.forEach(agent => {
+      if (this.needsUpdating) {
+        for (let i = 0; i < this.dimension; i++) {
+          const coord = getCoord(i);
+          if (agent.get(coord) < this.bbox.min[coord])
+            this.bbox.min[coord] = agent.get(coord);
+          if (agent.get(coord) > this.bbox.max[coord])
+            this.bbox.max[coord] = agent.get(coord);
+        }
+      }
+      if (agent.get(axis) < this.median) {
+        left.push(agent);
+      } else {
+        right.push(agent);
+      }
+    });
+
+    this.needsUpdating = false;
+
+    if (left.length > 0) {
+      const leftBBox = this.bbox.clone();
+      if (axis === "x") leftBBox.max.x = this.median;
+      if (axis === "y") leftBBox.max.y = this.median;
+      this.left = new KDTree(left, this.dimension, this.depth + 1, leftBBox);
+      this.left.parent = this;
+    }
+    if (right.length > 0) {
+      const rightBBox = this.bbox.clone();
+      if (axis === "x") rightBBox.min.x = this.median;
+      if (axis === "y") rightBBox.min.y = this.median;
+      this.right = new KDTree(right, this.dimension, this.depth + 1, rightBBox);
+      this.right.parent = this;
+    }
   }
 }
 
