@@ -13,6 +13,7 @@ const getCoord = (i: number): "x" | "y" | "z" => {
 };
 
 const arrayOfTreesToAgents = (trees: KDTree[]): Agent[] => {
+  if (trees.length === 0) return [];
   return trees
     .map(tree => tree.agents)
     .reduce((acc, agents) => acc.concat(agents));
@@ -166,13 +167,7 @@ class KDTree {
   rebalance(agents: Agent[]): void {
     this.agents = agents;
 
-    if (agents.length <= MAX_IN_LEAF) {
-      // console.log(
-      //   "leaf",
-      //   this.agents.map(a => a.getData())
-      // );
-      return;
-    }
+    if (agents.length <= MAX_IN_LEAF) return;
 
     const axis = this.axis();
     if (axis === null) {

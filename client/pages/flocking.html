@@ -14,7 +14,8 @@
         ASCIIRenderer,
         CanvasRenderer,
         utils,
-        Vector
+        Vector,
+        KDTree
     } = flocc;
 
     /* ------- PARAMETERS --------- */
@@ -27,8 +28,12 @@
 
     /* ------- SET UP ENVIRONMENT, RENDERER --------- */
 
-    const environment = new Environment();
+    const environment = new Environment({
+        height,
+        width
+    });
     const renderer = new CanvasRenderer(environment, { width, height });
+    let tree;
     const container = document.getElementById("container");
     renderer.mount(container);
 
@@ -72,6 +77,10 @@
 
             environment.addAgent(agent);
         }
+
+        tree = new KDTree(environment.getAgents(), 2);
+        environment.use(tree);
+        console.log(tree);
     }
 
     function tick(agent) {
@@ -80,19 +89,11 @@
         x += v.x;
         y += v.y;
 
-        while (x < 0) x += width;
-        while (x >= width) x -= width;
-        while (y < 0) y += height;
-        while (y >= height) y -= height;
-
         agent.set("x", x);
         agent.set("y", y);
 
         // update direction
-        var neighbors = environment.getAgents().filter(function(neighbor) {
-            var d = utils.distance(agent, neighbor);
-            return d < 20 && d > 0;
-        });
+        var neighbors = tree.agentsWithinDistance(agent, 20);
 
         if (neighbors.length === 0) return;
 
@@ -110,7 +111,7 @@
 
     function render() {
         environment.tick();
-        console.log(`${new Date() - t} since last render`);
+        // console.log(`${new Date() - t} since last render`);
         t = new Date();
         requestAnimationFrame(render);
     }
