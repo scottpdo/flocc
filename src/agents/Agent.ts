@@ -93,6 +93,13 @@ class Agent implements DataObj {
         this._setFunctionValue(this.data, key, value);
       } else {
         this.data[key] = value;
+        if (this.environment && this.environment.opts.torus) {
+          const { width, height } = this.environment;
+          if (key === "x" && value > width) this.data[key] -= width;
+          if (key === "x" && value < 0) this.data[key] += width;
+          if (key === "y" && value > height) this.data[key] -= height;
+          if (key === "y" && value < 0) this.data[key] += height;
+        }
       }
     };
 
