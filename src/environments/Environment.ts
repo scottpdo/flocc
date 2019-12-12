@@ -4,7 +4,6 @@
 /// <reference path="../types/Data.d.ts" />
 import { Agent } from "../agents/Agent";
 import { Network } from "../helpers/Network";
-import { Rule } from "../helpers/Rule";
 import shuffle from "../utils/shuffle";
 import { KDTree } from "../helpers/KDTree";
 
@@ -25,8 +24,8 @@ export const defaultTickOptions: TickOptions = {
 
 const defaultEnvironmentOptions: EnvironmentOptions = {
   torus: true,
-  height: 500,
-  width: 500
+  height: 0,
+  width: 0
 };
 
 /**
