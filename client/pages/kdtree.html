@@ -2,15 +2,15 @@
 <div id="histogram"></div>
 <script>
     const PERCENT_FULL = 0.57;
+    const [width, height] = [600, 600];
     const environment = new Environment({
-        torus: true,
-        width: 600,
-        height: 600
+        width,
+        height
     });
     const renderer = new CanvasRenderer(environment, {
         background: "#ccc",
-        width: 600,
-        height: 600
+        width,
+        height
     });
     renderer.mount("#container");
 
@@ -21,6 +21,7 @@
         agent.set("size", agent === rando ? 6 : 1);
         agent.increment("x", agent === rando ? 1 : utils.random(0, 1) * 6 - 3);
         agent.increment("y", utils.random(0, 1) * 6 - 3);
+        // if (agent === rando) console.log(agent.getData());
     }
 
     function setup() {
@@ -29,8 +30,8 @@
             const agent = new Agent();
             // agent.set("size", 1);
             agent.set({
-                x: utils.random(0, 600),
-                y: utils.random(0, 600)
+                x: utils.random(0, width),
+                y: utils.random(0, height)
             });
             agent.addRule(tick);
             environment.addAgent(agent);
@@ -61,10 +62,36 @@
 
     function run() {
         environment.tick();
-        tree.agentsWithinDistance(rando, 100).forEach(a => a.set("size", 3));
+        const center = new Vector();
+        const rx = rando.get("x");
+        const ry = rando.get("x");
+        const d = 120;
+        const neighbors = tree.agentsWithinDistance(rando, d);
+        neighbors.forEach(a => {
+            let { x, y } = a.getData();
+            if (rx + d > width && x < d) x += width;
+            if (rx - d < 0 && x + d > width) x -= width;
+            if (ry + d > height && y < d) y += height;
+            if (ry - d < 0 && y + d > height) y -= height;
+            center.x += x;
+            center.y += y;
+            a.set("size", 3);
+        });
+        center.multiplyScalar(1 / neighbors.length);
 
         renderer.render();
         // draw(tree);
+
+        renderer.context.fillStyle = "red";
+        renderer.context.beginPath();
+        renderer.context.arc(
+            window.devicePixelRatio * center.x,
+            window.devicePixelRatio * center.y,
+            10,
+            0,
+            2 * Math.PI
+        );
+        renderer.context.fill();
 
         requestAnimationFrame(run);
     }

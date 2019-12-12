@@ -93,34 +93,54 @@ class KDTree {
     d: number,
     trees: KDTree[] = []
   ): KDTree[] {
-    const { bbox, dimension, left, right } = this;
-    const { min, max } = bbox;
+    const { left, right } = this;
     if (left) left.subtreesWithinDistance(pt, d, trees);
     if (right) right.subtreesWithinDistance(pt, d, trees);
-    if (!left && !right) {
-      const match = new Array(dimension)
-        .fill(0)
-        .map((a, i) => getCoord(i))
-        .every(coord => {
-          const c = pt instanceof Agent ? pt.get(coord) : pt[coord];
-          const mn = min[coord];
-          const mx = max[coord];
-          if (c <= mn && c + d >= mn) return true;
-          if (c >= mx && c - d <= mx) return true;
-          if (c + d >= mn && c - d <= mx) return true;
-          if (pt instanceof Agent && pt.environment.opts.torus) {
-            const { environment } = pt;
-            if (coord === "x" && c + d > environment.width) return true;
-            if (coord === "x" && c - d < 0) return true;
-            if (coord === "y" && c + d > environment.height) return true;
-            if (coord === "y" && c - d < 0) return true;
-          }
-          return false;
-        });
-      if (match) trees.push(this);
-    }
+    if (!left && !right && this.sphereIntersectsBBox(pt, d)) trees.push(this);
     return trees;
   }
+
+  intersectsAlongDimension = (
+    pt: Point | Agent,
+    d: number,
+    coord: "x" | "y" | "z"
+  ): boolean => {
+    const c = pt instanceof Agent ? pt.get(coord) : pt[coord];
+    const mn = this.bbox.min[coord];
+    const mx = this.bbox.max[coord];
+    if (c <= mn && c + d >= mn) return true;
+    if (c >= mx && c - d <= mx) return true;
+    if (c + d >= mn && c - d <= mx) return true;
+    if (pt instanceof Agent && pt.environment.opts.torus) {
+      const { environment } = pt;
+      if (coord === "x" && c + d > environment.width) return true;
+      if (coord === "x" && c - d < 0) return true;
+      if (coord === "y" && c + d > environment.height) return true;
+      if (coord === "y" && c - d < 0) return true;
+    }
+    return false;
+  };
+
+  sphereIntersectsBBox = (pt: Point | Agent, d: number): boolean => {
+    // needs to be true for every dimension
+    switch (this.dimension) {
+      case 1:
+        return this.intersectsAlongDimension(pt, d, "x");
+      case 2:
+        return (
+          this.intersectsAlongDimension(pt, d, "x") &&
+          this.intersectsAlongDimension(pt, d, "y")
+        );
+      case 3:
+        return (
+          this.intersectsAlongDimension(pt, d, "x") &&
+          this.intersectsAlongDimension(pt, d, "y") &&
+          this.intersectsAlongDimension(pt, d, "z")
+        );
+      default:
+        return false;
+    }
+  };
 
   agentsWithinDistance(pt: Point | Agent, d: number): Agent[] {
     const trees = this.subtreesWithinDistance(pt, d);
@@ -161,8 +181,6 @@ class KDTree {
 
     return candidates[0];
   }
-
-  balance(): void {}
 
   rebalance(agents: Agent[]): void {
     this.agents = agents;

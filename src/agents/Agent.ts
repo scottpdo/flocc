@@ -98,7 +98,7 @@ class Agent implements DataObj {
           if (key === "x" && value > width) this.data[key] -= width;
           if (key === "x" && value < 0) this.data[key] += width;
           if (key === "y" && value > height) this.data[key] -= height;
-          if (key === "y" && value < 0) this.data[key] -= height;
+          if (key === "y" && value < 0) this.data[key] += height;
         }
       }
     };

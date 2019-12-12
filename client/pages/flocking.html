@@ -17,10 +17,11 @@
         Vector,
         KDTree
     } = flocc;
+    const { random } = utils;
 
     /* ------- PARAMETERS --------- */
 
-    const flockSize = 150;
+    const flockSize = 350;
     const width = 600;
     const height = 600;
 
@@ -61,8 +62,9 @@
         for (let i = 0; i < flockSize; i++) {
             const agent = new Agent();
 
-            agent.set("x", Math.random() * width);
-            agent.set("y", Math.random() * height);
+            agent.set("p", new Vector(random(0, width), random(0, height)));
+            agent.set("x", agent => agent.get("p").x);
+            agent.set("y", agent => agent.get("p").y);
 
             const angle = 2 * Math.random() * Math.PI;
             agent.set("v", new Vector(Math.cos(angle), Math.sin(angle)));
@@ -84,27 +86,52 @@
     }
 
     function tick(agent) {
-        let { x, y, v } = agent.getData();
+        let { p, v } = agent.getData();
 
-        x += v.x;
-        y += v.y;
-
-        agent.set("x", x);
-        agent.set("y", y);
+        p.x += v.x;
+        p.y += v.y;
+        if (p.x > width) p.x -= width;
+        if (p.x < 0) p.x += width;
+        if (p.y > height) p.y -= height;
+        if (p.y < 0) p.y += height;
 
         // update direction
-        var neighbors = tree.agentsWithinDistance(agent, 20);
+        const d = 30;
+        const neighbors = tree.agentsWithinDistance(agent, d);
+        if (neighbors.length < 1) return;
 
-        if (neighbors.length === 0) return;
+        const averageVelocity = new Vector();
+        const center = new Vector();
+        for (let i = 0; i < neighbors.length; i++) {
+            const neighbor = neighbors[i];
+            if (neighbor === agent) continue;
+            averageVelocity.add(neighbor.get("v"));
+            let x = neighbor.get("x");
+            let y = neighbor.get("y");
+            if (p.x + d > width && x < d) x += width;
+            if (p.x - d < 0 && x + d > width) x -= width;
+            if (p.y + d > height && y < d) y += height;
+            if (p.y - d < 0 && y + d > height) y -= height;
+            center.x += x;
+            center.y += y;
+        }
+        center.multiplyScalar(1 / neighbors.length);
 
         const meanVel = neighbors.reduce(
             (a, b) => a.add(b.get("v")),
             new Vector()
         );
-        const norm = utils.distance(meanVel, new Vector());
-        meanVel.multiplyScalar(1 / norm);
+        meanVel.normalize();
+        meanVel.multiplyScalar(0.03);
 
-        v.add(meanVel.multiplyScalar(0.01)).normalize();
+        const towardCenter = p
+            .clone()
+            .add(center.multiplyScalar(-1))
+            .multiplyScalar(0.001);
+
+        v.add(towardCenter);
+        v.add(meanVel);
+        v.normalize();
     }
 
     let t = new Date();
