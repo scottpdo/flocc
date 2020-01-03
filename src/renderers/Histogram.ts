@@ -46,7 +46,7 @@ class Histogram implements Renderer {
 
   constructor(environment: Environment, opts?: HistogramOptions) {
     this.environment = environment;
-    this.opts = Object.assign(this.opts, opts);
+    this.opts = Object.assign({}, this.opts, opts);
     const { width, height } = this.opts;
     const dpr = window.devicePixelRatio;
     this.width = width * dpr;
@@ -172,7 +172,7 @@ class Histogram implements Renderer {
       );
 
       // increment the corresponding value in the bucketValues array
-      if (bucketIndex >= 0 && bucketIndex < bucketValues.length - 1) {
+      if (bucketIndex >= 0 && bucketIndex < bucketValues.length) {
         bucketValues[bucketIndex + (belowMin ? 1 : 0)]++;
       } else if (bucketIndex >= bucketValues.length - 1 && aboveMax) {
         bucketValues[bucketValues.length - 1]++;
