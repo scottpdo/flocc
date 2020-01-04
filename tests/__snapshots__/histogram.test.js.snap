@@ -1,0 +1,91 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Correctly renders 1`] = `
+Array [
+  Object {
+    "props": Object {
+      "height": 400,
+      "width": 200,
+      "x": 0,
+      "y": 0,
+    },
+    "transform": Array [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "clearRect",
+  },
+  Object {
+    "props": Object {
+      "maxWidth": null,
+      "text": "0–0.25",
+      "x": 25,
+      "y": 397,
+    },
+    "transform": Array [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillText",
+  },
+  Object {
+    "props": Object {
+      "maxWidth": null,
+      "text": "0.25–0.5",
+      "x": 75,
+      "y": 397,
+    },
+    "transform": Array [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillText",
+  },
+  Object {
+    "props": Object {
+      "maxWidth": null,
+      "text": "0.5–0.75",
+      "x": 125,
+      "y": 397,
+    },
+    "transform": Array [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillText",
+  },
+  Object {
+    "props": Object {
+      "maxWidth": null,
+      "text": "0.75–1",
+      "x": 175,
+      "y": 397,
+    },
+    "transform": Array [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillText",
+  },
+]
+`;
