@@ -11,8 +11,9 @@ const lineDash = [10, 10];
 interface HistogramOptions {
   aboveMax: boolean;
   belowMin: boolean;
-  buckets: number;
+  buckets: number | any[];
   color: string;
+  epsilon: number;
   height: number;
   max: number;
   min: number;
@@ -25,6 +26,7 @@ const defaultHistogramOptions: HistogramOptions = {
   belowMin: false,
   buckets: 1,
   color: "#000",
+  epsilon: 0,
   height: 500,
   max: 1,
   min: 0,
@@ -82,7 +84,7 @@ class Histogram implements Renderer {
     return remap(value, 0, maxValue, height - 30, 0);
   }
 
-  drawMarkers(bucketValues: Array<number>): void {
+  drawMarkers(bucketValues: number[]): void {
     const context = this.canvas.getContext("2d");
     const { environment, height, width } = this;
     const agents = environment.getAgents();
@@ -119,6 +121,7 @@ class Histogram implements Renderer {
 
     bucketValues
       .map((v, i) => {
+        if (buckets instanceof Array) return buckets[i].toString();
         if (i === 0 && belowMin) {
           return `< ${min}`;
         } else if (i === bucketValues.length - 1 && aboveMax) {
@@ -149,7 +152,16 @@ class Histogram implements Renderer {
     if (!this._metric) return;
     const { canvas, environment, width, height } = this;
     const metric = this._metric;
-    const { aboveMax, belowMin, buckets, color, scale, max, min } = this.opts;
+    const {
+      aboveMax,
+      belowMin,
+      buckets,
+      color,
+      epsilon,
+      scale,
+      max,
+      min
+    } = this.opts;
     const context = canvas.getContext("2d");
 
     const agents = environment.getAgents();
@@ -159,7 +171,10 @@ class Histogram implements Renderer {
     // initialize map of bucket values --
     // array of length `buckets`, initialized to all zeros,
     // plus 1 if aboveMax, plus another 1 if belowMin
-    const numBuckets = buckets + (aboveMax ? 1 : 0) + (belowMin ? 1 : 0);
+    const numBuckets =
+      buckets instanceof Array
+        ? buckets.length
+        : buckets + (aboveMax ? 1 : 0) + (belowMin ? 1 : 0);
     const bucketValues = new Array(numBuckets).fill(0);
 
     agents.forEach(agent => {
@@ -167,9 +182,16 @@ class Histogram implements Renderer {
       if (agent.get(metric) === null) return;
 
       // calculate index of bucket this agent's value says it belongs in
-      const bucketIndex = Math.floor(
-        remap(agent.get(metric), min, max, 0, 0.999999) * buckets
-      );
+      const bucketIndex =
+        buckets instanceof Array
+          ? buckets.findIndex(
+              v =>
+                v === agent.get(metric) ||
+                Math.abs(v - agent.get(metric)) <= epsilon
+            )
+          : Math.floor(
+              remap(agent.get(metric), min, max, 0, 0.999999) * buckets
+            );
 
       // increment the corresponding value in the bucketValues array
       if (bucketIndex >= 0 && bucketIndex < bucketValues.length) {
