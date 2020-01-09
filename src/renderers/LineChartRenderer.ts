@@ -62,8 +62,8 @@ class LineChartRenderer implements Renderer {
 
   constructor(environment: Environment, opts?: LineChartRendererOptions) {
     this.environment = environment;
-    this.opts = Object.assign({}, defaultRendererOptions);
-    this.opts = Object.assign(this.opts, opts);
+    this.opts = Object.assign({}, defaultRendererOptions, opts);
+    this.opts.range = Object.assign({}, this.opts.range);
     const { width, height } = this.opts;
     const dpr = window.devicePixelRatio;
     this.width = this.opts.width * dpr;
@@ -75,6 +75,7 @@ class LineChartRenderer implements Renderer {
     this.background.width = width * dpr;
     this.background.height = height * dpr;
     environment.renderers.push(this);
+    console.log(this.opts);
   }
 
   mount(el: string | HTMLElement): void {
@@ -192,8 +193,9 @@ class LineChartRenderer implements Renderer {
       const value = fn(values.get(key));
       buffer.set(this.t, value);
       if (opts.autoScale) {
-        if (value < opts.range.min) opts.range.min = value;
-        if (value > opts.range.max) opts.range.max = value;
+        if (value < opts.range.min) this.opts.range.min = value;
+        if (value > opts.range.max) this.opts.range.max = value;
+        console.log(this.metrics.length, fn(values.get(key)));
       }
 
       context.strokeStyle = color;
