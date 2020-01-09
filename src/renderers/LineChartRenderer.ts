@@ -62,7 +62,8 @@ class LineChartRenderer implements Renderer {
 
   constructor(environment: Environment, opts?: LineChartRendererOptions) {
     this.environment = environment;
-    this.opts = Object.assign({}, defaultRendererOptions, opts);
+    this.opts = Object.assign({}, defaultRendererOptions);
+    this.opts = Object.assign(this.opts, opts);
     const { width, height } = this.opts;
     const dpr = window.devicePixelRatio;
     this.width = this.opts.width * dpr;
