@@ -75,7 +75,6 @@ class LineChartRenderer implements Renderer {
     this.background.width = width * dpr;
     this.background.height = height * dpr;
     environment.renderers.push(this);
-    console.log(this.opts);
   }
 
   mount(el: string | HTMLElement): void {
@@ -195,7 +194,6 @@ class LineChartRenderer implements Renderer {
       if (opts.autoScale) {
         if (value < opts.range.min) this.opts.range.min = value;
         if (value > opts.range.max) this.opts.range.max = value;
-        console.log(this.metrics.length, fn(values.get(key)));
       }
 
       context.strokeStyle = color;
