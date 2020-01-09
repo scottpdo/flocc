@@ -7,9 +7,10 @@
     const z = new Agent();
 
     const chart = new LineChartRenderer(environment, {
+        autoScale: true,
+        autoScroll: true,
         background: "#eee",
-        range: { min: -10, max: 100 },
-        width: 1200
+        width: 500
     });
     chart.mount("#chart");
     const fn = values => values.filter(v => v !== null)[0];
@@ -48,8 +49,14 @@
         environment.addAgent(z);
     })();
 
+    let t = 0;
+
     (function draw() {
-        environment.tick(300);
+        environment.tick(100);
+        // if (environment.time % 100 === 0) {
+        //     console.log((performance.now() - t) / 1000);
+        //     t = performance.now();
+        // }
         window.setTimeout(draw, 0);
     })();
 </script>

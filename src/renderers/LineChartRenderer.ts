@@ -2,16 +2,18 @@
 /// <reference path="../types/Point.d.ts" />
 /// <reference path="../types/NRange.d.ts" />
 import { Environment } from "../environments/Environment";
+import { NumArray } from "../helpers/NumArray";
 import mean from "../utils/mean";
 import extractRoundNumbers from "../utils/extractRoundNumbers";
+
+const lineDash = [10, 10];
 
 type MetricFunction = (arr: Array<number>) => number;
 
 interface Metric {
   color: string;
-  buffer: HTMLCanvasElement;
+  buffer: NumArray;
   fn: MetricFunction;
-  location: Point; // the last point drawn on the buffer canvas
   key: string;
 }
 
@@ -21,6 +23,8 @@ interface MetricOptions {
 }
 
 interface LineChartRendererOptions {
+  autoScale: boolean;
+  autoScroll: boolean;
   background: string;
   height: number;
   range: NRange;
@@ -28,11 +32,13 @@ interface LineChartRendererOptions {
 }
 
 const defaultRendererOptions: LineChartRendererOptions = {
+  autoScale: false,
+  autoScroll: false,
   background: "transparent",
   height: 500,
   range: {
     min: 0,
-    max: 500
+    max: 1
   },
   width: 500
 };
@@ -52,6 +58,7 @@ class LineChartRenderer implements Renderer {
   metrics: Metric[] = [];
   height: number;
   width: number;
+  t: number = 0;
 
   constructor(environment: Environment, opts?: LineChartRendererOptions) {
     this.environment = environment;
@@ -67,8 +74,6 @@ class LineChartRenderer implements Renderer {
     this.background.width = width * dpr;
     this.background.height = height * dpr;
     environment.renderers.push(this);
-
-    this.drawBackground();
   }
 
   mount(el: string | HTMLElement): void {
@@ -80,20 +85,24 @@ class LineChartRenderer implements Renderer {
   }
 
   metric(key: string, opts?: MetricOptions) {
-    const buffer = document.createElement("canvas");
-    buffer.width = this.canvas.width;
-    buffer.height = this.canvas.height;
+    const buffer = new NumArray();
     this.metrics.push(
       Object.assign({}, defaultMetricOptions, opts, {
         key,
-        buffer,
-        location: { x: -1, y: -1 }
+        buffer
       })
     );
   }
 
   x(value: number): number {
-    return Math.round(value);
+    const { opts, t, width } = this;
+    let x = value;
+    if (opts.autoScroll && t >= width) {
+      x -= t - width;
+    } else if (opts.autoScale && t >= width) {
+      x *= width / t;
+    }
+    return x | 0;
   }
 
   y(value: number): number {
@@ -105,11 +114,11 @@ class LineChartRenderer implements Renderer {
   }
 
   drawBackground() {
-    const { width, height } = this;
+    const { canvas, width, height } = this;
     // draw background and lines
-    const backgroundContext = this.background.getContext("2d");
-    backgroundContext.fillStyle = this.opts.background;
-    backgroundContext.fillRect(0, 0, width, height);
+    const context = canvas.getContext("2d");
+    context.fillStyle = this.opts.background;
+    context.fillRect(0, 0, width, height);
 
     const { range } = this.opts;
     const markers = extractRoundNumbers(range);
@@ -124,37 +133,43 @@ class LineChartRenderer implements Renderer {
 
     let textMaxWidth = 0;
     // write numbers
-    backgroundContext.font = `${14 * window.devicePixelRatio}px Helvetica`;
-    backgroundContext.fillStyle = "#000";
-    backgroundContext.textBaseline = "middle";
+    context.font = `${14 * window.devicePixelRatio}px Helvetica`;
+    context.fillStyle = "#000";
+    context.textBaseline = "middle";
 
     markers.forEach(marker => {
-      const { width } = backgroundContext.measureText(marker.toLocaleString());
+      const { width } = context.measureText(marker.toLocaleString());
       if (width > textMaxWidth) textMaxWidth = width;
-      backgroundContext.fillText(marker.toLocaleString(), 5, this.y(marker));
+      context.fillText(marker.toLocaleString(), 5, this.y(marker));
     });
 
     // draw lines
+    context.save();
     markers.forEach(marker => {
-      backgroundContext.moveTo(textMaxWidth + 10, this.y(marker));
-      backgroundContext.lineTo(this.x(width), this.y(marker));
-      backgroundContext.setLineDash([10, 10]);
-      backgroundContext.stroke();
+      context.beginPath();
+      context.moveTo(textMaxWidth + 10, this.y(marker));
+      context.lineTo(
+        this.x(Math.max(width, this.environment.time)),
+        this.y(marker)
+      );
+      context.setLineDash(lineDash);
+      context.stroke();
     });
+    context.restore();
   }
 
   render() {
-    const { canvas, environment, metrics } = this;
-    const { width, height } = this;
+    const { canvas, environment, metrics, width, height, opts } = this;
     const context = canvas.getContext("2d");
 
-    // clear existing canvas by drawing background
-    context.drawImage(this.background, 0, 0, width, height);
+    // clear canvas and draw background
+    context.clearRect(0, 0, width, height);
+    this.drawBackground();
 
     const agents = environment.getAgents();
 
     // initialize values map -- for each metric, a pairing of `key` and an empty array
-    const values: Map<string, Array<number>> = new Map();
+    const values: Map<string, number[]> = new Map();
     metrics.forEach(({ key }) => values.set(key, []));
 
     // loop over all the agents and, for each metric, push to the values map
@@ -170,21 +185,31 @@ class LineChartRenderer implements Renderer {
     // finally, for each metric, use its function to derive the desired value
     // from all the agent data
     metrics.forEach(metric => {
-      const { buffer, color, fn, location, key } = metric;
-      let { x, y } = location;
-      const bufferContext = buffer.getContext("2d");
+      const { buffer, color, fn, key } = metric;
+
+      // push new value to buffer
       const value = fn(values.get(key));
+      buffer.set(this.t, value);
+      if (opts.autoScale) {
+        if (value < opts.range.min) opts.range.min = value;
+        if (value > opts.range.max) opts.range.max = value;
+      }
 
-      bufferContext.strokeStyle = color;
-      if (this.x(x) < 0) y = this.y(value);
-      bufferContext.moveTo(this.x(x), y);
-      bufferContext.lineTo(this.x(x + 1), this.y(value));
-      bufferContext.stroke();
-      location.x++;
-      location.y = this.y(value);
+      context.strokeStyle = color;
+      context.beginPath();
 
-      context.drawImage(buffer, 0, 0, width, height);
+      for (let i = 0; i < buffer.length; i++) {
+        const value = buffer.get(i);
+        const x = this.x(i);
+        const y = this.y(value);
+        if (i === 0) context.moveTo(x, y);
+        context.lineTo(x, y);
+      }
+
+      context.stroke();
     });
+
+    this.t++;
   }
 }
 
