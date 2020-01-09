@@ -2,6 +2,7 @@
 /// <reference path="../types/Point.d.ts" />
 /// <reference path="../types/NRange.d.ts" />
 import { Environment } from "../environments/Environment";
+import { NumArray } from "../helpers/NumArray";
 import mean from "../utils/mean";
 import extractRoundNumbers from "../utils/extractRoundNumbers";
 
@@ -9,9 +10,8 @@ type MetricFunction = (arr: Array<number>) => number;
 
 interface Metric {
   color: string;
-  buffer: HTMLCanvasElement;
+  buffer: NumArray;
   fn: MetricFunction;
-  location: Point; // the last point drawn on the buffer canvas
   key: string;
 }
 
@@ -21,6 +21,8 @@ interface MetricOptions {
 }
 
 interface LineChartRendererOptions {
+  autoScale: boolean;
+  autoScroll: boolean;
   background: string;
   height: number;
   range: NRange;
@@ -28,6 +30,8 @@ interface LineChartRendererOptions {
 }
 
 const defaultRendererOptions: LineChartRendererOptions = {
+  autoScale: false,
+  autoScroll: false,
   background: "transparent",
   height: 500,
   range: {
@@ -52,6 +56,7 @@ class LineChartRenderer implements Renderer {
   metrics: Metric[] = [];
   height: number;
   width: number;
+  t: number = 0;
 
   constructor(environment: Environment, opts?: LineChartRendererOptions) {
     this.environment = environment;
@@ -80,14 +85,11 @@ class LineChartRenderer implements Renderer {
   }
 
   metric(key: string, opts?: MetricOptions) {
-    const buffer = document.createElement("canvas");
-    buffer.width = this.canvas.width;
-    buffer.height = this.canvas.height;
+    const buffer = new NumArray();
     this.metrics.push(
       Object.assign({}, defaultMetricOptions, opts, {
         key,
-        buffer,
-        location: { x: -1, y: -1 }
+        buffer
       })
     );
   }
@@ -154,7 +156,7 @@ class LineChartRenderer implements Renderer {
     const agents = environment.getAgents();
 
     // initialize values map -- for each metric, a pairing of `key` and an empty array
-    const values: Map<string, Array<number>> = new Map();
+    const values: Map<string, number[]> = new Map();
     metrics.forEach(({ key }) => values.set(key, []));
 
     // loop over all the agents and, for each metric, push to the values map
@@ -170,21 +172,26 @@ class LineChartRenderer implements Renderer {
     // finally, for each metric, use its function to derive the desired value
     // from all the agent data
     metrics.forEach(metric => {
-      const { buffer, color, fn, location, key } = metric;
-      let { x, y } = location;
-      const bufferContext = buffer.getContext("2d");
-      const value = fn(values.get(key));
+      const { buffer, color, fn, key } = metric;
 
-      bufferContext.strokeStyle = color;
-      if (this.x(x) < 0) y = this.y(value);
-      bufferContext.moveTo(this.x(x), y);
-      bufferContext.lineTo(this.x(x + 1), this.y(value));
-      bufferContext.stroke();
-      location.x++;
-      location.y = this.y(value);
+      // push new value to buffer
+      buffer.set(this.t, fn(values.get(key)));
 
-      context.drawImage(buffer, 0, 0, width, height);
+      context.strokeStyle = color;
+      context.beginPath();
+
+      for (let i = 0; i < buffer.length; i++) {
+        const value = buffer.get(i);
+        const x = this.x(i);
+        const y = this.y(value);
+        if (i === 0) context.moveTo(x, y);
+        context.lineTo(x, y);
+      }
+
+      context.stroke();
     });
+
+    this.t++;
   }
 }
 
