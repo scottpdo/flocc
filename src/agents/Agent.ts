@@ -22,6 +22,10 @@ class Agent implements DataObj {
   data: Data = {};
   id: string = uuid();
 
+  // This is used as a temporary store for data that
+  // gets returned from rules. When enqueued rules are executed,
+  // even if there aren't any enqueued rules, .set gets called
+  // on any data that was placed here.
   __newData: Data = {};
 
   // When agent.get('key') is called, this pseudo-private member is set to 'key'.
@@ -29,6 +33,10 @@ class Agent implements DataObj {
   // this has been reset, that means that there is an infinite loop, and the call
   // will throw an error.
   __retrievingData: string = null;
+
+  constructor(data: Data = {}) {
+    this.set(data);
+  }
 
   // Given a data object, a name, and a function value,
   // force the object to call the function whenever data[name] is referenced

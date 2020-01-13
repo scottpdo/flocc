@@ -34,6 +34,17 @@ it("Correctly sets new data.", () => {
   expect([x, y, z]).toEqual([100, false, "asdf"]);
 });
 
+it("Instantiates agents with data", () => {
+  const a = new Agent({
+    x: 0,
+    y: 12,
+    z: 24
+  });
+  expect(a.get("x")).toBe(0);
+  expect(a.get("y")).toBe(12);
+  expect(a.get("z")).toBe(24);
+});
+
 it("Correctly retrieves function values that reference other values.", () => {
   agent.set("alias", agt => agt.get("z"));
   expect(agent.get("alias")).toBe("asdf");
