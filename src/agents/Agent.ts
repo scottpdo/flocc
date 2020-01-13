@@ -16,26 +16,19 @@ class Agent implements DataObj {
    * @member {RuleObj[]} queue
    * @member {Object} data
    */
-  environment: Environment | null;
-  rules: Array<RuleObj>;
-  queue: Array<RuleObj>;
-  data: Data;
-  id: string;
+  environment: Environment = null;
+  rules: Array<RuleObj> = [];
+  queue: Array<RuleObj> = [];
+  data: Data = {};
+  id: string = uuid();
+
+  __newData: Data = {};
 
   // When agent.get('key') is called, this pseudo-private member is set to 'key'.
   // Once it is retrieved, it is reset to null. If agent.get('key') is called before
   // this has been reset, that means that there is an infinite loop, and the call
   // will throw an error.
-  __retrievingData: string | null;
-
-  constructor() {
-    this.environment = null;
-    this.rules = [];
-    this.queue = [];
-    this.data = {};
-    this.id = uuid();
-    this.__retrievingData = null;
-  }
+  __retrievingData: string = null;
 
   // Given a data object, a name, and a function value,
   // force the object to call the function whenever data[name] is referenced
@@ -174,12 +167,14 @@ class Agent implements DataObj {
    * From a RuleObj, execute a single rule (function or structured Rule).
    * @param {RuleObj} ruleObj
    */
-  executeRule(ruleObj: RuleObj) {
+  executeRule(ruleObj: RuleObj): Data {
     const { rule, args } = ruleObj;
     if (rule instanceof Rule) {
       rule.call(this);
+      return {};
     } else {
-      rule(this, ...args);
+      const data = rule(this, ...args);
+      return data || {};
     }
   }
 
@@ -187,16 +182,25 @@ class Agent implements DataObj {
    * Execute all rules.
    */
   executeRules() {
-    this.rules.forEach(ruleObj => this.executeRule(ruleObj));
+    this.rules.forEach(ruleObj => {
+      Object.assign(this.__newData, this.executeRule(ruleObj));
+    });
   }
 
   /**
    * Execute all enqueued rules.
    */
   executeEnqueuedRules() {
+    // if new data from the rules
+    // exists, set it
+    this.set(this.__newData);
+    this.__newData = {};
+
+    // run through the queue
     while (this.queue.length > 0) {
       const ruleObj = this.queue.shift();
-      this.executeRule(ruleObj);
+      const data = this.executeRule(ruleObj);
+      if (data) this.set(data);
     }
   }
 }
