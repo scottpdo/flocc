@@ -1,4 +1,4 @@
-const { Agent } = require("../dist/flocc");
+const { Agent, Environment } = require("../dist/flocc");
 
 const agent = new Agent();
 agent.set("x", 12);
@@ -34,6 +34,17 @@ it("Correctly sets new data.", () => {
   expect([x, y, z]).toEqual([100, false, "asdf"]);
 });
 
+it("Instantiates agents with data", () => {
+  const a = new Agent({
+    x: 0,
+    y: 12,
+    z: 24
+  });
+  expect(a.get("x")).toBe(0);
+  expect(a.get("y")).toBe(12);
+  expect(a.get("z")).toBe(24);
+});
+
 it("Correctly retrieves function values that reference other values.", () => {
   agent.set("alias", agt => agt.get("z"));
   expect(agent.get("alias")).toBe("asdf");
@@ -62,4 +73,45 @@ it(`Throws an error if an agent's data tries to call itself.`, () => {
   a.set("value", () => b.get("value"));
   b.set("value", () => a.get("value"));
   expect(() => a.get("value")).toThrow();
+});
+
+it("Sets new data based on return value of rules", () => {
+  const a = new Agent();
+  a.set("x", 100);
+  expect(a.get("x")).toBe(100);
+  function rule(agt) {
+    return {
+      x: agt.get("x") + 1
+    };
+  }
+  a.addRule(rule);
+  const e = new Environment();
+  e.addAgent(a);
+  e.tick();
+  expect(a.get("x")).toBe(101);
+});
+
+it("Sets new data based on return value of rules asynchronously.", () => {
+  const a = new Agent();
+  const b = new Agent();
+  const e = new Environment();
+  e.addAgent(a);
+  e.addAgent(b);
+  a.set("x", 100);
+  b.set("x", 200);
+  function rule(agt) {
+    const mean =
+      e
+        .getAgents()
+        .map(_ => _.get("x"))
+        .reduce((x, y) => x + y, 0) / e.getAgents().length;
+    return {
+      x: (agt.get("x") + mean) / 2
+    };
+  }
+  a.addRule(rule);
+  b.addRule(rule);
+  e.tick();
+  expect(a.get("x")).toBe(125);
+  expect(b.get("x")).toBe(175);
 });
