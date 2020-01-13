@@ -62,20 +62,17 @@
 
     function setup() {
         for (let i = 0; i < flockSize; i++) {
-            const agent = new Agent();
-
-            agent.set("p", new Vector(random(0, width), random(0, height)));
-            agent.set("x", agent => agent.get("p").x);
-            agent.set("y", agent => agent.get("p").y);
-
             const angle = 2 * Math.random() * Math.PI;
-            agent.set("v", new Vector(Math.cos(angle), Math.sin(angle)));
-
-            agent.set("shape", "arrow");
-            agent.set("size", 2.5);
-
-            agent.set("vx", a => a.get("v").x);
-            agent.set("vy", a => a.get("v").y);
+            const agent = new Agent({
+                p: new Vector(random(0, width), random(0, height)),
+                x: agent => agent.get("p").x,
+                y: agent => agent.get("p").y,
+                v: new Vector(Math.cos(angle), Math.sin(angle)),
+                shape: "arrow",
+                size: 2.5,
+                vx: a => a.get("v").x,
+                vy: a => a.get("v").y
+            });
 
             agent.addRule(tick);
 
@@ -84,7 +81,6 @@
 
         tree = new KDTree(environment.getAgents(), 2);
         environment.use(tree);
-        console.log(tree);
     }
 
     function tick(agent) {

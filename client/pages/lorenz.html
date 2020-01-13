@@ -3,9 +3,9 @@
 
 <script>
     const environment = new Environment();
-    const x = new Agent();
-    const y = new Agent();
-    const z = new Agent();
+    const x = new Agent({ x: 1 });
+    const y = new Agent({ y: 2 });
+    const z = new Agent({ z: 0 });
 
     const chart1 = new LineChartRenderer(environment, {
         autoScale: true,
@@ -30,27 +30,29 @@
 
     function tickX() {
         const i = 10 * (y.get("y") - x.get("x"));
-        x.enqueue(() => x.increment("x", i * timeFactor));
+        return {
+            x: x.get("x") + i * timeFactor
+        };
     }
 
     function tickY() {
         const i = x.get("x") * (28 - z.get("z")) - y.get("y");
-        y.enqueue(() => y.increment("y", i * timeFactor));
+        return {
+            y: y.get("y") + i * timeFactor
+        };
     }
 
     function tickZ() {
         const i = x.get("x") * y.get("y") - (8 / 3) * z.get("z");
-        z.enqueue(() => z.increment("z", i * timeFactor));
+        return {
+            z: z.get("z") + i * timeFactor
+        };
     }
 
     (function setup() {
         x.addRule(tickX);
         y.addRule(tickY);
         z.addRule(tickZ);
-
-        x.set("x", 1);
-        y.set("y", 1);
-        z.set("z", 3);
 
         environment.addAgent(x);
         environment.addAgent(y);

@@ -1,14 +1,6 @@
 <div id="container"></div>
 <div id="chart"></div>
 <script>
-    /*
-This intentionally abstract simulation depicts the dynamics of a network tending toward the mean.
-
-Each agent is connected to its closest geographic neighbors, and possibly a few other random agents in the network, depending on the value of REWIRING_PROBABILITY. With each tick of the simulation, an agent that is larger than its neighbor will transfer some of its size to the neighbor, shrinking the agent and growing the neighbor. With enough time, the network reaches stasis.
-
-Try adjusting the parameters to see how it affects the network dynamics.
-*/
-
     const {
         Agent,
         Environment,
@@ -57,8 +49,9 @@ Try adjusting the parameters to see how it affects the network dynamics.
 
     function setup() {
         for (let i = 0; i < POPULATION; i++) {
-            const agent = new Agent();
-            agent.set("size", Math.max(utils.gaussian(7, 6), 1));
+            const agent = new Agent({
+                size: Math.max(utils.gaussian(7, 6), 1)
+            });
             agent.addRule(tick);
             environment.addAgent(agent);
             network.addAgent(agent);
