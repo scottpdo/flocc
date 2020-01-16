@@ -9,7 +9,7 @@
     "watch": "rollup -cw",
     "dev": "concurrently 'npm run watch' 'node client/app.js' 'browser-sync start --watch dist/flocc.js'",
     "test": "jest",
-    "prepublish": "yarn run build"
+    "perf": "node ./performance/agent.js"
   },
   "author": "Scott Donaldson",
   "license": "ISC",
