@@ -6,6 +6,7 @@ export { KDTree } from "./helpers/KDTree";
 export { NumArray } from "./helpers/NumArray";
 
 export { Environment } from "./environments/Environment";
+export { NewEnvironment } from "./environments/NewEnvironment";
 export { GridEnvironment } from "./environments/GridEnvironment";
 
 export { ASCIIRenderer } from "./renderers/ASCIIRenderer";
