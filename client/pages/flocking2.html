@@ -1,0 +1,124 @@
+<div id="container"></div>
+<div id="histogram-vx"></div>
+<div id="histogram-vy"></div>
+<script>
+    const {
+        NewEnvironment,
+        GridEnvironment,
+        Histogram,
+        ASCIIRenderer,
+        CanvasRenderer,
+        utils,
+        Vector,
+        KDTree
+    } = flocc;
+    const { random } = utils;
+
+    /* ------- PARAMETERS --------- */
+
+    const flockSize = 350;
+    const width = 600;
+    const height = 600;
+
+    /* ---------------------------- */
+
+    /* ------- SET UP ENVIRONMENT, RENDERER --------- */
+
+    const environment = new NewEnvironment();
+    environment.width = width;
+    environment.height = height;
+    const renderer = new CanvasRenderer(environment, { width, height });
+    let tree;
+    const container = document.getElementById("container");
+    renderer.mount(container);
+    let agents;
+
+    function setup() {
+        environment.addRule(tick);
+        for (let i = 0; i < flockSize; i++) {
+            const angle = 2 * Math.random() * Math.PI;
+            environment.addAgent({
+                vx: Math.cos(angle),
+                vy: Math.sin(angle),
+                x: random(0, width),
+                y: random(0, height),
+                shape: "arrow",
+                size: 2.5
+            });
+        }
+        agents = environment.getAgents();
+        tree = new KDTree(agents, 2);
+        console.log(tree);
+    }
+
+    function tick(agent) {
+        let { x, y, vx, vy } = agent.getData();
+
+        x += vx;
+        y += vy;
+        if (x > width) x -= width;
+        if (x < 0) x += width;
+        if (y > height) y -= height;
+        if (y < 0) y += height;
+
+        // update direction
+        const d = 30;
+        const neighbors = tree.agentsWithinDistance(agent, d);
+        if (neighbors.length < 1) return { x, y };
+
+        const center = new Vector();
+        neighbors.forEach(neighbor => {
+            let nx = neighbor.get("x");
+            let ny = neighbor.get("y");
+            if (x + d > width && x < d) nx += width;
+            if (x - d < 0 && x + d > width) nx -= width;
+            if (y + d > height && y < d) ny += height;
+            if (y - d < 0 && y + d > height) ny -= height;
+            center.x += nx;
+            center.y += ny;
+        });
+        center.multiplyScalar(1 / neighbors.length);
+
+        const meanVel = neighbors.reduce(
+            (a, b) => a.add(new Vector(b.get("vx"), b.get("vy"))),
+            new Vector()
+        );
+        meanVel.normalize();
+        meanVel.multiplyScalar(0.03);
+
+        const towardCenter = new Vector(x, y)
+            .clone()
+            .add(center.multiplyScalar(-1))
+            .multiplyScalar(0.001);
+
+        const v = new Vector(vx, vy);
+        v.add(towardCenter);
+        v.add(meanVel);
+        v.normalize();
+
+        return {
+            x,
+            y,
+            vx: v.x,
+            vy: v.y
+        };
+    }
+
+    let t = new Date();
+    const times = [];
+
+    function render() {
+        environment.tick();
+        tree.rebalance(agents);
+        times.push(new Date() - t);
+        if (times.length === 10) {
+            console.log(utils.mean(times));
+            while (times.length > 0) times.pop();
+        }
+        t = new Date();
+        requestAnimationFrame(render);
+    }
+
+    setup();
+    render();
+</script>
