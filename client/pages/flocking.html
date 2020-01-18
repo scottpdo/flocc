@@ -38,28 +38,6 @@
     const container = document.getElementById("container");
     renderer.mount(container);
 
-    const histogramVX = new Histogram(environment, {
-        buckets: 5,
-        height: 200,
-        min: -0.5,
-        max: 0.5,
-        width: 800,
-        aboveMax: true,
-        belowMin: true
-    });
-    histogramVX.mount("#histogram-vx");
-    histogramVX.metric("vx");
-
-    const histogramVY = new Histogram(environment, {
-        buckets: 10,
-        height: 200,
-        min: -1,
-        max: 1,
-        width: 800
-    });
-    histogramVY.mount("#histogram-vy");
-    histogramVY.metric("vy");
-
     function setup() {
         for (let i = 0; i < flockSize; i++) {
             const angle = 2 * Math.random() * Math.PI;
@@ -133,9 +111,15 @@
     }
 
     let t = new Date();
+    const times = [];
 
     function render() {
         environment.tick();
+        times.push(new Date() - t);
+        if (times.length === 10) {
+            console.log(utils.mean(times));
+            while (times.length > 0) times.pop();
+        }
         t = new Date();
         requestAnimationFrame(render);
     }

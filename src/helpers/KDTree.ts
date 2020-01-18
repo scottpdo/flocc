@@ -1,10 +1,11 @@
-import { Agent } from "../agents/Agent";
+/// <reference path="../agents/Agent.d.ts" />
 import { BBox } from "./BBox";
 import median from "../utils/median";
 import sample from "../utils/sample";
 import { Vector } from "./Vector";
 import { utils } from "../utils/utils";
 import distance from "../utils/distance";
+import instanceOfPoint from "../types/instanceOfPoint";
 
 const MAX_IN_LEAF = 5;
 
@@ -72,7 +73,7 @@ class KDTree {
     const position = new Vector();
     for (let i = 0; i < this.dimension; i++) {
       const coord = getCoord(i);
-      const v = pt instanceof Agent ? pt.get(coord) : pt[coord];
+      const v = instanceOfPoint(pt) ? pt[coord] : pt.get(coord);
       if (v < this.bbox.min[coord] || v > this.bbox.max[coord]) {
         throw new Error("Can't locate subtree out of bounds!");
       }
@@ -105,19 +106,19 @@ class KDTree {
     d: number,
     coord: "x" | "y" | "z"
   ): boolean => {
-    const c = pt instanceof Agent ? pt.get(coord) : pt[coord];
+    const c = instanceOfPoint(pt) ? pt[coord] : pt.get(coord);
     const mn = this.bbox.min[coord];
     const mx = this.bbox.max[coord];
     if (c <= mn && c + d >= mn) return true;
     if (c >= mx && c - d <= mx) return true;
     if (c + d >= mn && c - d <= mx) return true;
-    if (pt instanceof Agent && pt.environment.opts.torus) {
-      const { environment } = pt;
-      if (coord === "x" && c + d > environment.width) return true;
-      if (coord === "x" && c - d < 0) return true;
-      if (coord === "y" && c + d > environment.height) return true;
-      if (coord === "y" && c - d < 0) return true;
-    }
+    // if (pt instanceof Agent && pt.environment.opts.torus) {
+    //   const { environment } = pt;
+    //   if (coord === "x" && c + d > environment.width) return true;
+    //   if (coord === "x" && c - d < 0) return true;
+    //   if (coord === "y" && c + d > environment.height) return true;
+    //   if (coord === "y" && c - d < 0) return true;
+    // }
     return false;
   };
 

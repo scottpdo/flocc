@@ -1,23 +1,19 @@
+/// <reference path="../agents/Agent.d.ts" />
 /// <reference path="../types/Data.d.ts" />
+/// <reference path="../renderers/Renderer.d.ts" />
 
-interface NewAgent {
-  get(key: string): any;
-  getData(): Data;
-  set(key: string, value: any): void;
-  increment(key: string, n: number): void;
-  decrement(key: string, n: number): void;
-}
-
-type NewRule = (agent: NewAgent) => Data;
+type NewRule = (agent: Agent) => Data;
 
 class NewEnvironment {
   agents: number = 0;
   current: number = 0;
   data: Map<string, any[]> = new Map();
+  helpers: { network: any } = { network: null };
   nextData: Map<string, any[]> = new Map();
   rule: NewRule;
+  renderers: Renderer[] = [];
 
-  addAgent(data: Data): NewAgent {
+  addAgent(data: Data): Agent {
     const index = this.agents++;
     if (data) this.set(index, data);
     return this.getAgent(index);
@@ -67,7 +63,7 @@ class NewEnvironment {
     }
   }
 
-  getAgent(i: number): NewAgent {
+  getAgent(i: number): Agent {
     if (i >= this.agents) return null;
     return {
       get: (key: string) => this.get(i, key),
@@ -78,8 +74,16 @@ class NewEnvironment {
     };
   }
 
+  getAgents(): Agent[] {
+    const agents = [];
+    for (let i = 0; i < this.agents; i++) {
+      agents.push(this.getAgent(i));
+    }
+    return agents;
+  }
+
   addRule(rule: NewRule) {
-    this.rule = (agent: NewAgent): Data => {
+    this.rule = (agent: Agent): Data => {
       const data = rule(agent);
       this.current++;
       return data || null;
@@ -98,7 +102,10 @@ class NewEnvironment {
       // reset current agent
       this.current = 0;
     }
-    if (n > 1) this.tick(n - 1);
+
+    if (n > 1) return this.tick(n - 1);
+
+    this.renderers.forEach(r => r.render());
   }
 }
 
