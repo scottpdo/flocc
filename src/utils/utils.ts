@@ -12,6 +12,7 @@ import max from "./max";
 import mean from "./mean";
 import median from "./median";
 import min from "./min";
+import percentile from "./percentile";
 import stdDev from "./stdDev";
 import uuid from "./uuid";
 import zfill from "./zfill";
@@ -26,6 +27,7 @@ const utils = {
   mean,
   median,
   min,
+  percentile,
   remap,
   random,
   sample,
