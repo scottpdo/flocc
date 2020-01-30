@@ -1,12 +1,5 @@
-import copyArray from "./copyArray";
+import percentile from "./percentile";
 
 export default function median(arr: Array<number>): number {
-  if (arr.length === 0) return null;
-  const copy = copyArray(arr);
-  copy.sort((a, b) => (a < b ? -1 : 1));
-  const len = copy.length;
-  if (len % 2 === 0) {
-    return (copy[len / 2 - 1] + copy[len / 2]) / 2;
-  }
-  return copy[(len - 1) / 2];
+  return percentile(arr, 0.5);
 }
