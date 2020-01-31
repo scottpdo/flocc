@@ -1,12 +1,10 @@
-import copyArray from "./copyArray";
+import percentile from "./percentile";
 
-export default function median(arr: Array<number>): number {
-  if (arr.length === 0) return null;
-  const copy = copyArray(arr);
-  copy.sort((a, b) => (a < b ? -1 : 1));
-  const len = copy.length;
-  if (len % 2 === 0) {
-    return (copy[len / 2 - 1] + copy[len / 2]) / 2;
-  }
-  return copy[(len - 1) / 2];
+/**
+ * Find the median value of an array of numbers. If there are an even number
+ * of elements in the array, takes the mean of the two values closest to the median.
+ * @param {number[]} arr
+ */
+export default function median(arr: number[]): number {
+  return percentile(arr, 0.5);
 }
