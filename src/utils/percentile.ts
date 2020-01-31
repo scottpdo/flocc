@@ -3,6 +3,13 @@ import min from "./min";
 import max from "./max";
 import lerp from "./lerp";
 
+/**
+ * Return percentile value from an array of numbers. If a percentile falls
+ * between discrete values of the array, linearly interpolates between those values
+ * (https://en.wikipedia.org/wiki/Percentile#The_linear_interpolation_between_closest_ranks_method)
+ * @param {number[]} arr - Array of numbers
+ * @param {number} n - Percentile value (between 0 and 1 inclusive)
+ */
 export default function percentile(arr: number[], n: number): number {
   if (arr.length === 0) return null;
   if (arr.length === 1) return arr[0];

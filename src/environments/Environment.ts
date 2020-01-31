@@ -199,6 +199,15 @@ class Environment extends Agent {
     if (e instanceof Network) this.helpers.network = e;
   }
 
+  /**
+   * Get an array of data associated with agents in the environment by key.
+   * Equivalent to calling `environment.getAgents().map(agent => agent.get(key));`
+   * Defaults to calculating and storing the result within the same environment tick.
+   * If the 2nd parameter is set to `false`, will recalculate and return the result every time.
+   * @param {string} key - The key for which to retrieve data.
+   * @param {boolean} useCache - Whether or not to cache the result (defaults to true).
+   * @return {any[]} Array of data associated with `agent.get(key)` across all agents.
+   */
   stat(key: string, useCache: boolean = true): any[] {
     if (useCache) {
       return this.memo(() => this.getAgents().map(agent => agent.get(key)));
@@ -206,13 +215,18 @@ class Environment extends Agent {
     return this.getAgents().map(agent => agent.get(key));
   }
 
-  memo(value: Function): any {
-    const serialized = value.toString();
+  /**
+   * Pass a function to cache and use the return value within the same environment tick.
+   * @param {Function} key - The key for which to retrieve data.
+   * @return {any} The return value of the function that was passed.
+   */
+  memo(fn: Function): any {
+    const serialized = fn.toString();
     const memoValue = this.cache.get(serialized);
     if (memoValue && this.time === memoValue.time) return memoValue.value;
 
-    // if does not exist in cache or time has elapsed, set new value
-    const data = value();
+    // if does not exist in cache or time has elapsed, cache new value
+    const data = fn();
     this.cache.set(serialized, { value: data, time: this.time });
     return data;
   }
