@@ -1,17 +1,43 @@
 /// <reference path="../agents/Agent.d.ts" />
 /// <reference path="../types/Data.d.ts" />
 /// <reference path="../renderers/Renderer.d.ts" />
+/// <reference path="./EnvironmentOptions.d.ts" />
+
+import { Network } from "../helpers/Network";
+import shuffle from "../utils/shuffle";
+import { KDTree } from "../helpers/KDTree";
 
 type NewRule = (agent: Agent) => Data;
+
+interface Helpers {
+  kdtree: KDTree;
+  network: Network;
+}
+
+const defaultEnvironmentOptions: EnvironmentOptions = {
+  torus: true,
+  height: 0,
+  width: 0
+};
 
 class NewEnvironment {
   agents: number = 0;
   current: number = 0;
   data: Map<string, any[]> = new Map();
   helpers: { network: any } = { network: null };
+  opts: EnvironmentOptions;
   nextData: Map<string, any[]> = new Map();
   rule: NewRule;
   renderers: Renderer[] = [];
+  width: number;
+  height: number;
+  time: number = 0;
+
+  constructor(opts: EnvironmentOptions = defaultEnvironmentOptions) {
+    this.opts = Object.assign({}, defaultEnvironmentOptions, opts);
+    this.width = this.opts.width;
+    this.height = this.opts.height;
+  }
 
   addAgent(data: Data): Agent {
     const index = this.agents++;

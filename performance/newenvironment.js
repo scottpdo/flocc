@@ -39,4 +39,23 @@ function profileReturnValue() {
   console.log("\n");
 }
 
-profileReturnValue();
+function getAgents() {
+  function rule(agent) {
+    return {
+      x: agent.get("x") + 1
+    };
+  }
+  const environment = new NewEnvironment();
+  environment.addRule(rule);
+  for (let i = 0; i < numAgents; i++) {
+    environment.addAgent({ x: 0 });
+  }
+  console.log(`instantiating took ${sinceLast()}`);
+
+  const agents = environment.getAgents();
+  console.log(`getting agents took ${sinceLast()}`);
+  console.log("\n");
+}
+
+// profileReturnValue();
+getAgents();
