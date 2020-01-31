@@ -2,9 +2,9 @@
 
 export default function instanceOfPoint(obj: any): obj is Point {
   return (
-    obj.hasOwnProperty["x"] &&
+    obj.hasOwnProperty("x") &&
     typeof obj.x === "number" &&
-    obj.hasOwnProperty["y"] &&
+    obj.hasOwnProperty("y") &&
     typeof obj.y === "number"
   );
 }

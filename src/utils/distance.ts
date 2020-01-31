@@ -24,21 +24,21 @@ export default function distance(p1: Point | Agent, p2: Point | Agent): number {
   let dz: number = Math.abs(z2 - z1);
 
   // distance for toroidal environments
-  // if (
-  //   !instanceOfPoint(p1) &&
-  //   !instanceOfPoint(p2) &&
-  //   p1.environment &&
-  //   p2.environment &&
-  //   p1.environment === p2.environment &&
-  //   p1.environment.width &&
-  //   p1.environment.height &&
-  //   p1.environment.opts.torus
-  // ) {
-  //   const { environment } = p1;
-  //   const { width, height } = environment;
-  //   if (dx > width / 2) dx = width - dx;
-  //   if (dy > height / 2) dy = height - dy;
-  // }
+  if (
+    !instanceOfPoint(p1) &&
+    !instanceOfPoint(p2) &&
+    p1.environment &&
+    p2.environment &&
+    p1.environment === p2.environment &&
+    p1.environment.width &&
+    p1.environment.height &&
+    p1.environment.opts.torus
+  ) {
+    const { environment } = p1;
+    const { width, height } = environment;
+    if (dx > width / 2) dx = width - dx;
+    if (dy > height / 2) dy = height - dy;
+  }
 
   return Math.sqrt(dx * dx + dy * dy + dz * dz);
 }

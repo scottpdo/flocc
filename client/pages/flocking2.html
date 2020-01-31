@@ -48,6 +48,7 @@
         }
         agents = environment.getAgents();
         tree = new KDTree(agents, 2);
+        environment.use(tree);
         console.log(tree);
     }
 

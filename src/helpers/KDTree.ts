@@ -6,6 +6,7 @@ import { Vector } from "./Vector";
 import { utils } from "../utils/utils";
 import distance from "../utils/distance";
 import instanceOfPoint from "../types/instanceOfPoint";
+import { NewEnvironment } from "../environments/NewEnvironment";
 
 const MAX_IN_LEAF = 5;
 
@@ -25,6 +26,7 @@ class KDTree {
   bbox: BBox;
   depth: number = 0;
   dimension: number = 2;
+  environment: NewEnvironment;
   median: number = null;
   needsUpdating: boolean = false;
   parent: KDTree = null;
@@ -112,13 +114,17 @@ class KDTree {
     if (c <= mn && c + d >= mn) return true;
     if (c >= mx && c - d <= mx) return true;
     if (c + d >= mn && c - d <= mx) return true;
-    // if (pt instanceof Agent && pt.environment.opts.torus) {
-    //   const { environment } = pt;
-    //   if (coord === "x" && c + d > environment.width) return true;
-    //   if (coord === "x" && c - d < 0) return true;
-    //   if (coord === "y" && c + d > environment.height) return true;
-    //   if (coord === "y" && c - d < 0) return true;
-    // }
+    if (
+      !instanceOfPoint(pt) &&
+      this.environment &&
+      this.environment.opts.torus
+    ) {
+      const { width, height } = this.environment;
+      if (coord === "x" && c + d > width) return true;
+      if (coord === "x" && c - d < 0) return true;
+      if (coord === "y" && c + d > height) return true;
+      if (coord === "y" && c - d < 0) return true;
+    }
     return false;
   };
 

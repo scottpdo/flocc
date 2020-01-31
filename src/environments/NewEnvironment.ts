@@ -5,6 +5,7 @@
 
 import { Network } from "../helpers/Network";
 import shuffle from "../utils/shuffle";
+import uuid from "../utils/uuid";
 import { KDTree } from "../helpers/KDTree";
 
 type NewRule = (agent: Agent) => Data;
@@ -24,7 +25,9 @@ class NewEnvironment {
   agents: number = 0;
   current: number = 0;
   data: Map<string, any[]> = new Map();
-  helpers: { network: any } = { network: null };
+  ids: string[] = [];
+  idsToIndices: { [key: string]: number } = {};
+  helpers: Helpers = { network: null, kdtree: null };
   opts: EnvironmentOptions;
   nextData: Map<string, any[]> = new Map();
   rule: NewRule;
@@ -41,8 +44,30 @@ class NewEnvironment {
 
   addAgent(data: Data): Agent {
     const index = this.agents++;
+    const id = uuid();
+    this.ids.push(id);
+    this.idsToIndices[id] = index;
     if (data) this.set(index, data);
     return this.getAgent(index);
+  }
+
+  /**
+   * Remove an agent from the environment.
+   * @param {Agent} agent
+   */
+  removeAgent(agent: Agent): void {
+    this.removeAgentById(agent.id);
+  }
+
+  /**
+   * Remove an agent from the environment by its ID.
+   * @param {string} id
+   */
+  removeAgentById(id: string): void {
+    const index = this.idsToIndices[id];
+    this.agents--;
+    delete this.idsToIndices[id];
+    this.ids.splice(index, 1);
   }
 
   get(i: number, key: string): any {
@@ -64,6 +89,13 @@ class NewEnvironment {
   set(i: number, key: string | Data, value?: any): void {
     if (typeof key === "string") {
       if (!this.data.get(key)) this.data.set(key, []);
+      if (this.opts.torus) {
+        const { width, height } = this;
+        if (key === "x" && value > width) value -= width;
+        if (key === "x" && value < 0) value += width;
+        if (key === "y" && value > height) value -= height;
+        if (key === "y" && value < 0) value += height;
+      }
       this.data.get(key)[i] = value;
     } else {
       for (let name in key) {
@@ -92,6 +124,8 @@ class NewEnvironment {
   getAgent(i: number): Agent {
     if (i >= this.agents) return null;
     return {
+      environment: this,
+      id: this.ids[i],
       get: (key: string) => this.get(i, key),
       getData: () => this.getData(i),
       set: (key: string | Data, value?: any) => this.set(i, key, value),
@@ -106,6 +140,21 @@ class NewEnvironment {
       agents.push(this.getAgent(i));
     }
     return agents;
+  }
+
+  getAgentById(id: string): Agent {
+    const i = this.idsToIndices[id];
+    return this.getAgent(i);
+  }
+
+  /**
+   * Removes all agents from the environment.
+   */
+  clear(): void {
+    while (this.getAgents().length > 0) {
+      const a0 = this.getAgents()[0];
+      this.removeAgent(a0);
+    }
   }
 
   addRule(rule: NewRule) {
@@ -132,6 +181,18 @@ class NewEnvironment {
     if (n > 1) return this.tick(n - 1);
 
     this.renderers.forEach(r => r.render());
+  }
+
+  /**
+   * Use a helper with this environment.
+   * @param {EnvironmentHelper} e
+   */
+  use(e: EnvironmentHelper) {
+    if (e instanceof KDTree) {
+      e.environment = this;
+      this.helpers.kdtree = e;
+    }
+    if (e instanceof Network) this.helpers.network = e;
   }
 }
 

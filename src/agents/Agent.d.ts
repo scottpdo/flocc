@@ -1,6 +1,9 @@
 /// <reference path="../types/Data.d.ts" />
+/// <reference path="../environments/NewEnvironment.d.ts" />
 
 declare interface Agent {
+  environment: NewEnvironment;
+  id: string;
   get(key: string): any;
   getData(): Data;
   set(key: string, value: any): void;
