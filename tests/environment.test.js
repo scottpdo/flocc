@@ -1,6 +1,10 @@
-const { Agent, Environment } = require("../dist/flocc");
+const { Agent, Environment, utils } = require("../dist/flocc");
 
-const environment = new Environment();
+let environment;
+
+beforeEach(() => {
+  environment = new Environment();
+});
 
 it("Inherits all agent methods.", () => {
   environment.set("test", 1);
@@ -59,10 +63,14 @@ it("Correctly adds agents.", () => {
 });
 
 it("Correctly removes agents.", () => {
-  const a0 = environment.getAgents()[0];
+  const a0 = new Agent();
+  environment.addAgent(a0);
   environment.removeAgent(a0);
-  expect(environment.getAgents()).toHaveLength(5);
+  expect(environment.getAgents()).toHaveLength(0);
   expect(a0.environment).toBe(null);
+
+  for (let i = 0; i < 5; i++) environment.addAgent(new Agent());
+  expect(environment.getAgents()).toHaveLength(5);
 
   environment.clear();
   expect(environment.getAgents()).toHaveLength(0);
@@ -124,4 +132,52 @@ it("Correctly removes agents by ID.", () => {
   expect(environment.getAgents()).toHaveLength(1);
   environment.removeAgentById(id);
   expect(environment.getAgents()).toHaveLength(0);
+});
+
+it("Memoizes values", () => {
+  expect(environment.memo(() => 5)).toBe(5);
+  expect(environment.memo(() => true)).toBe(true);
+
+  const expensiveFunction = jest.fn(() => 123);
+  const tick = agent => {
+    agent.set("s", environment.memo(expensiveFunction));
+  };
+  for (let i = 0; i < 5; i++) {
+    const agent = new Agent({ i });
+    agent.addRule(tick);
+    environment.addAgent(agent);
+  }
+  environment.tick();
+  // should be called only once even though it runs for every agent
+  expect(expensiveFunction.mock.calls).toHaveLength(1);
+  expect(environment.getAgents()[0].get("s")).toBe(123);
+
+  environment.tick(3);
+  // should be called exactly once per environment tick
+  expect(expensiveFunction.mock.calls).toHaveLength(4);
+  expect(environment.getAgents()[3].get("s")).toBe(123);
+});
+
+it("Returns array of agent stats", () => {
+  for (let i = 0; i < 101; i++) {
+    const agent = new Agent({ i });
+    environment.addAgent(agent);
+  }
+
+  expect(environment.stat("i")).toHaveLength(101);
+  expect(utils.mean(environment.stat("i"))).toBe(50);
+
+  // after having been called once, uses cached value
+  environment.getAgents()[0].set("i", 9999);
+  expect(environment.stat("i")[0]).toBe(0);
+  expect(utils.mean(environment.stat("i"))).toBe(50);
+
+  // if called with `false` parameter, does not use cached value
+  expect(environment.stat("i", false)[0]).toBe(9999);
+  expect(utils.mean(environment.stat("i", false))).toBe(149);
+
+  // cache is cleared after ticking
+  environment.tick();
+  expect(environment.stat("i")[0]).toBe(9999);
+  expect(utils.mean(environment.stat("i"))).toBe(149);
 });
