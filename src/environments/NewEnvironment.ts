@@ -1,12 +1,13 @@
 /// <reference path="../agents/Agent.d.ts" />
 /// <reference path="../types/Data.d.ts" />
 /// <reference path="../renderers/Renderer.d.ts" />
+/// <reference path="../helpers/KDTree.d.ts" />
 /// <reference path="./EnvironmentOptions.d.ts" />
 
 import { Network } from "../helpers/Network";
 import shuffle from "../utils/shuffle";
 import uuid from "../utils/uuid";
-import { KDTree } from "../helpers/KDTree";
+import isAgent from "../types/isAgent";
 
 type NewRule = (agent: Agent) => Data;
 
@@ -40,6 +41,10 @@ class NewEnvironment {
     this.opts = Object.assign({}, defaultEnvironmentOptions, opts);
     this.width = this.opts.width;
     this.height = this.opts.height;
+  }
+
+  static isAgent(a: any): a is Agent {
+    return isAgent(a);
   }
 
   addAgent(data: Data): Agent {

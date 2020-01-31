@@ -151,9 +151,17 @@ class KDTree {
 
   agentsWithinDistance(pt: Point | Agent, d: number): Agent[] {
     const trees = this.subtreesWithinDistance(pt, d);
-    return arrayOfTreesToAgents(trees).filter(
-      a => a !== pt && distance(a, pt) <= d
-    );
+    return arrayOfTreesToAgents(trees).filter(a => {
+      // exclude agent itself
+      if (
+        NewEnvironment.isAgent(pt) &&
+        NewEnvironment.isAgent(a) &&
+        pt.id === a.id
+      ) {
+        return false;
+      }
+      return distance(a, pt) <= d;
+    });
   }
 
   nearestNeighbor(pt: Agent | Point): Agent {

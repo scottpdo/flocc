@@ -1,6 +1,6 @@
 /// <reference path="../types/Data.d.ts" />
+/// <reference path="../helpers/KDTree.d.ts" />
 import { Network } from "../helpers/Network";
-import { KDTree } from "../helpers/KDTree";
 
 type NewRule = (agent: Agent) => Data;
 
@@ -13,7 +13,7 @@ declare interface NewEnvironment {
   agents: number;
   current: number;
   data: Map<string, any[]>;
-  ids: string[] = [];
+  ids: string[];
   idsToIndices: { [key: string]: number };
   helpers: Helpers;
   opts: EnvironmentOptions;
