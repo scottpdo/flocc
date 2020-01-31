@@ -209,10 +209,16 @@ class Environment extends Agent {
    * @return {any[]} Array of data associated with `agent.get(key)` across all agents.
    */
   stat(key: string, useCache: boolean = true): any[] {
-    if (useCache) {
-      return this.memo(() => this.getAgents().map(agent => agent.get(key)));
-    }
-    return this.getAgents().map(agent => agent.get(key));
+    const mapAndFilter = () => {
+      const output: any[] = [];
+      this.getAgents().forEach(a => {
+        if (a.get(key) === null) return;
+        output.push(a.get(key));
+      });
+      return output;
+    };
+    if (useCache) return this.memo(mapAndFilter);
+    return mapAndFilter();
   }
 
   /**
