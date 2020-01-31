@@ -28,6 +28,11 @@ const defaultEnvironmentOptions: EnvironmentOptions = {
   width: 0
 };
 
+interface MemoValue {
+  value: any;
+  time: number;
+}
+
 /**
  * An environment provides the space and time in which agents interact.
  * Environments, like agents, can store data in key-value pairs
@@ -35,31 +40,25 @@ const defaultEnvironmentOptions: EnvironmentOptions = {
  */
 class Environment extends Agent {
   /** @member {Agent[]} */
-  agents: Array<Agent>;
-  agentsById: Map<string, Agent>;
-  data: Data;
-  helpers: Helpers;
+  agents: Array<Agent> = [];
+  agentsById: Map<string, Agent> = new Map();
+  cache: Map<string, MemoValue> = new Map();
+  helpers: Helpers = {
+    kdtree: null,
+    network: null
+  };
   /** @member {Renderer[]} */
-  renderers: Renderer[];
+  renderers: Renderer[] = [];
   opts: EnvironmentOptions;
   width: number;
   height: number;
-  time: number;
+  time: number = 0;
 
   constructor(opts: EnvironmentOptions = defaultEnvironmentOptions) {
     super();
-    this.agents = [];
-    this.agentsById = new Map();
-    this.data = {};
-    this.renderers = [];
     this.opts = Object.assign({}, defaultEnvironmentOptions, opts);
     this.width = this.opts.width;
     this.height = this.opts.height;
-    this.helpers = {
-      kdtree: null,
-      network: null
-    };
-    this.time = 0;
   }
 
   /**
@@ -198,6 +197,38 @@ class Environment extends Agent {
   use(e: EnvironmentHelper) {
     if (e instanceof KDTree) this.helpers.kdtree = e;
     if (e instanceof Network) this.helpers.network = e;
+  }
+
+  /**
+   * Get an array of data associated with agents in the environment by key.
+   * Equivalent to calling `environment.getAgents().map(agent => agent.get(key));`
+   * Defaults to calculating and storing the result within the same environment tick.
+   * If the 2nd parameter is set to `false`, will recalculate and return the result every time.
+   * @param {string} key - The key for which to retrieve data.
+   * @param {boolean} useCache - Whether or not to cache the result (defaults to true).
+   * @return {any[]} Array of data associated with `agent.get(key)` across all agents.
+   */
+  stat(key: string, useCache: boolean = true): any[] {
+    if (useCache) {
+      return this.memo(() => this.getAgents().map(agent => agent.get(key)));
+    }
+    return this.getAgents().map(agent => agent.get(key));
+  }
+
+  /**
+   * Pass a function to cache and use the return value within the same environment tick.
+   * @param {Function} key - The key for which to retrieve data.
+   * @return {any} The return value of the function that was passed.
+   */
+  memo(fn: Function): any {
+    const serialized = fn.toString();
+    const memoValue = this.cache.get(serialized);
+    if (memoValue && this.time === memoValue.time) return memoValue.value;
+
+    // if does not exist in cache or time has elapsed, cache new value
+    const data = fn();
+    this.cache.set(serialized, { value: data, time: this.time });
+    return data;
   }
 }
 
