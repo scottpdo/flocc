@@ -1,9 +1,9 @@
-const { Agent, Environment, utils } = require("../dist/flocc");
+const { NewEnvironment, utils } = require("../dist/flocc");
 
 let environment;
 
 beforeEach(() => {
-  environment = new Environment();
+  environment = new NewEnvironment();
 });
 
 it("Inherits all agent methods.", () => {
@@ -49,27 +49,20 @@ it("Has zero width and height upon instantiating.", () => {
 });
 
 it("Correctly adds agents.", () => {
-  const a0 = new Agent();
-  environment.addAgent(a0);
+  const a0 = environment.addAgent();
   expect(environment.getAgents()).toHaveLength(1);
   expect(a0.environment).toEqual(environment);
 
-  // does nothing if attempting to add non-agent
-  environment.addAgent(null);
-  expect(environment.getAgents()).toHaveLength(1);
-
-  for (let i = 0; i < 5; i++) environment.addAgent(new Agent());
+  for (let i = 0; i < 5; i++) environment.addAgent();
   expect(environment.getAgents()).toHaveLength(6);
 });
 
 it("Correctly removes agents.", () => {
-  const a0 = new Agent();
-  environment.addAgent(a0);
+  const a0 = environment.addAgent();
   environment.removeAgent(a0);
   expect(environment.getAgents()).toHaveLength(0);
-  expect(a0.environment).toBe(null);
 
-  for (let i = 0; i < 5; i++) environment.addAgent(new Agent());
+  for (let i = 0; i < 5; i++) environment.addAgent();
   expect(environment.getAgents()).toHaveLength(5);
 
   environment.clear();
@@ -86,10 +79,8 @@ it("Correctly loops over agents in the order they were added.", () => {
     order.push(agent.get("i"));
   }
   for (let i = 0; i < 10; i++) {
-    const agent = new Agent();
-    agent.set("i", i);
+    const agent = environment.addAgent({ i });
     agent.addRule(tick);
-    environment.addAgent(agent);
   }
   environment.tick();
   expect(order).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
@@ -103,10 +94,8 @@ it("Correctly loops over agents in random order.", () => {
     order.push(agent.get("i"));
   }
   for (let i = 0; i < 10; i++) {
-    const agent = new Agent();
-    agent.set("i", i);
+    const agent = environment.addAgent({ i });
     agent.addRule(tick);
-    environment.addAgent(agent);
   }
   environment.tick({ randomizeOrder: true });
 
@@ -118,17 +107,15 @@ it("Correctly loops over agents in random order.", () => {
 });
 
 it("Correctly retrieves agents by ID.", () => {
-  const a0 = new Agent();
+  const a0 = environment.addAgent();
   const { id } = a0;
-  environment.addAgent(a0);
   expect(environment.getAgentById(id)).toBe(a0);
   environment.clear();
 });
 
 it("Correctly removes agents by ID.", () => {
-  const a0 = new Agent();
+  const a0 = environmnet.addAgent();
   const { id } = a0;
-  environment.addAgent(a0);
   expect(environment.getAgents()).toHaveLength(1);
   environment.removeAgentById(id);
   expect(environment.getAgents()).toHaveLength(0);
@@ -160,8 +147,7 @@ it("Memoizes values", () => {
 
 it("Returns array of agent stats", () => {
   for (let i = 0; i < 101; i++) {
-    const agent = new Agent({ i });
-    environment.addAgent(agent);
+    environment.addAgent({ i });
   }
 
   expect(environment.stat("i")).toHaveLength(101);

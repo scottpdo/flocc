@@ -1,12 +1,11 @@
 /// <reference path="../types/Data.d.ts" />
-/// <reference path="../helpers/KDTree.d.ts" />
-import { Network } from "../helpers/Network";
+/// <reference path="./EnvironmentHelper.d.ts" />
 
 type NewRule = (agent: Agent) => Data;
 
 interface Helpers {
-  kdtree: KDTree;
-  network: Network;
+  kdtree: EnvironmentHelper;
+  network: EnvironmentHelper;
 }
 
 declare interface NewEnvironment {
@@ -25,4 +24,5 @@ declare interface NewEnvironment {
   time: number;
 
   addAgent(data: Data): Agent;
+  getAgents(): Agent[];
 }

@@ -1,10 +1,11 @@
 /// <reference path="../agents/Agent.d.ts" />
 /// <reference path="../types/Data.d.ts" />
 /// <reference path="../renderers/Renderer.d.ts" />
-/// <reference path="../helpers/KDTree.d.ts" />
+/// <reference path="./EnvironmentHelper.d.ts" />
 /// <reference path="./EnvironmentOptions.d.ts" />
 
 import { Network } from "../helpers/Network";
+import { instanceOfKDTree } from "../helpers/KDTree";
 import shuffle from "../utils/shuffle";
 import uuid from "../utils/uuid";
 import isAgent from "../types/isAgent";
@@ -12,9 +13,37 @@ import isAgent from "../types/isAgent";
 type NewRule = (agent: Agent) => Data;
 
 interface Helpers {
-  kdtree: KDTree;
-  network: Network;
+  kdtree: EnvironmentHelper;
+  network: EnvironmentHelper;
 }
+
+export interface TickOptions {
+  count?: number;
+  randomizeOrder?: boolean;
+}
+
+export const defaultTickOptions: TickOptions = {
+  count: 1,
+  randomizeOrder: false
+};
+
+/**
+ * From the parameter passed to .tick, get a structured TickOptions object.
+ * @param {number | TickOptions} opts
+ */
+export const getTickOptions = (opts?: number | TickOptions): TickOptions => {
+  let count: number = 1;
+  if (typeof opts === "number") {
+    count = opts;
+  } else if (!!opts) {
+    count = opts.count || 1;
+  }
+  let randomizeOrder: boolean = false;
+  if (opts && typeof opts !== "number" && opts.hasOwnProperty("randomizeOrder"))
+    randomizeOrder = opts.randomizeOrder;
+
+  return { count, randomizeOrder };
+};
 
 const defaultEnvironmentOptions: EnvironmentOptions = {
   torus: true,
@@ -22,10 +51,17 @@ const defaultEnvironmentOptions: EnvironmentOptions = {
   width: 0
 };
 
+interface MemoValue {
+  value: any;
+  time: number;
+}
+
 class NewEnvironment {
   agents: number = 0;
+  agentData: Map<string, any[]> = new Map();
+  cache: Map<string, MemoValue> = new Map();
   current: number = 0;
-  data: Map<string, any[]> = new Map();
+  data: Data = {};
   ids: string[] = [];
   idsToIndices: { [key: string]: number } = {};
   helpers: Helpers = { network: null, kdtree: null };
@@ -52,7 +88,7 @@ class NewEnvironment {
     const id = uuid();
     this.ids.push(id);
     this.idsToIndices[id] = index;
-    if (data) this.set(index, data);
+    if (data) this._set(index, data);
     return this.getAgent(index);
   }
 
@@ -75,25 +111,25 @@ class NewEnvironment {
     this.ids.splice(index, 1);
   }
 
-  get(i: number, key: string): any {
+  _get(i: number, key: string): any {
     if (i >= this.agents) return null;
-    if (!this.data.get(key)) return null;
-    const value = this.data.get(key)[i];
+    if (!this.agentData.get(key)) return null;
+    const value = this.agentData.get(key)[i];
     if (typeof value === "undefined") return null;
     return value;
   }
 
-  getData(i: number): Data {
+  _getData(i: number): Data {
     const data: Data = {};
-    Array.from(this.data.keys()).forEach(key => {
-      data[key] = this.data.get(key)[i];
+    Array.from(this.agentData.keys()).forEach(key => {
+      data[key] = this.agentData.get(key)[i];
     });
     return data;
   }
 
-  set(i: number, key: string | Data, value?: any): void {
+  _set(i: number, key: string | Data, value?: any): void {
     if (typeof key === "string") {
-      if (!this.data.get(key)) this.data.set(key, []);
+      if (!this.agentData.get(key)) this.agentData.set(key, []);
       if (this.opts.torus) {
         const { width, height } = this;
         if (key === "x" && value > width) value -= width;
@@ -101,17 +137,17 @@ class NewEnvironment {
         if (key === "y" && value > height) value -= height;
         if (key === "y" && value < 0) value += height;
       }
-      this.data.get(key)[i] = value;
+      this.agentData.get(key)[i] = value;
     } else {
       for (let name in key) {
-        this.set(i, name, key[name]);
+        this._set(i, name, key[name]);
       }
     }
   }
 
   increment(i: number, key: string, n: number): void {
-    if (!this.get(i, key)) this.set(i, key, 0);
-    this.set(i, key, this.get(i, key) + n);
+    if (!this._get(i, key)) this._set(i, key, 0);
+    this._set(i, key, this._get(i, key) + n);
   }
 
   decrement(i: number, key: string, n: number): void {
@@ -126,14 +162,27 @@ class NewEnvironment {
     }
   }
 
+  get(key: string): any {
+    return this.data.hasOwnProperty(key) ? this.data[key] : null;
+  }
+
+  getData(): Data {
+    return this.data;
+  }
+
+  set(key: string, value: any): void {
+    this.data[key] = value;
+  }
+
   getAgent(i: number): Agent {
     if (i >= this.agents) return null;
+    const environment: NewEnvironment = this;
     return {
-      environment: this,
+      environment,
       id: this.ids[i],
-      get: (key: string) => this.get(i, key),
-      getData: () => this.getData(i),
-      set: (key: string | Data, value?: any) => this.set(i, key, value),
+      get: (key: string) => this._get(i, key),
+      getData: () => this._getData(i),
+      set: (key: string | Data, value?: any) => this._set(i, key, value),
       increment: (key: string, n: number = 1) => this.increment(i, key, n),
       decrement: (key: string, n: number = 1) => this.decrement(i, key, n)
     };
@@ -170,20 +219,32 @@ class NewEnvironment {
     };
   }
 
-  tick(n: number = 1): void {
+  tick(opts?: number | TickOptions): void {
+    const { count, randomizeOrder } = getTickOptions(opts);
+
     if (this.rule) {
-      while (this.current < this.agents) {
-        this.enqueue(this.current, this.rule(this.getAgent(this.current)));
+      // TODO: randomize order
+      if (randomizeOrder) {
+      } else {
+        while (this.current < this.agents) {
+          this.enqueue(this.current, this.rule(this.getAgent(this.current)));
+        }
+        // update current data with next data
+        Array.from(this.nextData.keys()).forEach(key => {
+          this.agentData.set(key, Array.from(this.nextData.get(key)));
+        });
+        // reset current agent
+        this.current = 0;
       }
-      // update current data with next data
-      Array.from(this.nextData.keys()).forEach(key => {
-        this.data.set(key, Array.from(this.nextData.get(key)));
-      });
-      // reset current agent
-      this.current = 0;
     }
 
-    if (n > 1) return this.tick(n - 1);
+    if (instanceOfKDTree(this.helpers.kdtree)) {
+      this.helpers.kdtree.rebalance();
+    }
+
+    this.time++;
+
+    if (count > 1) return this.tick(count - 1);
 
     this.renderers.forEach(r => r.render());
   }
@@ -193,7 +254,7 @@ class NewEnvironment {
    * @param {EnvironmentHelper} e
    */
   use(e: EnvironmentHelper) {
-    if (e instanceof KDTree) {
+    if (instanceOfKDTree(e)) {
       e.environment = this;
       this.helpers.kdtree = e;
     }

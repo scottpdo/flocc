@@ -1,6 +1,7 @@
 /// <reference path="./Renderer.d.ts" />
 /// <reference path="./CanvasRendererOptions.d.ts" />
-import { Environment } from "../environments/Environment";
+import { NewEnvironment } from "../environments/NewEnvironment";
+import { instanceOfNetwork } from "../helpers/Network";
 
 const defaultOptions: CanvasRendererOptions = {
   autoPosition: false,
@@ -14,7 +15,7 @@ const defaultOptions: CanvasRendererOptions = {
 
 class CanvasRenderer implements Renderer {
   /** @member Environment */
-  environment: Environment;
+  environment: NewEnvironment;
   opts: CanvasRendererOptions;
   /** @member HTMLCanvasElement */
   canvas: HTMLCanvasElement;
@@ -22,7 +23,7 @@ class CanvasRenderer implements Renderer {
   width: number;
   height: number;
 
-  constructor(environment: Environment, opts: CanvasRendererOptions) {
+  constructor(environment: NewEnvironment, opts: CanvasRendererOptions) {
     this.environment = environment;
     environment.renderers.push(this);
 
@@ -78,9 +79,14 @@ class CanvasRenderer implements Renderer {
     }
 
     // automatically position agents in an environment that uses a network helper
-    if (opts.autoPosition && environment.helpers.network) {
+    if (
+      opts.autoPosition &&
+      environment.helpers.network &&
+      instanceOfNetwork(environment.helpers.network)
+    ) {
       environment.getAgents().forEach(agent => {
-        const { network } = this.environment.helpers;
+        const network = environment.helpers.network;
+        if (!instanceOfNetwork(network)) return;
         const { width, height } = this;
 
         // only set once
@@ -111,7 +117,10 @@ class CanvasRenderer implements Renderer {
       context.moveTo(this.x(x), this.y(y));
 
       // always draw connections to other agents
-      if (this.environment.helpers.network) {
+      if (
+        this.environment.helpers.network &&
+        instanceOfNetwork(this.environment.helpers.network)
+      ) {
         const { network } = this.environment.helpers;
         for (let neighbor of network.neighbors(agent)) {
           if (

@@ -71,10 +71,6 @@ it("Finds all agents within a given distance.", () => {
   const agent = environment.getAgents()[0]; // at 0, 0, 0
   let neighbors = tree.agentsWithinDistance(agent, 1); // should be (1, 0, 0), (0, 1, 0), (0, 0, 1)
   expect(neighbors.includes(agent)).toBe(false);
-  console.log(
-    "neighbors",
-    neighbors.map(n => n.getData())
-  );
   expect(neighbors.length).toBe(3);
 
   let point = { x: 5.2, y: 2.1, z: 3 };

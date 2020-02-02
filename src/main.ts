@@ -5,11 +5,10 @@ export { Rule } from "./helpers/Rule";
 export { KDTree } from "./helpers/KDTree";
 export { NumArray } from "./helpers/NumArray";
 
-export { Environment } from "./environments/Environment";
 export { NewEnvironment } from "./environments/NewEnvironment";
 export { GridEnvironment } from "./environments/GridEnvironment";
 
-export { ASCIIRenderer } from "./renderers/ASCIIRenderer";
+// export { ASCIIRenderer } from "./renderers/ASCIIRenderer";
 export { CanvasRenderer } from "./renderers/CanvasRenderer";
 export { Histogram } from "./renderers/Histogram";
 export { LineChartRenderer } from "./renderers/LineChartRenderer";

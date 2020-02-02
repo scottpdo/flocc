@@ -1,6 +1,6 @@
+/// <reference path="../environments/NewEnvironment.d.ts" />
 /// <reference path="../types/Data.d.ts" />
 /// <reference path="../types/DataObj.d.ts" />
-import { Environment } from "../environments/Environment";
 import uuid from "../utils/uuid";
 import { Rule } from "../helpers/Rule";
 
@@ -16,7 +16,7 @@ class Agent implements DataObj {
    * @member {RuleObj[]} queue
    * @member {Object} data
    */
-  environment: Environment = null;
+  environment: NewEnvironment = null;
   rules: Array<RuleObj> = [];
   queue: Array<RuleObj> = [];
   data: Data = {};

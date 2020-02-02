@@ -1,5 +1,4 @@
-import { Environment } from "../environments/Environment";
-import { Agent } from "../agents/Agent";
+import { NewEnvironment } from "../environments/NewEnvironment";
 import { Vector } from "./Vector";
 
 enum Operators {
@@ -11,7 +10,6 @@ enum Operators {
   power = "power",
   get = "get",
   set = "set",
-  enqueue = "enqueue",
   local = "local",
   if = "if",
   and = "and",
@@ -59,11 +57,11 @@ const method = (
 };
 
 class Rule {
-  environment: Environment;
+  environment: NewEnvironment;
   steps: Step[] = [];
   locals: { [key: string]: any } = {};
 
-  constructor(environment: Environment, steps: Step[]) {
+  constructor(environment: NewEnvironment, steps: Step[]) {
     this.environment = environment;
     this.steps = steps;
   }
@@ -111,12 +109,6 @@ class Rule {
     if (first === Operators.get) return get(agent, this.evaluate(agent, a));
     if (first === Operators.set)
       return set(agent, this.evaluate(agent, a), this.evaluate(agent, b));
-    if (first === Operators.enqueue) {
-      agent.enqueue(() =>
-        set(agent, this.evaluate(agent, a), this.evaluate(agent, b))
-      );
-      return null;
-    }
     if (first === Operators.local) {
       const key = this.evaluate(agent, a);
       const value = this.evaluate(agent, b);

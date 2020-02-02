@@ -1,7 +1,7 @@
 /// <reference path="./Renderer.d.ts" />
 /// <reference path="../types/Point.d.ts" />
 /// <reference path="../types/NRange.d.ts" />
-import { Environment } from "../environments/Environment";
+import { NewEnvironment } from "../environments/NewEnvironment";
 import remap from "../utils/remap";
 import { default as getMax } from "../utils/max";
 import extractRoundNumbers from "../utils/extractRoundNumbers";
@@ -36,7 +36,7 @@ const defaultHistogramOptions: HistogramOptions = {
 
 class Histogram implements Renderer {
   /** @member Environment` */
-  environment: Environment;
+  environment: NewEnvironment;
   /** @member HTMLCanvasElement */
   canvas: HTMLCanvasElement = document.createElement("canvas");
   background: HTMLCanvasElement = document.createElement("canvas");
@@ -46,7 +46,7 @@ class Histogram implements Renderer {
   markerWidth: number = 0;
   width: number;
 
-  constructor(environment: Environment, opts?: HistogramOptions) {
+  constructor(environment: NewEnvironment, opts?: HistogramOptions) {
     this.environment = environment;
     this.opts = Object.assign({}, this.opts, opts);
     const { width, height } = this.opts;

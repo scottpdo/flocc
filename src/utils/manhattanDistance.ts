@@ -1,6 +1,7 @@
 /// <reference path="../types/Point.d.ts" />
 
-import { Agent } from '../agents/Agent';
+import { Agent } from "../agents/Agent";
+import instanceOfPoint from "../types/instanceOfPoint";
 
 /**
  * Finds the Manhattan distance between `p1` and `p2`.
@@ -11,15 +12,17 @@ import { Agent } from '../agents/Agent';
  * @param {Point|Agent} p2
  * @return {number} The Manhattan distance between p1 and p2.
  */
-export default function manhattanDistance(p1: Point | Agent, p2: Point | Agent): number {
+export default function manhattanDistance(
+  p1: Point | Agent,
+  p2: Point | Agent
+): number {
+  let x1: number = (instanceOfPoint(p1) ? p1.x : p1.get("x")) || 0;
+  let y1: number = (instanceOfPoint(p1) ? p1.y : p1.get("y")) || 0;
+  let z1: number = (instanceOfPoint(p1) ? p1.z : p1.get("z")) || 0;
 
-  let x1: number = (p1 instanceof Agent ? p1.get('x') : p1.x) || 0;
-  let y1: number = (p1 instanceof Agent ? p1.get('y') : p1.y) || 0;
-  let z1: number = (p1 instanceof Agent ? p1.get('z') : p1.z) || 0;
-
-  let x2: number = (p2 instanceof Agent ? p2.get('x') : p2.x) || 0;
-  let y2: number = (p2 instanceof Agent ? p2.get('y') : p2.y) || 0;
-  let z2: number = (p2 instanceof Agent ? p2.get('z') : p2.z) || 0;
+  let x2: number = (instanceOfPoint(p2) ? p2.x : p2.get("x")) || 0;
+  let y2: number = (instanceOfPoint(p2) ? p2.y : p2.get("y")) || 0;
+  let z2: number = (instanceOfPoint(p2) ? p2.z : p2.get("z")) || 0;
 
   let dx: number = Math.abs(x2 - x1);
   let dy: number = Math.abs(y2 - y1);
@@ -27,8 +30,8 @@ export default function manhattanDistance(p1: Point | Agent, p2: Point | Agent):
 
   // distance for toroidal environments
   if (
-    p1 instanceof Agent &&
-    p2 instanceof Agent &&
+    !instanceOfPoint(p1) &&
+    !instanceOfPoint(p2) &&
     p1.environment &&
     p2.environment &&
     p1.environment === p2.environment &&
@@ -43,4 +46,4 @@ export default function manhattanDistance(p1: Point | Agent, p2: Point | Agent):
   }
 
   return dx + dy + dz;
-};
+}

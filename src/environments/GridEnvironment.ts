@@ -1,8 +1,12 @@
+/// <reference path="../agents/Agent.d.ts" />
 /// <reference path="../types/Point.d.ts" />
 
-import { Agent } from "../agents/Agent";
-import { Cell } from "../agents/Cell";
-import { Environment, TickOptions, defaultTickOptions } from "./Environment";
+import {
+  NewEnvironment,
+  TickOptions,
+  getTickOptions,
+  defaultTickOptions
+} from "./NewEnvironment";
 
 import shuffle from "../utils/shuffle";
 import { Rule } from "../helpers/Rule";
@@ -17,7 +21,11 @@ const unhash = (str: string): Point => {
   };
 };
 
-class GridEnvironment extends Environment {
+interface Cell {
+  [key: string]: any;
+}
+
+class GridEnvironment extends NewEnvironment {
   cells: Map<string, Cell>;
   _cellHashes: Array<string>;
 
@@ -37,7 +45,7 @@ class GridEnvironment extends Environment {
         const id = hash(x, y);
         this._cellHashes.push(id);
 
-        const cell = new Cell(x, y);
+        const cell: Cell = { x, y };
         cell.environment = this;
         this.cells.set(id, cell);
       }
@@ -71,11 +79,7 @@ class GridEnvironment extends Environment {
    * @param {number} y_
    * @returns {Agent} The agent that was added at the specified coordinate.
    */
-  addAgentAt(
-    x_: number = 0,
-    y_: number = 0,
-    agent: Agent = new Agent()
-  ): Agent {
+  addAgentAt(x_: number = 0, y_: number = 0, agent: Data = {}): Agent {
     const { x, y } = this.normalize(x_, y_);
     const id = hash(x, y);
 
@@ -84,19 +88,17 @@ class GridEnvironment extends Environment {
 
     // If there is already an agent at this location,
     // overwrite it (with a warning). Remove the existing agent...
-    if (cell.get("agent")) {
+    if (cell.agent) {
       console.warn(`Overwriting agent at ${x}, ${y}.`);
       this.removeAgentAt(x, y);
     }
 
-    // ...and add a new one
-    agent.set({ x, y });
-    agent.environment = this;
+    const _agent = super.addAgent(agent);
+    _agent.set({ x, y });
 
-    this.agents.push(agent);
-    cell.set("agent", agent);
+    cell.agent = _agent;
 
-    return agent;
+    return _agent;
   }
 
   /**
@@ -113,15 +115,12 @@ class GridEnvironment extends Environment {
     if (!cell)
       throw new Error("Can't remove an Agent from a non-existent Cell!");
 
-    const agent = cell.get("agent");
+    const { agent } = cell;
     if (!agent) return;
 
-    agent.environment = null;
+    super.removeAgentById(agent.id);
 
-    const indexAmongAgents = this.agents.indexOf(agent);
-    this.agents.splice(indexAmongAgents, 1);
-
-    cell.set("agent", null);
+    cell.agent = null;
   }
 
   /**
@@ -155,7 +154,7 @@ class GridEnvironment extends Environment {
     const id = hash(x, y);
     const cell = this.cells.get(id);
     if (!cell) return null;
-    return cell.get("agent") || null;
+    return cell.agent || null;
   }
 
   /**
@@ -211,8 +210,8 @@ class GridEnvironment extends Environment {
 
     const cell1 = this.cells.get(hash(x1, y1));
     const cell2 = this.cells.get(hash(x2, y2));
-    if (cell1) cell1.set("agent", maybeAgent2);
-    if (cell2) cell2.set("agent", maybeAgent1);
+    if (cell1) cell1.agent = maybeAgent2;
+    if (cell2) cell2.agent = maybeAgent1;
   }
 
   /**
@@ -227,7 +226,7 @@ class GridEnvironment extends Environment {
     while (hashes.length > 0) {
       const id = hashes.pop();
       const cell = this.cells.get(id);
-      const maybeAgent = cell ? cell.get("agent") : null;
+      const maybeAgent = cell ? cell.agent : null;
       if (cell && !maybeAgent) return cell;
     }
 
@@ -316,27 +315,28 @@ class GridEnvironment extends Environment {
    * @override
    * @param {number} opts
    */
-  tick(opts?: number | TickOptions) {
-    const { count, randomizeOrder } = this._getTickOptions(opts);
+  tick(opts?: number | TickOptions): void {
+    const { count, randomizeOrder } = getTickOptions(opts);
 
-    // execute all cell rules
-    this._executeCellRules(randomizeOrder);
-
-    // execute all agent rules
-    this._executeAgentRules(randomizeOrder);
-
-    // execute all enqueued cell rules
-    this._executeEnqueuedCellRules(randomizeOrder);
-
-    // execute all enqueued agent rules
-    this._executeEnqueuedAgentRules(randomizeOrder);
+    if (this.rule) {
+      // TODO: randomize order
+      if (randomizeOrder) {
+      } else {
+        while (this.current < this.agents) {
+          this.enqueue(this.current, this.rule(this.getAgent(this.current)));
+        }
+        // update current data with next data
+        Array.from(this.nextData.keys()).forEach(key => {
+          this.data.set(key, Array.from(this.nextData.get(key)));
+        });
+        // reset current agent
+        this.current = 0;
+      }
+    }
 
     this.time++;
 
-    if (count > 1) {
-      this.tick(count - 1);
-      return;
-    }
+    if (count > 1) return this.tick(count - 1);
 
     this.renderers.forEach(r => r.render());
   }

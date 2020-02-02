@@ -1,6 +1,5 @@
+/// <reference path="../environments/NewEnvironment.d.ts" />
 /// <reference path="../environments/EnvironmentHelper.d.ts" />
-import { Agent } from "../agents/Agent";
-import { Environment } from "../environments/Environment";
 import shuffle from "../utils/shuffle";
 
 interface AdjacencyList {
@@ -9,6 +8,12 @@ interface AdjacencyList {
 
 interface AgentCallback {
   (agent: Agent, index: number): any;
+}
+
+export function instanceOfNetwork(obj: any): obj is Network {
+  return obj.connect && obj.areConnected && obj.disconnect && obj.isInNetwork
+    ? true
+    : false;
 }
 
 class Network implements EnvironmentHelper {
@@ -44,7 +49,7 @@ class Network implements EnvironmentHelper {
    * Add all agents in an environment to this network.
    * @param {Environment} environment
    */
-  addFromEnvironment(environment: Environment) {
+  addFromEnvironment(environment: NewEnvironment) {
     environment.getAgents().forEach(agent => this.addAgent(agent));
   }
 

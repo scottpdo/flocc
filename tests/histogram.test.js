@@ -1,13 +1,14 @@
-const { Agent, Environment, Histogram, utils } = require("../dist/flocc");
+const { NewEnvironment, Histogram, utils } = require("../dist/flocc");
 
 const width = 200;
 const height = 400;
 
 const container = document.createElement("div");
-const environment = new Environment();
+const environment = new NewEnvironment();
 let histogram;
 
 beforeEach(() => {
+  environment.clear();
   histogram = new Histogram(environment, {
     buckets: 4,
     width,
@@ -44,9 +45,7 @@ it("Correctly renders", () => {
 
 it("Correctly renders with agents", () => {
   for (let i = 0; i < 100; i++) {
-    const agent = new Agent();
-    agent.set("x", Math.sqrt(i));
-    environment.addAgent(agent);
+    environment.addAgent({ x: Math.sqrt(i) });
   }
   environment.tick();
   const calls = histogram.canvas.getContext("2d").__getDrawCalls();
@@ -57,9 +56,7 @@ it("Correctly renders with discrete buckets", () => {
   histogram.opts.background = "yellow";
   histogram.opts.buckets = [1, 2, 3];
   for (let i = 0; i < 10; i++) {
-    const agent = new Agent();
-    agent.set("x", i % 4);
-    environment.addAgent(agent);
+    environment.addAgent({ x: i % 4 });
   }
   environment.tick();
   const calls = histogram.canvas.getContext("2d").__getDrawCalls();

@@ -1,4 +1,5 @@
 /// <reference path="../agents/Agent.d.ts" />
+/// <reference path="../environments/NewEnvironment.d.ts" />
 import { BBox } from "./BBox";
 import median from "../utils/median";
 import sample from "../utils/sample";
@@ -6,7 +7,7 @@ import { Vector } from "./Vector";
 import { utils } from "../utils/utils";
 import distance from "../utils/distance";
 import instanceOfPoint from "../types/instanceOfPoint";
-import { NewEnvironment } from "../environments/NewEnvironment";
+import isAgent from "../types/isAgent";
 
 const MAX_IN_LEAF = 5;
 
@@ -20,6 +21,12 @@ const arrayOfTreesToAgents = (trees: KDTree[]): Agent[] => {
     .map(tree => tree.agents)
     .reduce((acc, agents) => acc.concat(agents));
 };
+
+export function instanceOfKDTree(obj: any): obj is KDTree {
+  return obj && obj.axis && obj.locateSubtree && obj.agentsWithinDistance
+    ? true
+    : false;
+}
 
 class KDTree {
   agents: Agent[] = null;
@@ -108,6 +115,7 @@ class KDTree {
     d: number,
     coord: "x" | "y" | "z"
   ): boolean => {
+    // console.log("is point?", pt, instanceOfPoint(pt));
     const c = instanceOfPoint(pt) ? pt[coord] : pt.get(coord);
     const mn = this.bbox.min[coord];
     const mx = this.bbox.max[coord];
@@ -153,11 +161,7 @@ class KDTree {
     const trees = this.subtreesWithinDistance(pt, d);
     return arrayOfTreesToAgents(trees).filter(a => {
       // exclude agent itself
-      if (
-        NewEnvironment.isAgent(pt) &&
-        NewEnvironment.isAgent(a) &&
-        pt.id === a.id
-      ) {
+      if (isAgent(pt) && isAgent(a) && pt.id === a.id) {
         return false;
       }
       return distance(a, pt) <= d;
@@ -197,8 +201,12 @@ class KDTree {
     return candidates[0];
   }
 
-  rebalance(agents: Agent[]): void {
-    this.agents = agents;
+  rebalance(agents?: Agent[]): void {
+    if (!agents) {
+      agents = this.agents;
+    } else {
+      this.agents = agents;
+    }
 
     if (agents.length <= MAX_IN_LEAF) return;
 

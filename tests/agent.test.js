@@ -1,6 +1,7 @@
-const { Agent, Environment } = require("../dist/flocc");
+const { NewEnvironment } = require("../dist/flocc");
 
-const agent = new Agent();
+const environment = new NewEnvironment();
+const agent = environment.addAgent();
 agent.set("x", 12);
 agent.set("y", 23);
 agent.set("z", () => 41);
@@ -35,7 +36,7 @@ it("Correctly sets new data.", () => {
 });
 
 it("Instantiates agents with data", () => {
-  const a = new Agent({
+  const a = environment.addAgent({
     x: 0,
     y: 12,
     z: 24
@@ -59,7 +60,7 @@ it("Retrieves a null value for data that does not exist.", () => {
 });
 
 it("Increments and decrements data.", () => {
-  const a = new Agent();
+  const a = environment.addAgent();
   a.set("x", 4);
   a.increment("x");
   expect(a.get("x")).toEqual(5);
@@ -68,15 +69,15 @@ it("Increments and decrements data.", () => {
 });
 
 it(`Throws an error if an agent's data tries to call itself.`, () => {
-  const a = new Agent();
-  const b = new Agent();
+  const a = environment.addAgent();
+  const b = environment.addAgent();
   a.set("value", () => b.get("value"));
   b.set("value", () => a.get("value"));
   expect(() => a.get("value")).toThrow();
 });
 
 it("Sets new data based on return value of rules", () => {
-  const a = new Agent();
+  const a = environment.addAgent();
   a.set("x", 100);
   expect(a.get("x")).toBe(100);
   function rule(agt) {
@@ -84,7 +85,6 @@ it("Sets new data based on return value of rules", () => {
       x: agt.get("x") + 1
     };
   }
-  a.addRule(rule);
   const e = new Environment();
   e.addAgent(a);
   e.tick();
@@ -92,11 +92,9 @@ it("Sets new data based on return value of rules", () => {
 });
 
 it("Sets new data based on return value of rules asynchronously.", () => {
-  const a = new Agent();
-  const b = new Agent();
-  const e = new Environment();
-  e.addAgent(a);
-  e.addAgent(b);
+  const e = new NewEnvironment();
+  const a = e.addAgent();
+  const b = e.addAgent();
   a.set("x", 100);
   b.set("x", 200);
   function rule(agt) {

@@ -1,10 +1,11 @@
 /// <reference path="./Point.d.ts" />
 
 export default function instanceOfPoint(obj: any): obj is Point {
-  return (
+  return obj &&
     obj.hasOwnProperty("x") &&
     typeof obj.x === "number" &&
     obj.hasOwnProperty("y") &&
     typeof obj.y === "number"
-  );
+    ? true
+    : false;
 }

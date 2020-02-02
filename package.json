@@ -3,6 +3,7 @@
   "version": "0.3.14",
   "description": "Agent-based modeling in JavaScript in the browser or server.",
   "main": "dist/flocc.js",
+  "types": "dist/main.d.ts",
   "module": "dist/flocc.es.js",
   "scripts": {
     "build": "rollup -c",

@@ -1,7 +1,7 @@
 /// <reference path="./Renderer.d.ts" />
 /// <reference path="../types/Point.d.ts" />
 /// <reference path="../types/NRange.d.ts" />
-import { Environment } from "../environments/Environment";
+import { NewEnvironment } from "../environments/NewEnvironment";
 import { NumArray } from "../helpers/NumArray";
 import mean from "../utils/mean";
 import extractRoundNumbers from "../utils/extractRoundNumbers";
@@ -50,7 +50,7 @@ const defaultMetricOptions: MetricOptions = {
 
 class LineChartRenderer implements Renderer {
   /** @member Environment */
-  environment: Environment;
+  environment: NewEnvironment;
   /** @member HTMLCanvasElement */
   canvas: HTMLCanvasElement = document.createElement("canvas");
   background: HTMLCanvasElement = document.createElement("canvas");
@@ -60,7 +60,7 @@ class LineChartRenderer implements Renderer {
   width: number;
   t: number = 0;
 
-  constructor(environment: Environment, opts?: LineChartRendererOptions) {
+  constructor(environment: NewEnvironment, opts?: LineChartRendererOptions) {
     this.environment = environment;
     this.opts = Object.assign({}, defaultRendererOptions, opts);
     this.opts.range = Object.assign({}, this.opts.range);
