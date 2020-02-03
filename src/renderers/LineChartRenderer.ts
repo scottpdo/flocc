@@ -171,17 +171,7 @@ class LineChartRenderer implements Renderer {
 
     // initialize values map -- for each metric, a pairing of `key` and an empty array
     const values: Map<string, number[]> = new Map();
-    metrics.forEach(({ key }) => values.set(key, []));
-
-    // loop over all the agents and, for each metric, push to the values map
-    agents.forEach((agent, i) => {
-      metrics.forEach(metric => {
-        const { key } = metric;
-        const data = agent.get(key);
-        if (isNaN(data)) return;
-        values.get(key)[i] = data;
-      });
-    });
+    metrics.forEach(({ key }) => values.set(key, environment.stat(key)));
 
     // finally, for each metric, use its function to derive the desired value
     // from all the agent data
