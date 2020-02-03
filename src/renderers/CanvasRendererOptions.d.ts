@@ -3,6 +3,9 @@
 declare interface CanvasRendererOptions {
   autoPosition: boolean;
   background: string;
+  connectionColor: string;
+  connectionOpacity: number;
+  connectionWidth: number;
   height: number;
   origin: Point;
   scale: number;

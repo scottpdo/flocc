@@ -1,0 +1,175 @@
+<div id="compass"></div>
+<script>
+    const {
+        Agent,
+        Environment,
+        GridEnvironment,
+        ASCIIRenderer,
+        CanvasRenderer,
+        Network,
+        utils,
+        Vector,
+        Rule
+    } = flocc;
+
+    const VOTERS = 300;
+    const CANDIDATES = 6;
+
+    const colors = [
+        "rgb(255, 0, 0)",
+        "rgb(127, 255, 0)",
+        "rgb(255, 127, 0)",
+        "rgb(0, 64, 127)",
+        "rgb(0, 0, 255)",
+        "rgb(127, 0, 127)",
+        "rgb(0, 255, 64)"
+    ];
+
+    const width = Math.min(window.innerWidth, window.innerHeight);
+    const height = Math.min(window.innerWidth, window.innerHeight);
+
+    const o = () => Math.sign(Math.random() - 0.5);
+
+    const xy = () => {
+        const a = utils.gaussian(Math.PI, Math.PI / 4);
+        const r = utils.gaussian(0.2, 0.08, true);
+        const x = r * Math.cos(a);
+        const y = r * Math.sin(a);
+        return { x, y };
+    };
+
+    const environment = new Environment();
+    const network = new Network();
+    environment.use(network);
+
+    const compass = new CanvasRenderer(environment, {
+        width,
+        height,
+        scale: width,
+        origin: {
+            x: -width,
+            y: -height
+        },
+        connectionColor: "#999"
+    });
+    compass.mount("#compass");
+
+    function getVoters() {
+        return environment.getAgents().filter(a => a.get("type") === "voter");
+    }
+
+    function getCandidates() {
+        return environment
+            .getAgents()
+            .filter(a => a.get("type") === "candidate");
+    }
+
+    function tickVoter(agent) {
+        const candidates = environment.memo(getCandidates);
+        candidates.sort((a, b) => {
+            return utils.distance(a, agent) - utils.distance(b, agent);
+        });
+        // TODO: if no longer valid, move on to next closest
+        let closest = candidates[0];
+        if (closest) {
+            closest.increment("votes");
+            agent.set("color", closest.get("color"));
+        }
+    }
+
+    function setup() {
+        for (let i = 0; i < CANDIDATES; i++) {
+            const { x, y } = xy();
+            const candidate = new Agent({
+                x,
+                y,
+                color: colors[i],
+                size: 4,
+                type: "candidate"
+            });
+            environment.addAgent(candidate);
+            network.addAgent(candidate);
+        }
+        for (let i = 0; i < VOTERS; i++) {
+            const { x, y } = xy();
+            const voter = new Agent({
+                x,
+                y,
+                color: "gray",
+                size: 2,
+                type: "voter"
+            });
+            voter.addRule(tickVoter);
+            environment.addAgent(voter);
+            network.addAgent(voter);
+        }
+        const voters = getVoters();
+        voters.forEach(voter => {
+            voters.sort(
+                (a, b) => utils.distance(voter, a) - utils.distance(voter, b)
+            );
+            for (let i = 0; i < 5; i++) {
+                network.connect(voter, voters[i]);
+            }
+        });
+        // randomly rewire
+        voters.forEach(voter => {
+            const connections = network.neighbors(voter);
+            connections.forEach(connect => {
+                if (Math.random() < 0.03) {
+                    network.disconnect(voter, connect);
+                    network.connect(voter, utils.sample(voters));
+                }
+            });
+        });
+    }
+
+    function drawAxes() {
+        const dpr = window.devicePixelRatio;
+        const { context } = compass;
+        context.save();
+        context.beginPath();
+        context.globalAlpha = 0.5;
+        context.moveTo(dpr * 0, (dpr * height) / 2);
+        context.lineTo(dpr * width, (dpr * height) / 2);
+        context.moveTo((dpr * width) / 2, dpr * 0);
+        context.lineTo((dpr * width) / 2, dpr * height);
+        context.stroke();
+        context.restore();
+    }
+
+    function drawConnections() {
+        network.agents.forEach(agent => {
+            const neighbors = network.neighbors(agent);
+        });
+    }
+
+    function draw() {
+        environment.tick();
+        drawAxes();
+
+        const candidates = environment.memo(getCandidates);
+        const voters = environment.memo(getVoters);
+
+        candidates.forEach(c => {
+            const { votes } = c.getData();
+            const valid = votes / voters.length >= 0.15;
+            c.set("valid", valid);
+            if (!valid) {
+                c.set({
+                    // type: null,
+                    color: "#d8d8d8"
+                });
+            }
+            // reset votes
+            c.set("lastVotes", votes);
+            c.set("votes", 0);
+        });
+
+        setTimeout(draw, 2000);
+        // requestAnimationFrame(draw);
+    }
+
+    setup();
+    draw();
+</script>
