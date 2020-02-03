@@ -177,21 +177,16 @@ class Histogram implements Renderer {
         : buckets + (aboveMax ? 1 : 0) + (belowMin ? 1 : 0);
     const bucketValues = new Array(numBuckets).fill(0);
 
-    agents.forEach(agent => {
-      // ignore this agent if it doesn't have the metric in question
-      if (agent.get(metric) === null) return;
+    const data = environment.stat(metric);
 
+    data.forEach(value => {
       // calculate index of bucket this agent's value says it belongs in
       const bucketIndex =
         buckets instanceof Array
           ? buckets.findIndex(
-              v =>
-                v === agent.get(metric) ||
-                Math.abs(v - agent.get(metric)) <= epsilon
+              v => v === value || Math.abs(v - value) <= epsilon
             )
-          : Math.floor(
-              remap(agent.get(metric), min, max, 0, 0.999999) * buckets
-            );
+          : Math.floor(remap(value, min, max, 0, 0.999999) * buckets);
 
       // increment the corresponding value in the bucketValues array
       if (bucketIndex >= 0 && bucketIndex < bucketValues.length) {

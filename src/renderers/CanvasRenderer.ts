@@ -5,6 +5,9 @@ import { Environment } from "../environments/Environment";
 const defaultOptions: CanvasRendererOptions = {
   autoPosition: false,
   background: "transparent",
+  connectionColor: "black",
+  connectionOpacity: 1,
+  connectionWidth: 1,
   origin: { x: 0, y: 0 },
   width: 500,
   height: 500,
@@ -26,7 +29,8 @@ class CanvasRenderer implements Renderer {
     this.environment = environment;
     environment.renderers.push(this);
 
-    this.opts = Object.assign({}, defaultOptions, opts);
+    this.opts = Object.assign({}, defaultOptions);
+    Object.assign(this.opts, opts);
     const { width, height } = this.opts;
 
     this.canvas = document.createElement("canvas");
@@ -61,7 +65,7 @@ class CanvasRenderer implements Renderer {
 
   y(v: number): number {
     const { origin, scale } = this.opts;
-    return scale * v - origin.x;
+    return scale * v - origin.y;
   }
 
   render(): void {
@@ -113,6 +117,7 @@ class CanvasRenderer implements Renderer {
       // always draw connections to other agents
       if (this.environment.helpers.network) {
         const { network } = this.environment.helpers;
+        if (!network.neighbors(agent)) return;
         for (let neighbor of network.neighbors(agent)) {
           if (
             connectionsDrawn.get(agent) === neighbor ||
@@ -124,12 +129,23 @@ class CanvasRenderer implements Renderer {
           connectionsDrawn.set(agent, neighbor);
           connectionsDrawn.set(neighbor, agent);
 
+          let nx = neighbor.get("x");
+          let ny = neighbor.get("y");
+          if (!(opts.autoPosition && environment.helpers.network)) {
+            nx *= dpr;
+            ny *= dpr;
+          }
+
+          context.save();
           context.beginPath();
-          context.strokeStyle = "black";
-          context.moveTo(x, y);
-          context.lineTo(neighbor.get("x"), neighbor.get("y"));
+          context.globalAlpha = this.opts.connectionOpacity;
+          context.strokeStyle = this.opts.connectionColor;
+          context.lineWidth = this.opts.connectionWidth;
+          context.moveTo(this.x(x), this.x(y));
+          context.lineTo(this.x(nx), this.x(ny));
           context.stroke();
-          context.moveTo(x, y);
+          context.closePath();
+          context.restore();
         }
       }
 
