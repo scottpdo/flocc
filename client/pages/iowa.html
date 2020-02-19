@@ -1,4 +1,5 @@
 <div id="compass"></div>
+<div id="vote-count"></div>
 <script>
     const {
         Agent,
@@ -13,22 +14,21 @@
     } = flocc;
 
     const VOTERS = 300;
-    const CANDIDATES = 6;
+    const CANDIDATES = 8;
 
     const colors = [
-        "rgb(255, 0, 0)",
-        "rgb(127, 255, 0)",
-        "rgb(255, 127, 0)",
-        "rgb(0, 64, 127)",
-        "rgb(0, 0, 255)",
-        "rgb(127, 0, 127)",
-        "rgb(0, 255, 64)"
+        "#28262b",
+        "#91cf67",
+        "#3d4aa8",
+        "#d28148",
+        "#7ac6d2",
+        "#83193a",
+        "#33562c",
+        "#e8a5d2"
     ];
 
     const width = Math.min(window.innerWidth, window.innerHeight);
     const height = Math.min(window.innerWidth, window.innerHeight);
-
-    const o = () => Math.sign(Math.random() - 0.5);
 
     const xy = () => {
         const a = utils.gaussian(Math.PI, Math.PI / 4);
@@ -50,7 +50,7 @@
             x: -width,
             y: -height
         },
-        connectionColor: "#999"
+        connectionColor: "#bbb"
     });
     compass.mount("#compass");
 
@@ -66,50 +66,66 @@
 
     function tickVoter(agent) {
         const candidates = environment.memo(getCandidates);
-        candidates.sort((a, b) => {
-            return utils.distance(a, agent) - utils.distance(b, agent);
-        });
-        // TODO: if no longer valid, move on to next closest
-        let closest = candidates[0];
-        if (closest) {
-            closest.increment("votes");
-            agent.set("color", closest.get("color"));
+        let candidate = agent.get("candidate");
+
+        if (environment.time === 0) {
+            return;
         }
+
+        // voting for the first time
+        if (!candidate) {
+            candidates.sort((a, b) => {
+                return utils.distance(a, agent) - utils.distance(b, agent);
+            });
+            candidate = candidates[0];
+        } else if (candidate && candidate.get("valid") === false) {
+            const neighborCandidates = network
+                .neighbors(agent)
+                .map(a => a.get("candidate"));
+            candidate = utils.sample(neighborCandidates);
+            if (!candidate) return;
+        }
+
+        candidate.increment("votes");
+        agent.set("candidate", candidate);
+        agent.set("color", candidate.get("color"));
     }
 
     function setup() {
-        for (let i = 0; i < CANDIDATES; i++) {
-            const { x, y } = xy();
-            const candidate = new Agent({
-                x,
-                y,
-                color: colors[i],
-                size: 4,
-                type: "candidate"
-            });
-            environment.addAgent(candidate);
-            network.addAgent(candidate);
-        }
         for (let i = 0; i < VOTERS; i++) {
             const { x, y } = xy();
             const voter = new Agent({
                 x,
                 y,
                 color: "gray",
-                size: 2,
+                size: 3,
                 type: "voter"
             });
             voter.addRule(tickVoter);
             environment.addAgent(voter);
             network.addAgent(voter);
         }
+        for (let i = 0; i < CANDIDATES; i++) {
+            const { x, y } = xy();
+            const candidate = new Agent({
+                x,
+                y,
+                color: colors[i],
+                size: 6,
+                type: "candidate",
+                votes: 0
+            });
+            environment.addAgent(candidate);
+            network.addAgent(candidate);
+        }
         const voters = getVoters();
         voters.forEach(voter => {
-            voters.sort(
+            const neighbors = Array.from(voters);
+            neighbors.sort(
                 (a, b) => utils.distance(voter, a) - utils.distance(voter, b)
             );
-            for (let i = 0; i < 5; i++) {
-                network.connect(voter, voters[i]);
+            for (let i = 0; i < 7; i++) {
+                network.connect(voter, neighbors[i]);
             }
         });
         // randomly rewire
@@ -138,10 +154,26 @@
         context.restore();
     }
 
-    function drawConnections() {
-        network.agents.forEach(agent => {
-            const neighbors = network.neighbors(agent);
+    function log(showWinner) {
+        const voteCount = document.getElementById("vote-count");
+        const candidates = environment.memo(getCandidates);
+        const winner = showWinner ? "All remaining candidates over 15%" : "";
+        voteCount.innerHTML = `<h3>Round ${environment.time -
+            1}: ${winner}</h3>`;
+        let bars = '<div class="bars">';
+        candidates.forEach(candidate => {
+            const { color, votes } = candidate.getData();
+            const valid = votes / VOTERS > 0.15;
+            let html = `<div class="count" style="flex-basis: ${100 / 7}%;">`;
+            html += `<div class="bar ${!valid &&
+                "not-valid"}" style="background-color: ${color};"></div>`;
+            // html += votes + "<br>";
+            html += `<small>${Math.round((1000 * votes) / VOTERS) /
+                10}%</small>`;
+            html += `</div>`;
+            bars += html;
         });
+        voteCount.innerHTML += bars;
     }
 
     function draw() {
@@ -151,23 +183,25 @@
         const candidates = environment.memo(getCandidates);
         const voters = environment.memo(getVoters);
 
+        const serializedVotes = candidates.map(c => c.get("votes")).join(",");
+        if (serializedVotes === environment.get("serializedVotes")) {
+            return log(true);
+        } else {
+            environment.set("serializedVotes", serializedVotes);
+        }
+
+        log();
+
         candidates.forEach(c => {
             const { votes } = c.getData();
             const valid = votes / voters.length >= 0.15;
             c.set("valid", valid);
-            if (!valid) {
-                c.set({
-                    // type: null,
-                    color: "#d8d8d8"
-                });
-            }
             // reset votes
             c.set("lastVotes", votes);
             c.set("votes", 0);
         });
 
-        setTimeout(draw, 2000);
-        // requestAnimationFrame(draw);
+        setTimeout(draw, 2500);
     }
 
     setup();

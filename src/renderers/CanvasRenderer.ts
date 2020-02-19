@@ -19,6 +19,7 @@ class CanvasRenderer implements Renderer {
   /** @member Environment */
   environment: Environment;
   opts: CanvasRendererOptions;
+  buffer: HTMLCanvasElement;
   /** @member HTMLCanvasElement */
   canvas: HTMLCanvasElement;
   context: CanvasRenderingContext2D;
@@ -33,21 +34,19 @@ class CanvasRenderer implements Renderer {
     Object.assign(this.opts, opts);
     const { width, height } = this.opts;
 
-    this.canvas = document.createElement("canvas");
-    this.context = this.canvas.getContext("2d");
-
     const dpr = window.devicePixelRatio;
     this.width = width * dpr;
     this.height = height * dpr;
 
-    this.canvas.width = width * dpr;
-    this.canvas.height = height * dpr;
+    this.canvas = this.createCanvas();
+    this.context = this.canvas.getContext("2d");
     this.canvas.style.width = width + "px";
     this.canvas.style.height = height + "px";
 
-    const context = this.canvas.getContext("2d");
-    context.fillStyle = opts.background;
-    context.fillRect(0, 0, width, height);
+    this.buffer = this.createCanvas();
+
+    this.context.fillStyle = opts.background;
+    this.context.fillRect(0, 0, width, height);
   }
 
   mount(el: string | HTMLElement): void {
@@ -68,10 +67,23 @@ class CanvasRenderer implements Renderer {
     return scale * v - origin.y;
   }
 
+  createCanvas(): HTMLCanvasElement {
+    const dpr = window.devicePixelRatio;
+    const { width, height } = this.opts;
+    const canvas = document.createElement("canvas");
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    return canvas;
+  }
+
   render(): void {
-    const { context, environment, width, height, opts } = this;
+    const { buffer, context, environment, width, height, opts } = this;
     const { trace } = opts;
     const dpr = window.devicePixelRatio;
+
+    // always clear buffer
+    const bufferContext = buffer.getContext("2d");
+    bufferContext.clearRect(0, 0, width, height);
 
     // if "trace" is truthy, don't clear the canvas with every frame
     // to trace the paths of agents
@@ -114,7 +126,10 @@ class CanvasRenderer implements Renderer {
       context.beginPath();
       context.moveTo(this.x(x), this.y(y));
 
-      // always draw connections to other agents
+      bufferContext.beginPath();
+      bufferContext.moveTo(this.x(x), this.y(y));
+
+      // always draw connections to other agents directly to the canvas context
       if (this.environment.helpers.network) {
         const { network } = this.environment.helpers;
         if (!network.neighbors(agent)) return;
@@ -149,35 +164,39 @@ class CanvasRenderer implements Renderer {
         }
       }
 
-      context.strokeStyle = "none";
-      context.fillStyle = color || "black";
+      bufferContext.strokeStyle = "none";
+      bufferContext.fillStyle = color || "black";
 
+      // draw agents to the buffer, then after finished looping
+      // we will draw the buffer to the canvas
       if (shape === "arrow" && vx !== null && vy !== null) {
         const norm = Math.sqrt(vx ** 2 + vy ** 2);
         const _vx = 3 * size * (vx / norm) * dpr;
         const _vy = 3 * size * (vy / norm) * dpr;
 
-        context.beginPath();
+        bufferContext.beginPath();
 
-        context.save();
-        context.translate(this.x(x), this.y(y));
-        context.moveTo(1.5 * _vx, 1.5 * _vy);
-        context.lineTo(_vy / 2, -_vx / 2);
-        context.lineTo(-_vy / 2, _vx / 2);
-        context.restore();
+        bufferContext.save();
+        bufferContext.translate(this.x(x), this.y(y));
+        bufferContext.moveTo(1.5 * _vx, 1.5 * _vy);
+        bufferContext.lineTo(_vy / 2, -_vx / 2);
+        bufferContext.lineTo(-_vy / 2, _vx / 2);
+        bufferContext.restore();
       } else if (shape === "rect") {
-        context.fillRect(
+        bufferContext.fillRect(
           this.x(x),
           this.y(y),
           (agent.get("width") || 1) * dpr,
           (agent.get("height") || 1) * dpr
         );
       } else {
-        context.arc(this.x(x), this.y(y), size * dpr, 0, 2 * Math.PI);
+        bufferContext.arc(this.x(x), this.y(y), size * dpr, 0, 2 * Math.PI);
       }
 
-      context.fill();
+      bufferContext.fill();
     });
+
+    context.drawImage(buffer, 0, 0);
   }
 }
 
