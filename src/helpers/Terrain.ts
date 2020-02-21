@@ -1,5 +1,3 @@
-import clamp from "../utils/clamp";
-
 interface TerrainOptions {
   grayscale: boolean;
 }
@@ -55,7 +53,7 @@ class Terrain implements EnvironmentHelper {
     while (y < 0) y += height;
     while (y >= height) y -= height;
 
-    const i = x + width * y;
+    const i = 4 * (x + width * y);
     if (grayscale) {
       return data[i];
     } else {
@@ -79,10 +77,10 @@ class Terrain implements EnvironmentHelper {
 
     const i = 4 * (x + width * y);
 
-    data[i] = clamp(r, 0, 255);
-    data[i + 1] = clamp(g, 0, 255);
-    data[i + 2] = clamp(b, 0, 255);
-    data[i + 3] = clamp(a, 0, 255);
+    data[i] = r;
+    data[i + 1] = g;
+    data[i + 2] = b;
+    data[i + 3] = a;
   }
 }
 
