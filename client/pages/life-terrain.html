@@ -1,0 +1,85 @@
+<div id="container"></div>
+<div id="histogram-vx"></div>
+<div id="histogram-vy"></div>
+<script>
+    const {
+        Agent,
+        Environment,
+        GridEnvironment,
+        Histogram,
+        ASCIIRenderer,
+        CanvasRenderer,
+        utils,
+        Vector,
+        KDTree,
+        Terrain
+    } = flocc;
+    const { random } = utils;
+
+    /* ------- PARAMETERS --------- */
+    const width = 600;
+    const height = 600;
+
+    /* ---------------------------- */
+
+    /* ------- SET UP ENVIRONMENT, RENDERER --------- */
+
+    const environment = new Environment({
+        height,
+        width
+    });
+    const renderer = new CanvasRenderer(environment, { width, height });
+    const container = document.getElementById("container");
+    renderer.mount(container);
+
+    const terrain = new Terrain(width, height);
+    environment.use(terrain);
+    console.log(terrain);
+
+    function isAlive(x, y) {
+        const { r, g } = terrain.sample(x, y);
+        return r === 255 && g === 255;
+    }
+
+    const dead = { r: 0, g: 0, b: 0, a: 255 };
+    const alive = { r: 255, g: 255, b: 0, a: 255 };
+
+    function setup() {
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                terrain.set(
+                    x,
+                    y,
+                    Math.random() < 0.75 ? 255 : 0,
+                    Math.random() < 0.75 ? 255 : 0,
+                    0,
+                    255
+                );
+            }
+        }
+
+        terrain.rule = (x, y) => {
+            let livingNeighbors = 0;
+            for (var dx = -1; dx <= 1; dx++) {
+                for (var dy = -1; dy <= 1; dy++) {
+                    if (dx === 0 && dy === 0) continue;
+                    if (isAlive(x + dx, y + dy)) livingNeighbors++;
+                }
+            }
+
+            if (isAlive(x, y) && livingNeighbors < 2) return dead;
+            if (isAlive(x, y) && livingNeighbors > 3) return dead;
+            if (!isAlive(x, y) && livingNeighbors === 3) return alive;
+
+            return terrain.sample(x, y);
+        };
+    }
+
+    function render() {
+        environment.tick();
+        requestAnimationFrame(render);
+    }
+
+    setup();
+    render();
+</script>

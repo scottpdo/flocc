@@ -15,9 +15,11 @@ interface Pixel {
 
 class Terrain implements EnvironmentHelper {
   data: Uint8ClampedArray;
+  nextData: Uint8ClampedArray;
   opts: TerrainOptions;
   width: number;
   height: number;
+  rule: (x: number, y: number) => Pixel;
 
   constructor(
     width: number,
@@ -42,6 +44,7 @@ class Terrain implements EnvironmentHelper {
         this.data[i + 3] = 255;
       }
     }
+    this.nextData = new Uint8ClampedArray(this.data);
   }
 
   sample(x: number, y: number): Pixel | number {
@@ -81,6 +84,41 @@ class Terrain implements EnvironmentHelper {
     data[i + 1] = g;
     data[i + 2] = b;
     data[i + 3] = a;
+  }
+
+  setNext(
+    x: number,
+    y: number,
+    r: number,
+    g: number,
+    b: number,
+    a: number
+  ): void {
+    const { nextData, width, height, opts } = this;
+    const grayscale = { opts };
+
+    while (x < 0) x += width;
+    while (x >= width) x -= width;
+    while (y < 0) y += height;
+    while (y >= height) y -= height;
+
+    const i = 4 * (x + width * y);
+
+    nextData[i] = r;
+    nextData[i + 1] = g;
+    nextData[i + 2] = b;
+    nextData[i + 3] = a;
+  }
+
+  loop(): void {
+    if (!this.rule) return;
+    for (let y = 0; y < this.height; y++) {
+      for (let x = 0; x < this.width; x++) {
+        const { r, g, b, a } = this.rule(x, y);
+        this.setNext(x, y, r, g, b, a);
+      }
+    }
+    this.data = new Uint8ClampedArray(this.nextData);
   }
 }
 
