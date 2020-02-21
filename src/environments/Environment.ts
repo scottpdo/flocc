@@ -6,10 +6,12 @@ import { Agent } from "../agents/Agent";
 import { Network } from "../helpers/Network";
 import shuffle from "../utils/shuffle";
 import { KDTree } from "../helpers/KDTree";
+import { Terrain } from "../helpers/Terrain";
 
 interface Helpers {
   kdtree: KDTree;
   network: Network;
+  terrain: Terrain;
 }
 
 export interface TickOptions {
@@ -45,7 +47,8 @@ class Environment extends Agent {
   cache: Map<string, MemoValue> = new Map();
   helpers: Helpers = {
     kdtree: null,
-    network: null
+    network: null,
+    terrain: null
   };
   /** @member {Renderer[]} */
   renderers: Renderer[] = [];
@@ -56,7 +59,8 @@ class Environment extends Agent {
 
   constructor(opts: EnvironmentOptions = defaultEnvironmentOptions) {
     super();
-    this.opts = Object.assign({}, defaultEnvironmentOptions, opts);
+    this.opts = Object.assign({}, defaultEnvironmentOptions);
+    this.opts = Object.assign(this.opts, opts);
     this.width = this.opts.width;
     this.height = this.opts.height;
   }
@@ -197,6 +201,7 @@ class Environment extends Agent {
   use(e: EnvironmentHelper) {
     if (e instanceof KDTree) this.helpers.kdtree = e;
     if (e instanceof Network) this.helpers.network = e;
+    if (e instanceof Terrain) this.helpers.terrain = e;
   }
 
   /**
