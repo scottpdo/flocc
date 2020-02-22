@@ -13,13 +13,15 @@ interface Pixel {
   a: number;
 }
 
+type TerrainRule = (x: number, y: number) => Pixel | number;
+
 class Terrain implements EnvironmentHelper {
   data: Uint8ClampedArray;
   nextData: Uint8ClampedArray;
   opts: TerrainOptions;
   width: number;
   height: number;
-  rule: (x: number, y: number) => Pixel;
+  rule: TerrainRule;
 
   constructor(
     width: number,
@@ -31,25 +33,39 @@ class Terrain implements EnvironmentHelper {
     this.opts = Object.assign({}, defaultTerrainOptions);
     this.opts = Object.assign(this.opts, options);
 
-    const { grayscale } = this.opts;
-    const size = width * height * (grayscale ? 1 : 4);
+    const size = width * height * 4;
     this.data = new Uint8ClampedArray(size);
-    for (let i = 0; i < size; i += grayscale ? 1 : 4) {
-      if (grayscale) {
-        this.data[i] = 0;
-      } else {
-        this.data[i] = 0;
-        this.data[i + 1] = 0;
-        this.data[i + 2] = 0;
-        this.data[i + 3] = 255;
-      }
+    for (let i = 0; i < size; i += 4) {
+      this.data[i] = 0;
+      this.data[i + 1] = 0;
+      this.data[i + 2] = 0;
+      this.data[i + 3] = 255;
     }
     this.nextData = new Uint8ClampedArray(this.data);
   }
 
+  init(rule: TerrainRule): void {
+    for (let y = 0; y < this.height; y++) {
+      for (let x = 0; x < this.width; x++) {
+        let result = rule(x, y);
+        if (result === undefined) result = this.sample(x, y);
+        if (typeof result === "number") {
+          if (this.opts.grayscale) {
+            this.set(x, y, result);
+          } else {
+            this.set(x, y, result, result, result, result);
+          }
+        } else {
+          const { r, g, b, a } = result;
+          this.set(x, y, r, g, b, a);
+        }
+      }
+    }
+  }
+
   sample(x: number, y: number): Pixel | number {
-    const { data, width, height } = this;
-    const grayscale = this.opts.grayscale;
+    const { data, width, height, opts } = this;
+    const { grayscale } = opts;
 
     while (x < 0) x += width;
     while (x >= width) x -= width;
@@ -69,9 +85,16 @@ class Terrain implements EnvironmentHelper {
     }
   }
 
-  set(x: number, y: number, r: number, g: number, b: number, a: number): void {
+  set(
+    x: number,
+    y: number,
+    r: number,
+    g?: number,
+    b?: number,
+    a?: number
+  ): void {
     const { data, width, height, opts } = this;
-    const grayscale = { opts };
+    const { grayscale } = opts;
 
     while (x < 0) x += width;
     while (x >= width) x -= width;
@@ -81,21 +104,21 @@ class Terrain implements EnvironmentHelper {
     const i = 4 * (x + width * y);
 
     data[i] = r;
-    data[i + 1] = g;
-    data[i + 2] = b;
-    data[i + 3] = a;
+    data[i + 1] = grayscale ? r : g;
+    data[i + 2] = grayscale ? r : b;
+    data[i + 3] = grayscale ? 255 : a;
   }
 
   setNext(
     x: number,
     y: number,
     r: number,
-    g: number,
-    b: number,
-    a: number
+    g?: number,
+    b?: number,
+    a?: number
   ): void {
     const { nextData, width, height, opts } = this;
-    const grayscale = { opts };
+    const { grayscale } = opts;
 
     while (x < 0) x += width;
     while (x >= width) x -= width;
@@ -105,17 +128,29 @@ class Terrain implements EnvironmentHelper {
     const i = 4 * (x + width * y);
 
     nextData[i] = r;
-    nextData[i + 1] = g;
-    nextData[i + 2] = b;
-    nextData[i + 3] = a;
+    nextData[i + 1] = grayscale ? r : g;
+    nextData[i + 2] = grayscale ? r : b;
+    nextData[i + 3] = grayscale ? 255 : a;
   }
 
   loop(): void {
-    if (!this.rule) return;
-    for (let y = 0; y < this.height; y++) {
-      for (let x = 0; x < this.width; x++) {
-        const { r, g, b, a } = this.rule(x, y);
-        this.setNext(x, y, r, g, b, a);
+    const { rule, width, height, opts } = this;
+    const { grayscale } = opts;
+    if (!rule) return;
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        let result = rule(x, y);
+        if (result === undefined) result = this.sample(x, y);
+        if (typeof result === "number") {
+          if (grayscale) {
+            this.setNext(x, y, result);
+          } else {
+            this.setNext(x, y, result, result, result, result);
+          }
+        } else {
+          const { r, g, b, a } = result;
+          this.setNext(x, y, r, g, b, a);
+        }
       }
     }
     this.data = new Uint8ClampedArray(this.nextData);

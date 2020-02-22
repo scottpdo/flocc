@@ -32,31 +32,31 @@
     const container = document.getElementById("container");
     renderer.mount(container);
 
-    const terrain = new Terrain(width, height);
+    const terrain = new Terrain(width, height, { grayscale: true });
     environment.use(terrain);
     console.log(terrain);
 
     function isAlive(x, y) {
-        const { r, g } = terrain.sample(x, y);
-        return r === 255 && g === 255;
+        return terrain.sample(x, y) === 255;
     }
 
-    const dead = { r: 0, g: 0, b: 0, a: 255 };
-    const alive = { r: 255, g: 255, b: 0, a: 255 };
+    const dead = 0;
+    const alive = 255;
 
     function setup() {
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
-                terrain.set(
-                    x,
-                    y,
-                    Math.random() < 0.75 ? 255 : 0,
-                    Math.random() < 0.75 ? 255 : 0,
-                    0,
-                    255
-                );
+                terrain.set(x, y, Math.random() < 0.2 ? 255 : 0);
             }
         }
+
+        const x = 100;
+        const y = 100;
+        terrain.set(x, y, alive);
+        terrain.set(x + 1, y + 1, alive);
+        terrain.set(x - 1, y + 2, alive);
+        terrain.set(x, y + 2, alive);
+        terrain.set(x + 1, y + 2, alive);
 
         terrain.rule = (x, y) => {
             let livingNeighbors = 0;
@@ -70,8 +70,6 @@
             if (isAlive(x, y) && livingNeighbors < 2) return dead;
             if (isAlive(x, y) && livingNeighbors > 3) return dead;
             if (!isAlive(x, y) && livingNeighbors === 3) return alive;
-
-            return terrain.sample(x, y);
         };
     }
 

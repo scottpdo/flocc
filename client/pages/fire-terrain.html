@@ -1,0 +1,81 @@
+<div id="container"></div>
+<div id="histogram"></div>
+<script>
+    const {
+        Agent,
+        Environment,
+        Terrain,
+        CanvasRenderer,
+        utils,
+        Vector,
+        Rule
+    } = flocc;
+
+    const PERCENT_FULL = 0.59;
+    const [width, height] = [600, 600];
+    const environment = new Environment({ width, height });
+    const renderer = new CanvasRenderer(environment, {
+        width,
+        height
+    });
+    renderer.mount("#container");
+
+    const terrain = new Terrain(width, height);
+    environment.use(terrain);
+
+    const histogram = new Histogram(environment, {
+        color: "fuchsia",
+        buckets: 6,
+        // scale: "relative",
+        width: 500,
+        height: 250
+    });
+    histogram.mount("#histogram");
+    histogram.metric("a");
+
+    const empty = { r: 0, g: 0, b: 0, a: 255 };
+    const notOnFire = { r: 0, g: 255, b: 0, a: 255 };
+    const onFire = { r: 255, g: 0, b: 0, a: 255 };
+
+    function isOnFire(x, y) {
+        return terrain.sample(x, y).r === 255;
+    }
+
+    function isEmpty(x, y) {
+        const { r, g } = terrain.sample(x, y);
+        return r === 0 && g === 0;
+    }
+
+    function isNotEmpty(x, y) {
+        return terrain.sample(x, y).g === 255;
+    }
+
+    terrain.rule = (x, y) => {
+        if (isEmpty(x, y)) return;
+        for (var dx = -1; dx <= 1; dx++) {
+            for (var dy = -1; dy <= 1; dy++) {
+                if ((dx === 0 && dy === 0) || Math.abs(dx) + Math.abs(dy) === 2)
+                    continue;
+                if (isOnFire(x + dx, y + dy)) return onFire;
+            }
+        }
+    };
+
+    function setup() {
+        terrain.init((x, y) => {
+            if (Math.random() > PERCENT_FULL) return empty;
+            return notOnFire;
+        });
+        terrain.init((x, y) => {
+            if (isNotEmpty(x, y) && x === 0) return onFire;
+        });
+    }
+
+    function run() {
+        environment.tick();
+        window.requestAnimationFrame(run);
+    }
+
+    setup();
+    run();
+</script>

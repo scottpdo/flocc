@@ -18,7 +18,7 @@
 
     /* ------- PARAMETERS --------- */
 
-    const flockSize = 100;
+    const flockSize = 350;
     const width = 400;
     const height = 400;
 
@@ -36,31 +36,34 @@
 
     const terrain = new Terrain(width, height);
     environment.use(terrain);
+    console.log(terrain);
 
     function rule(agent) {
         const { x, y } = agent.getData();
         const { r, g, b, a } = terrain.sample(x, y);
-        // console.log(b, b + 5);
-        terrain.set(x, y, 255, 0, b + 5, 255);
+        terrain.set(
+            x,
+            y,
+            r + 2 * Math.round(Math.random()),
+            g + 2 * Math.round(Math.random()),
+            b + 2 * Math.round(Math.random()),
+            255
+        );
         agent.set({
-            x: x + utils.random(-3, 3),
-            y: y + utils.random(-3, 3)
+            x: x + utils.random(-1, 1),
+            y: y + utils.random(-1, 1)
         });
     }
 
     function setup() {
         for (let i = 0; i < flockSize; i++) {
             const a = new Agent({
-                color: "white",
+                color: "transparent",
                 x: width / 2,
                 y: height / 2
             });
             a.addRule(rule);
             environment.addAgent(a);
-        }
-        for (let i = 0; i < (4 * (width * height)) / 2; i += 4) {
-            terrain.data[i] = 255;
-            terrain.data[i + 3] = 255;
         }
     }
 
