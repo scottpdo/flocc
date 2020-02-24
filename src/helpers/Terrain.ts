@@ -110,7 +110,7 @@ class Terrain implements EnvironmentHelper {
   set(
     x: number,
     y: number,
-    r: number,
+    r: number | Pixel,
     g?: number,
     b?: number,
     a?: number
@@ -125,16 +125,23 @@ class Terrain implements EnvironmentHelper {
 
     const i = 4 * (x + width * y);
 
-    data[i] = r;
-    data[i + 1] = grayscale ? r : g;
-    data[i + 2] = grayscale ? r : b;
-    data[i + 3] = grayscale ? 255 : a;
+    if (typeof r === "number") {
+      data[i] = r;
+      data[i + 1] = grayscale ? r : g;
+      data[i + 2] = grayscale ? r : b;
+      data[i + 3] = grayscale ? 255 : a;
+    } else {
+      data[i] = r.r;
+      data[i + 1] = grayscale ? r.r : r.g;
+      data[i + 2] = grayscale ? r.r : r.b;
+      data[i + 3] = grayscale ? 255 : r.a;
+    }
   }
 
   setNext(
     x: number,
     y: number,
-    r: number,
+    r: number | Pixel,
     g?: number,
     b?: number,
     a?: number
@@ -149,10 +156,17 @@ class Terrain implements EnvironmentHelper {
 
     const i = 4 * (x + width * y);
 
-    nextData[i] = r;
-    nextData[i + 1] = grayscale ? r : g;
-    nextData[i + 2] = grayscale ? r : b;
-    nextData[i + 3] = grayscale ? 255 : a;
+    if (typeof r === "number") {
+      nextData[i] = r;
+      nextData[i + 1] = grayscale ? r : g;
+      nextData[i + 2] = grayscale ? r : b;
+      nextData[i + 3] = grayscale ? 255 : a;
+    } else {
+      nextData[i] = r.r;
+      nextData[i + 1] = grayscale ? r.r : r.g;
+      nextData[i + 2] = grayscale ? r.r : r.b;
+      nextData[i + 3] = grayscale ? 255 : r.a;
+    }
   }
 
   loop(): void {
@@ -169,17 +183,7 @@ class Terrain implements EnvironmentHelper {
         if (async) continue;
 
         if (result === undefined) result = this.sample(x, y);
-
-        if (typeof result === "number") {
-          if (grayscale) {
-            update(x, y, result);
-          } else {
-            update(x, y, result, result, result, result);
-          }
-        } else {
-          const { r, g, b, a } = result;
-          update(x, y, r, g, b, a);
-        }
+        update(x, y, result);
       }
     }
     if (!async) this.data = new Uint8ClampedArray(this.nextData);
