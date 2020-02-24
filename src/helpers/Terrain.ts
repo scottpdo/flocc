@@ -21,9 +21,15 @@ export const Colors: { [name: string]: Pixel } = {
   BLACK: { r: 0, g: 0, b: 0, a: 255 },
   WHITE: { r: 255, g: 255, b: 255, a: 255 },
   RED: { r: 255, g: 0, b: 0, a: 255 },
+  MAROON: { r: 127, g: 0, b: 0, a: 255 },
   YELLOW: { r: 255, g: 255, b: 0, a: 255 },
   BLUE: { r: 0, g: 0, b: 255, a: 255 },
-  GREEN: { r: 0, g: 255, b: 0, a: 255 }
+  GREEN: { r: 0, g: 127, b: 0, a: 255 },
+  LIME: { r: 0, g: 255, b: 0, a: 255 },
+  AQUA: { r: 0, g: 255, b: 255, a: 255 },
+  ORANGE: { r: 255, g: 165, b: 0, a: 255 },
+  FUCHSIA: { r: 255, g: 0, b: 255, a: 255 },
+  PURPLE: { r: 127, g: 0, b: 127, a: 255 }
 };
 
 class Terrain implements EnvironmentHelper {
@@ -184,21 +190,26 @@ class Terrain implements EnvironmentHelper {
 
   loop(): void {
     const { rule, width, height, opts } = this;
-    const { async, grayscale } = opts;
+    const { async } = opts;
     if (!rule) return;
     const update = (async ? this.set : this.setNext).bind(this);
 
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
-        // Get result of rule. If doesn't in synchronous mode
-        // and the rule doesn't return anything, set result to the value of this pixel
+        // Get result of rule.
         let result = rule(x, y);
+        // If in async mode, then the rule should have made any necessary
+        // changes already
         if (async) continue;
 
+        // in synchronous mode, set result to this pixel if there was no return value
         if (result === undefined) result = this.sample(x, y);
+        // update on nextData
         update(x, y, result);
       }
     }
+
+    // in synchronous mode, write the buffer to the data
     if (!async) this.data = new Uint8ClampedArray(this.nextData);
   }
 }

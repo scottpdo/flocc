@@ -90,3 +90,39 @@ it("Returning a number from the update rule sets that value on r/g/b", () => {
     }
   }
 });
+
+it("Can even implement the Game of Life", () => {
+  terrain = new Terrain(width, height, { grayscale: true });
+  environment.use(terrain);
+
+  const DEAD = 0;
+  const ALIVE = 255;
+
+  function isAlive(x, y) {
+    return terrain.sample(x, y) === ALIVE;
+  }
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      terrain.set(x, y, Math.abs(Math.sin(x * y)) < 0.1 ? ALIVE : DEAD);
+    }
+  }
+
+  terrain.addRule((x, y) => {
+    let livingNeighbors = 0;
+    for (var dx = -1; dx <= 1; dx++) {
+      for (var dy = -1; dy <= 1; dy++) {
+        if (dx === 0 && dy === 0) continue;
+        if (isAlive(x + dx, y + dy)) livingNeighbors++;
+      }
+    }
+
+    if (isAlive(x, y) && livingNeighbors < 2) return DEAD;
+    if (isAlive(x, y) && livingNeighbors > 3) return DEAD;
+    if (!isAlive(x, y) && livingNeighbors === 3) return ALIVE;
+  });
+
+  environment.tick(10);
+
+  expect(terrain.data).toMatchSnapshot();
+});

@@ -4,6 +4,7 @@
   "description": "Agent-based modeling in JavaScript in the browser or server.",
   "main": "dist/flocc.js",
   "module": "dist/flocc.es.js",
+  "typings": "dist/main.d.ts",
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -cw",
