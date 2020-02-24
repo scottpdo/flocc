@@ -17,8 +17,8 @@
     const { random } = utils;
 
     /* ------- PARAMETERS --------- */
-    const width = 600;
-    const height = 600;
+    const width = 700;
+    const height = 700;
 
     /* ---------------------------- */
 
@@ -46,7 +46,7 @@
     function setup() {
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
-                terrain.set(x, y, Math.random() < 0.2 ? 255 : 0);
+                terrain.set(x, y, Math.abs(Math.sin(x * y)) < 0.1 ? 255 : 0);
             }
         }
 

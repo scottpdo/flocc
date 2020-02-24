@@ -17,6 +17,15 @@ interface Pixel {
 
 type TerrainRule = (x: number, y: number) => Pixel | number;
 
+export const Colors: { [name: string]: Pixel } = {
+  BLACK: { r: 0, g: 0, b: 0, a: 255 },
+  WHITE: { r: 255, g: 255, b: 255, a: 255 },
+  RED: { r: 255, g: 0, b: 0, a: 255 },
+  YELLOW: { r: 255, g: 255, b: 0, a: 255 },
+  BLUE: { r: 0, g: 0, b: 255, a: 255 },
+  GREEN: { r: 0, g: 255, b: 0, a: 255 }
+};
+
 class Terrain implements EnvironmentHelper {
   data: Uint8ClampedArray;
   nextData: Uint8ClampedArray;
@@ -63,6 +72,10 @@ class Terrain implements EnvironmentHelper {
         }
       }
     }
+  }
+
+  addRule(rule: TerrainRule): void {
+    this.rule = rule;
   }
 
   load(path: string, cb?: Function): void {
@@ -127,9 +140,9 @@ class Terrain implements EnvironmentHelper {
 
     if (typeof r === "number") {
       data[i] = r;
-      data[i + 1] = grayscale ? r : g;
-      data[i + 2] = grayscale ? r : b;
-      data[i + 3] = grayscale ? 255 : a;
+      data[i + 1] = grayscale ? r : g === undefined ? r : g;
+      data[i + 2] = grayscale ? r : b === undefined ? r : b;
+      data[i + 3] = grayscale ? 255 : a === undefined ? 255 : a;
     } else {
       data[i] = r.r;
       data[i + 1] = grayscale ? r.r : r.g;
@@ -158,9 +171,9 @@ class Terrain implements EnvironmentHelper {
 
     if (typeof r === "number") {
       nextData[i] = r;
-      nextData[i + 1] = grayscale ? r : g;
-      nextData[i + 2] = grayscale ? r : b;
-      nextData[i + 3] = grayscale ? 255 : a;
+      nextData[i + 1] = grayscale ? r : g === undefined ? r : g;
+      nextData[i + 2] = grayscale ? r : b === undefined ? r : b;
+      nextData[i + 3] = grayscale ? 255 : a === undefined ? 255 : a;
     } else {
       nextData[i] = r.r;
       nextData[i + 1] = grayscale ? r.r : r.g;
