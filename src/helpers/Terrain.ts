@@ -1,8 +1,10 @@
 interface TerrainOptions {
+  async: boolean;
   grayscale: boolean;
 }
 
 const defaultTerrainOptions: TerrainOptions = {
+  async: false,
   grayscale: false
 };
 
@@ -135,25 +137,32 @@ class Terrain implements EnvironmentHelper {
 
   loop(): void {
     const { rule, width, height, opts } = this;
-    const { grayscale } = opts;
+    const { async, grayscale } = opts;
     if (!rule) return;
+    const update = (async ? this.set : this.setNext).bind(this);
+
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
+        // Get result of rule. If doesn't in synchronous mode
+        // and the rule doesn't return anything, set result to the value of this pixel
         let result = rule(x, y);
+        if (async) continue;
+
         if (result === undefined) result = this.sample(x, y);
+
         if (typeof result === "number") {
           if (grayscale) {
-            this.setNext(x, y, result);
+            update(x, y, result);
           } else {
-            this.setNext(x, y, result, result, result, result);
+            update(x, y, result, result, result, result);
           }
         } else {
           const { r, g, b, a } = result;
-          this.setNext(x, y, r, g, b, a);
+          update(x, y, r, g, b, a);
         }
       }
     }
-    this.data = new Uint8ClampedArray(this.nextData);
+    if (!async) this.data = new Uint8ClampedArray(this.nextData);
   }
 }
 
