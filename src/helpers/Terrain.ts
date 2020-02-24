@@ -65,6 +65,26 @@ class Terrain implements EnvironmentHelper {
     }
   }
 
+  load(path: string, cb?: Function): void {
+    const img = document.createElement("img");
+    img.src = path;
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = this.width;
+      canvas.height = this.height;
+      canvas.getContext("2d").drawImage(img, 0, 0, this.width, this.height);
+      const { data } = canvas
+        .getContext("2d")
+        .getImageData(0, 0, this.width, this.height);
+      this.data = data;
+
+      if (cb) cb();
+    };
+    img.onerror = function() {
+      console.log("there was an error");
+    };
+  }
+
   sample(x: number, y: number): Pixel | number {
     const { data, width, height, opts } = this;
     const { grayscale } = opts;

@@ -3,7 +3,8 @@ const fs = require("fs");
 const app = express();
 const port = 3000;
 
-app.use('/dist', express.static(__dirname + "/dist"));
+app.use("/dist", express.static(__dirname + "/dist"));
+app.use("/static", express.static(__dirname + "/static"));
 
 app.get("*", (req, res) => {
   const header = fs.readFileSync(__dirname + "/partials/header.html");
