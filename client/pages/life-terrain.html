@@ -36,12 +36,10 @@
     environment.use(terrain);
     console.log(terrain);
 
-    function isAlive(x, y) {
-        return terrain.sample(x, y) === 255;
-    }
+    const isAlive = p => p === ALIVE;
 
-    const dead = 0;
-    const alive = 255;
+    const DEAD = 0;
+    const ALIVE = 255;
 
     function setup() {
         for (let y = 0; y < height; y++) {
@@ -50,27 +48,17 @@
             }
         }
 
-        const x = 100;
-        const y = 100;
-        terrain.set(x, y, alive);
-        terrain.set(x + 1, y + 1, alive);
-        terrain.set(x - 1, y + 2, alive);
-        terrain.set(x, y + 2, alive);
-        terrain.set(x + 1, y + 2, alive);
+        terrain.addRule((x, y) => {
+            const self = terrain.sample(x, y);
+            const isSelfAlive = isAlive(self);
+            const livingNeighbors = terrain
+                .neighbors(x, y, 1, true)
+                .filter(isAlive).length;
 
-        terrain.rule = (x, y) => {
-            let livingNeighbors = 0;
-            for (var dx = -1; dx <= 1; dx++) {
-                for (var dy = -1; dy <= 1; dy++) {
-                    if (dx === 0 && dy === 0) continue;
-                    if (isAlive(x + dx, y + dy)) livingNeighbors++;
-                }
-            }
-
-            if (isAlive(x, y) && livingNeighbors < 2) return dead;
-            if (isAlive(x, y) && livingNeighbors > 3) return dead;
-            if (!isAlive(x, y) && livingNeighbors === 3) return alive;
-        };
+            if (isSelfAlive && livingNeighbors < 2) return DEAD;
+            if (isSelfAlive && livingNeighbors > 3) return DEAD;
+            if (!isSelfAlive && livingNeighbors === 3) return ALIVE;
+        });
     }
 
     function render() {

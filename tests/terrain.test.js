@@ -98,9 +98,7 @@ it("Can even implement the Game of Life", () => {
   const DEAD = 0;
   const ALIVE = 255;
 
-  function isAlive(x, y) {
-    return terrain.sample(x, y) === ALIVE;
-  }
+  const isAlive = p => p === ALIVE;
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -109,17 +107,14 @@ it("Can even implement the Game of Life", () => {
   }
 
   terrain.addRule((x, y) => {
-    let livingNeighbors = 0;
-    for (var dx = -1; dx <= 1; dx++) {
-      for (var dy = -1; dy <= 1; dy++) {
-        if (dx === 0 && dy === 0) continue;
-        if (isAlive(x + dx, y + dy)) livingNeighbors++;
-      }
-    }
+    const self = terrain.sample(x, y);
+    const isSelfAlive = isAlive(self);
+    const livingNeighbors = terrain.neighbors(x, y, 1, true).filter(isAlive)
+      .length;
 
-    if (isAlive(x, y) && livingNeighbors < 2) return DEAD;
-    if (isAlive(x, y) && livingNeighbors > 3) return DEAD;
-    if (!isAlive(x, y) && livingNeighbors === 3) return ALIVE;
+    if (isSelfAlive && livingNeighbors < 2) return DEAD;
+    if (isSelfAlive && livingNeighbors > 3) return DEAD;
+    if (!isSelfAlive && livingNeighbors === 3) return ALIVE;
   });
 
   environment.tick(10);

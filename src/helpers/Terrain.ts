@@ -164,6 +164,41 @@ class Terrain implements EnvironmentHelper {
   }
 
   /**
+   * Get the neighbors of a coordinate within a certain radius.
+   * Depending on the fourth parameter, retrieves either the von Neumann neighborhood
+   * (https://en.wikipedia.org/wiki/Von_Neumann_neighborhood) or the Moore neighborhood
+   * (https://en.wikipedia.org/wiki/Moore_neighborhood).
+   *
+   * @param {Agent} agent - the agent whose neighbors to retrieve
+   * @param {number} radius - how far to look for neighbors
+   * @param {boolean} moore - whether to use the Moore neighborhood or von Neumann (defaults to von Neumann)
+   * @returns {Pixel[] | number[]} - An array of numbers (grayscale only) or pixel-like objects
+   */
+  neighbors(
+    x: number,
+    y: number,
+    radius: number = 1,
+    moore: boolean = false
+  ): (Pixel | number)[] {
+    const neighbors: Array<Pixel | number> = [];
+
+    if (radius < 1) return neighbors;
+
+    for (let ny = -radius; ny <= radius; ny++) {
+      for (let nx = -radius; nx <= radius; nx++) {
+        // always exclude self
+        if (nx === 0 && ny === 0) continue;
+        const manhattan = Math.abs(ny) + Math.abs(nx);
+        if (moore || manhattan <= radius) {
+          neighbors.push(this.sample(x + nx, y + ny));
+        }
+      }
+    }
+
+    return neighbors;
+  }
+
+  /**
    * Set new pixel data at a coordinate on the terrain. Only call this directly if
    * in async mode — otherwise you should return the new value from the update rule
    * (see Terrain.addRule).
