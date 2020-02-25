@@ -1,0 +1,71 @@
+<div id="container"></div>
+<div id="histogram-vx"></div>
+<div id="histogram-vy"></div>
+<script>
+    const {
+        Agent,
+        Environment,
+        GridEnvironment,
+        Histogram,
+        ASCIIRenderer,
+        CanvasRenderer,
+        utils,
+        Vector,
+        KDTree,
+        Terrain
+    } = flocc;
+    const { random } = utils;
+
+    /* ------- PARAMETERS --------- */
+    const width = 700;
+    const height = 700;
+
+    /* ---------------------------- */
+
+    /* ------- SET UP ENVIRONMENT, RENDERER --------- */
+
+    const environment = new Environment({
+        height,
+        width
+    });
+    const renderer = new CanvasRenderer(environment, { width, height });
+    const container = document.getElementById("container");
+    renderer.mount(container);
+
+    const terrain = new Terrain(width, height, { grayscale: true });
+    environment.use(terrain);
+    console.log(terrain);
+
+    const isAlive = p => p === ALIVE;
+
+    const DEAD = 0;
+    const ALIVE = 255;
+
+    function setup() {
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                terrain.set(x, y, Math.abs(Math.sin(x * y)) < 0.1 ? 255 : 0);
+            }
+        }
+
+        terrain.addRule((x, y) => {
+            const self = terrain.sample(x, y);
+            const isSelfAlive = isAlive(self);
+            const livingNeighbors = terrain
+                .neighbors(x, y, 1, true)
+                .filter(isAlive).length;
+
+            if (isSelfAlive && livingNeighbors < 2) return DEAD;
+            if (isSelfAlive && livingNeighbors > 3) return DEAD;
+            if (!isSelfAlive && livingNeighbors === 3) return ALIVE;
+        });
+    }
+
+    function render() {
+        environment.tick();
+        requestAnimationFrame(render);
+    }
+
+    setup();
+    render();
+</script>

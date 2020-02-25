@@ -1,0 +1,75 @@
+<div id="container"></div>
+<div id="histogram-vx"></div>
+<div id="histogram-vy"></div>
+<script>
+    const {
+        Agent,
+        Environment,
+        GridEnvironment,
+        Histogram,
+        ASCIIRenderer,
+        CanvasRenderer,
+        utils,
+        Vector,
+        KDTree,
+        Terrain
+    } = flocc;
+    const { random } = utils;
+
+    /* ------- PARAMETERS --------- */
+
+    const flockSize = 350;
+    const width = 400;
+    const height = 400;
+
+    /* ---------------------------- */
+
+    /* ------- SET UP ENVIRONMENT, RENDERER --------- */
+
+    const environment = new Environment({
+        height,
+        width
+    });
+    const renderer = new CanvasRenderer(environment, { width, height });
+    const container = document.getElementById("container");
+    renderer.mount(container);
+
+    const terrain = new Terrain(width, height);
+    environment.use(terrain);
+
+    terrain.addRule(function(x, y) {
+        const { r, g, b, a } = terrain.sample(x, y);
+        const sum = { r: 0, g: 0, b: 0 };
+        for (let dx = -1; dx <= 1; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
+                const c = terrain.sample(x + dx, y + dy);
+                sum.r += c.r;
+                sum.g += c.g;
+                sum.b += c.b;
+            }
+        }
+        sum.r /= 9;
+        sum.g /= 9;
+        sum.b /= 9;
+        return {
+            r: (r + sum.r) / 2,
+            g: (g + sum.g) / 2,
+            b: (b + sum.b) / 2,
+            a: 255
+        };
+    });
+
+    function setup() {
+        terrain.load(
+            "https://pbs.twimg.com/profile_images/1205891857835839488/c-Gb39dX_400x400.jpg",
+            render
+        );
+    }
+
+    function render() {
+        environment.tick();
+        requestAnimationFrame(render);
+    }
+
+    setup();
+</script>

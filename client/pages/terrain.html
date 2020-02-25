@@ -1,0 +1,77 @@
+<div id="container"></div>
+<div id="histogram-vx"></div>
+<div id="histogram-vy"></div>
+<script>
+    const {
+        Agent,
+        Environment,
+        GridEnvironment,
+        Histogram,
+        ASCIIRenderer,
+        CanvasRenderer,
+        utils,
+        Vector,
+        KDTree,
+        Terrain
+    } = flocc;
+    const { random } = utils;
+
+    /* ------- PARAMETERS --------- */
+
+    const flockSize = 350;
+    const width = 400;
+    const height = 400;
+
+    /* ---------------------------- */
+
+    /* ------- SET UP ENVIRONMENT, RENDERER --------- */
+
+    const environment = new Environment({
+        height,
+        width
+    });
+    const renderer = new CanvasRenderer(environment, { width, height });
+    const container = document.getElementById("container");
+    renderer.mount(container);
+
+    const terrain = new Terrain(width, height);
+    environment.use(terrain);
+    console.log(terrain);
+
+    function rule(agent) {
+        const { x, y } = agent.getData();
+        const { r, g, b, a } = terrain.sample(x, y);
+        terrain.set(
+            x,
+            y,
+            r + 2 * Math.round(Math.random()),
+            g + 2 * Math.round(Math.random()),
+            b + 2 * Math.round(Math.random()),
+            255
+        );
+        agent.set({
+            x: x + utils.random(-1, 1),
+            y: y + utils.random(-1, 1)
+        });
+    }
+
+    function setup() {
+        for (let i = 0; i < flockSize; i++) {
+            const a = new Agent({
+                color: "transparent",
+                x: width / 2,
+                y: height / 2
+            });
+            a.addRule(rule);
+            environment.addAgent(a);
+        }
+    }
+
+    function render() {
+        environment.tick();
+        requestAnimationFrame(render);
+    }
+
+    setup();
+    render();
+</script>

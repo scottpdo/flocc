@@ -4,6 +4,7 @@ export { Network } from "./helpers/Network";
 export { Rule } from "./helpers/Rule";
 export { KDTree } from "./helpers/KDTree";
 export { NumArray } from "./helpers/NumArray";
+export { Colors, Terrain } from "./helpers/Terrain";
 
 export { Environment } from "./environments/Environment";
 export { GridEnvironment } from "./environments/GridEnvironment";

@@ -23,6 +23,7 @@ class CanvasRenderer implements Renderer {
   /** @member HTMLCanvasElement */
   canvas: HTMLCanvasElement;
   context: CanvasRenderingContext2D;
+  terrainBuffer: HTMLCanvasElement = document.createElement("canvas");
   width: number;
   height: number;
 
@@ -44,6 +45,8 @@ class CanvasRenderer implements Renderer {
     this.canvas.style.height = height + "px";
 
     this.buffer = this.createCanvas();
+    this.terrainBuffer.width = width;
+    this.terrainBuffer.height = height;
 
     this.context.fillStyle = opts.background;
     this.context.fillRect(0, 0, width, height);
@@ -77,7 +80,15 @@ class CanvasRenderer implements Renderer {
   }
 
   render(): void {
-    const { buffer, context, environment, width, height, opts } = this;
+    const {
+      buffer,
+      context,
+      environment,
+      width,
+      height,
+      opts,
+      terrainBuffer
+    } = this;
     const { trace } = opts;
     const dpr = window.devicePixelRatio;
 
@@ -111,6 +122,21 @@ class CanvasRenderer implements Renderer {
           agent.set({ x, y });
         }
       });
+    }
+
+    if (environment.helpers.terrain) {
+      const { terrain } = environment.helpers;
+      const terrainContext = terrainBuffer.getContext("2d");
+      const imageData = new ImageData(
+        terrain.data,
+        terrain.width,
+        terrain.height
+      );
+      terrainContext.putImageData(imageData, 0, 0);
+      context.save();
+      context.scale(1 / dpr, 1 / dpr);
+      context.drawImage(this.terrainBuffer, 0, 0, width * dpr, height * dpr);
+      context.restore();
     }
 
     const connectionsDrawn = new Map();
