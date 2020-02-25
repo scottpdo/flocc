@@ -40,6 +40,12 @@ class Terrain implements EnvironmentHelper {
   height: number;
   rule: TerrainRule;
 
+  /**
+   *
+   * @param {number} width - The width of the terrain
+   * @param {number} height - The height of the terrain
+   * @param options
+   */
   constructor(
     width: number,
     height: number,
@@ -61,6 +67,11 @@ class Terrain implements EnvironmentHelper {
     this.nextData = new Uint8ClampedArray(this.data);
   }
 
+  /**
+   * Initialize (or overwrite) the terrain data by passing a function with parameters (x, y)
+   * and returning a pixel value.
+   * @param {Function} rule - The rule to follow to instantiate pixel values
+   */
   init(rule: TerrainRule): void {
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
@@ -80,13 +91,28 @@ class Terrain implements EnvironmentHelper {
     }
   }
 
+  /**
+   * Like with agents, this adds an update rule for the terrain. The function
+   * passed as the rule should be called with the parameters (x, y), and should return
+   * a pixel-like object { r: number, g: number, b: number, a: number } or number.
+   * @param {Function} rule - The update rule to be called on environment.tick()
+   */
   addRule(rule: TerrainRule): void {
     this.rule = rule;
   }
 
+  /**
+   * Given a local path or remote URL to an image, load that image and set
+   * terrain pixel data accordingly. This will scale the image to match the
+   * dimensionss of the terrain.
+   * A 2nd callback parameter fires once the image has been successfully loaded.
+   * @param {string} path - The path or URL to the image
+   * @param {Function} cb - The function to call once the image loads
+   */
   load(path: string, cb?: Function): void {
     const img = document.createElement("img");
     img.src = path;
+    img.crossOrigin = "anonymous";
     img.onload = () => {
       const canvas = document.createElement("canvas");
       canvas.width = this.width;
@@ -99,11 +125,22 @@ class Terrain implements EnvironmentHelper {
 
       if (cb) cb();
     };
-    img.onerror = function() {
-      console.log("there was an error");
+
+    img.onerror = () => {
+      console.error(
+        `There was an error loading the image for the terrain. Check the path to the URL to make sure that it exists, 
+  or consider saving a local copy to pull from the same origin: https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS/Errors`
+      );
     };
   }
 
+  /**
+   * Get the pixel value at the coordinate (x, y). If in grayscale mode, this
+   * returns a single number. Otherwise, it returns a pixel-like object { r: number,
+   * g: number, b: number, a: number } representing the value of that coordinate.
+   * @param {number} x - The x coordinate
+   * @param {number} y - The y coordinate
+   */
   sample(x: number, y: number): Pixel | number {
     const { data, width, height, opts } = this;
     const { grayscale } = opts;
@@ -126,6 +163,17 @@ class Terrain implements EnvironmentHelper {
     }
   }
 
+  /**
+   * Set new pixel data at a coordinate on the terrain. Only call this directly if
+   * in async mode — otherwise you should return the new value from the update rule
+   * (see Terrain.addRule).
+   * @param {number} x - The x coordinate
+   * @param {number} y - The y coordinate
+   * @param {number | Pixel} r - A number 0-255 (if in grayscale mode or setting a single value for r/g/b), or a pixel-like object
+   * @param {number=} g - The green value 0-255
+   * @param {number=} b - The blue value 0-255
+   * @param {number=} a - The alpha/transparency value 0-255
+   */
   set(
     x: number,
     y: number,
@@ -157,7 +205,7 @@ class Terrain implements EnvironmentHelper {
     }
   }
 
-  setNext(
+  _setNext(
     x: number,
     y: number,
     r: number | Pixel,
@@ -188,11 +236,11 @@ class Terrain implements EnvironmentHelper {
     }
   }
 
-  loop(): void {
+  _loop(): void {
     const { rule, width, height, opts } = this;
     const { async } = opts;
     if (!rule) return;
-    const update = (async ? this.set : this.setNext).bind(this);
+    const update = (async ? this.set : this._setNext).bind(this);
 
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {

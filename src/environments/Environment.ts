@@ -185,7 +185,7 @@ class Environment extends Agent {
     if (this.helpers.kdtree) this.helpers.kdtree.rebalance(this.agents);
 
     const { terrain } = this.helpers;
-    if (terrain && terrain.rule) terrain.loop();
+    if (terrain && terrain.rule) terrain._loop();
 
     this.time++;
 
