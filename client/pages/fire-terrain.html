@@ -23,22 +23,12 @@
     const terrain = new Terrain(width, height);
     environment.use(terrain);
 
-    const histogram = new Histogram(environment, {
-        color: "fuchsia",
-        buckets: 6,
-        // scale: "relative",
-        width: 500,
-        height: 250
-    });
-    histogram.mount("#histogram");
-    histogram.metric("a");
-
     const empty = { r: 0, g: 0, b: 0, a: 255 };
     const notOnFire = { r: 0, g: 255, b: 0, a: 255 };
     const onFire = { r: 255, g: 0, b: 0, a: 255 };
 
-    function isOnFire(x, y) {
-        return terrain.sample(x, y).r === 255;
+    function isOnFire(px) {
+        return px.r === 255;
     }
 
     function isEmpty(x, y) {
@@ -52,12 +42,9 @@
 
     terrain.rule = (x, y) => {
         if (isEmpty(x, y)) return;
-        for (var dx = -1; dx <= 1; dx++) {
-            for (var dy = -1; dy <= 1; dy++) {
-                if ((dx === 0 && dy === 0) || Math.abs(dx) + Math.abs(dy) === 2)
-                    continue;
-                if (isOnFire(x + dx, y + dy)) return onFire;
-            }
+        const neighbors = terrain.neighbors(x, y, 1);
+        for (let i = 0; i < neighbors.length; i++) {
+            if (isOnFire(neighbors[i])) return onFire;
         }
     };
 

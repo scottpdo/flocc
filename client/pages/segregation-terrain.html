@@ -40,8 +40,12 @@
         });
     }
 
-    function exists(x, y) {
+    function existsCoord(x, y) {
         return !areSame(terrain.sample(x, y), empty);
+    }
+
+    function existsPixel(px) {
+        return !areSame(px, empty);
     }
 
     function areSame(p1, p2) {
@@ -52,7 +56,7 @@
         let space = null;
         do {
             space = { x: utils.random(0, width), y: utils.random(0, height) };
-        } while (exists(space.x, space.y));
+        } while (existsCoord(space.x, space.y));
         return space;
     }
 
@@ -70,20 +74,14 @@
         if (areSame(color, empty)) return;
         population++;
 
-        let neighbors = 0;
-        let percentLike = 0;
+        // let neighbors = 0;
+        // let percentLike = 0;
 
-        for (let dx = -1; dx <= 1; dx++) {
-            for (let dy = -1; dy <= 1; dy++) {
-                if (dx === 0 && dy === 0) continue;
-                if (exists(x + dx, y + dy)) neighbors++;
-                if (areSame(color, terrain.sample(x + dx, y + dy))) {
-                    percentLike++;
-                }
-            }
-        }
-        if (neighbors === 0) return;
-        percentLike /= neighbors;
+        const neighbors = terrain.neighbors(x, y, 1, true).filter(existsPixel);
+        const percentLike =
+            neighbors.filter(n => areSame(color, n)).length / neighbors.length;
+
+        if (neighbors.length === 0) return;
         if (percentLike >= MOVE_THRESHOLD) return;
 
         const open = findOpenSpace();
