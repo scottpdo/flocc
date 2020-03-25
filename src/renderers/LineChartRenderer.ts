@@ -167,8 +167,6 @@ class LineChartRenderer implements Renderer {
     context.clearRect(0, 0, width, height);
     this.drawBackground();
 
-    const agents = environment.getAgents();
-
     // initialize values map -- for each metric, a pairing of `key` and an empty array
     const values: Map<string, number[]> = new Map();
     metrics.forEach(({ key }) => values.set(key, environment.stat(key)));

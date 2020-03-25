@@ -31,6 +31,7 @@ const defaultEnvironmentOptions: EnvironmentOptions = {
 };
 
 interface MemoValue {
+  key?: string;
   value: any;
   time: number;
 }
@@ -225,24 +226,25 @@ class Environment extends Agent {
       });
       return output;
     };
-    if (useCache) return this.memo(mapAndFilter);
+    if (useCache) return this.memo(mapAndFilter, key);
     return mapAndFilter();
   }
 
   /**
    * Pass a function to cache and use the return value within the same environment tick.
-   * @param {Function} key - The key for which to retrieve data.
+   * @param {Function} fn - The function to memoize.
    * @return {any} The return value of the function that was passed.
    */
-  memo(fn: Function): any {
-    const serialized = fn.toString();
+  memo(fn: Function, key?: string): any {
+    const serialized = (key ? key + "-" : "") + fn.toString();
     const memoValue = this.cache.get(serialized);
     if (memoValue && this.time === memoValue.time) return memoValue.value;
 
     // if does not exist in cache or time has elapsed, cache new value
-    const data = fn();
-    this.cache.set(serialized, { value: data, time: this.time });
-    return data;
+    const value = fn();
+    const newMemoValue: MemoValue = { value, time: this.time };
+    this.cache.set(serialized, newMemoValue);
+    return value;
   }
 }
 
