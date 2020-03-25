@@ -62,12 +62,12 @@ class CanvasRenderer implements Renderer {
 
   x(v: number): number {
     const { origin, scale } = this.opts;
-    return scale * v - origin.x;
+    return window.devicePixelRatio * scale * (v - origin.x);
   }
 
   y(v: number): number {
     const { origin, scale } = this.opts;
-    return scale * v - origin.y;
+    return window.devicePixelRatio * scale * (v - origin.y);
   }
 
   createCanvas(): HTMLCanvasElement {
@@ -142,12 +142,7 @@ class CanvasRenderer implements Renderer {
     const connectionsDrawn = new Map();
 
     environment.getAgents().forEach(agent => {
-      let { x, y, vx, vy, color, shape, size = 1 } = agent.getData();
-
-      if (!(opts.autoPosition && environment.helpers.network)) {
-        x *= dpr;
-        y *= dpr;
-      }
+      const { x, y, vx, vy, color, shape, size = 1 } = agent.getData();
 
       context.beginPath();
       context.moveTo(this.x(x), this.y(y));
@@ -170,12 +165,8 @@ class CanvasRenderer implements Renderer {
           connectionsDrawn.set(agent, neighbor);
           connectionsDrawn.set(neighbor, agent);
 
-          let nx = neighbor.get("x");
-          let ny = neighbor.get("y");
-          if (!(opts.autoPosition && environment.helpers.network)) {
-            nx *= dpr;
-            ny *= dpr;
-          }
+          const nx = neighbor.get("x");
+          const ny = neighbor.get("y");
 
           context.save();
           context.beginPath();
