@@ -115,7 +115,7 @@ class LineChartRenderer implements Renderer {
   }
 
   drawBackground() {
-    const { canvas, width, height } = this;
+    const { canvas, width, height, opts, t } = this;
     // draw background and lines
     const context = canvas.getContext("2d");
     context.fillStyle = this.opts.background;
@@ -124,29 +124,24 @@ class LineChartRenderer implements Renderer {
     const { range } = this.opts;
     const markers = extractRoundNumbers(range);
 
-    const { min, max } = range;
-    let increment = 10 ** Math.round(Math.log10(max - min) - 1); // start from closest power of 10 difference, over 10
-    let ticker = 0; // 0 = 1, 1 = 2, 2 = 5, etc.
-    while ((max - min) / increment > 8) {
-      increment *= ticker % 3 === 1 ? 2.5 : 2;
-      ticker++;
-    }
-
     let textMaxWidth = 0;
-    // write numbers
+    // write values on vertical axis
     context.font = `${14 * window.devicePixelRatio}px Helvetica`;
     context.fillStyle = "#000";
     context.textBaseline = "middle";
 
     markers.forEach(marker => {
+      if (this.y(marker) < 10 || this.y(marker) + 10 > height) return;
       const { width } = context.measureText(marker.toLocaleString());
       if (width > textMaxWidth) textMaxWidth = width;
       context.fillText(marker.toLocaleString(), 5, this.y(marker));
     });
 
-    // draw lines
+    // draw horizontal lines for vertical axis
     context.save();
+    context.strokeStyle = "#999";
     markers.forEach(marker => {
+      if (this.y(marker) >= height - 10) return;
       context.beginPath();
       context.moveTo(textMaxWidth + 10, this.y(marker));
       context.lineTo(
@@ -155,6 +150,24 @@ class LineChartRenderer implements Renderer {
       );
       context.setLineDash(lineDash);
       context.stroke();
+    });
+    context.restore();
+
+    // draw time values for horizontal axis
+    const min = opts.autoScroll && t >= width ? t - width : 0;
+    const max = opts.autoScale && t >= width ? t : width;
+    const timeRange: NRange = { min, max };
+    const timeMarkers = extractRoundNumbers(timeRange);
+    context.save();
+    context.textAlign = "center";
+    timeMarkers.forEach(marker => {
+      const { width } = context.measureText(marker.toLocaleString());
+      if (
+        this.x(marker) + width / 2 > this.width ||
+        this.x(marker) - width / 2 < textMaxWidth
+      )
+        return;
+      context.fillText(marker.toLocaleString(), this.x(marker), height - 10);
     });
     context.restore();
   }
