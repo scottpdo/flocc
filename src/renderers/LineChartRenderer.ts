@@ -111,7 +111,7 @@ class LineChartRenderer implements Renderer {
     const { range } = this.opts;
     const { min, max } = range;
     const pxPerUnit = height / (max - min);
-    return Math.round(this.canvas.height - (value - min) * pxPerUnit);
+    return Math.round(height - (value - min) * pxPerUnit - 22);
   }
 
   drawBackground() {
@@ -165,9 +165,19 @@ class LineChartRenderer implements Renderer {
       if (
         this.x(marker) + width / 2 > this.width ||
         this.x(marker) - width / 2 < textMaxWidth
-      )
+      ) {
         return;
+      }
+
+      context.font = `${11 * window.devicePixelRatio}px Helvetica`;
       context.fillText(marker.toLocaleString(), this.x(marker), height - 10);
+
+      context.strokeStyle = "black";
+      context.lineWidth = 1;
+      context.beginPath();
+      context.moveTo(this.x(marker), height - 4);
+      context.lineTo(this.x(marker), height);
+      context.stroke();
     });
     context.restore();
   }
