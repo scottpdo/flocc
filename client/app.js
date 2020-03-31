@@ -6,18 +6,24 @@ const port = 3000;
 app.use("/dist", express.static(__dirname + "/dist"));
 app.use("/static", express.static(__dirname + "/static"));
 
-app.get("*", (req, res) => {
-  const header = fs.readFileSync(__dirname + "/partials/header.html");
-  const footer = fs.readFileSync(__dirname + "/partials/footer.html");
-  let path = req.path;
-  if (path === "/") path = "/index";
-  if (fs.existsSync(__dirname + "/pages" + path + ".html")) {
-    res.send(
-      header + fs.readFileSync(__dirname + "/pages" + path + ".html") + footer
-    );
-  } else {
-    res.send(header + "404" + footer);
+app.set("view engine", "ejs");
+app.set("views", "./client/pages");
+
+const models = fs
+  .readdirSync(__dirname + "/models")
+  .map(filename => filename.replace(".ejs", ""));
+
+app.get("*", function(req, res) {
+  const { path } = req;
+  if (path === "/") {
+    res.render("index", { path, models, nav: true });
   }
+
+  if (!fs.existsSync(__dirname + "/models/" + path + ".ejs")) {
+    res.status(404).render("404", { nav: true });
+  }
+
+  res.render("page", { path, models, nav: false });
 });
 
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));

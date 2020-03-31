@@ -1,0 +1,48 @@
+<div id="container"></div>
+<div id="linechart"></div>
+<script>
+  const { Environment, Agent, LineChartRenderer, utils } = flocc;
+
+  const width = 500;
+  const height = 500;
+
+  const environment = new Environment({ width, height });
+  const chart = new LineChartRenderer(environment, {
+    background: "#eee",
+    autoScale: true
+  });
+  chart.mount("#linechart");
+  chart.metric("x", {
+    fn: utils.median
+  });
+  chart.metric("y", {
+    fn: utils.mean,
+    color: "blue"
+  });
+
+  function tick(agent) {
+    return {
+      x: agent.get("x") + 1.025 * width * Math.sin(environment.time / 100),
+      y: (agent.get("y") * 2 + 1) % height
+    };
+  }
+
+  function setup() {
+    for (let i = 0; i < 200; i++) {
+      const agent = new Agent({
+        x: Math.abs(Math.sin(i) * width),
+        y: Math.abs(Math.cos(i) ** 2 * height)
+      });
+      agent.addRule(tick);
+      environment.addAgent(agent);
+    }
+  }
+
+  function run() {
+    environment.tick();
+    if (environment.time < width) run();
+  }
+
+  setup();
+  run();
+</script>

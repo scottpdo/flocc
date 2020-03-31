@@ -17,10 +17,13 @@
   "devDependencies": {
     "browser-sync": "2.26.7",
     "concurrently": "5.1.0",
+    "ejs": "^3.0.2",
     "express": "^4.17.1",
     "jest": "25.1.0",
     "jest-canvas-mock": "^2.2.0",
     "minimist": "^1.2.5",
+    "pixelmatch": "^5.1.0",
+    "puppeteer": "^2.1.1",
     "rollup": "2.1.0",
     "rollup-plugin-typescript2": "0.26.0",
     "typescript": "3.8.3",
