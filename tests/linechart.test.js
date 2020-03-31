@@ -4,6 +4,10 @@ const {
   LineChartRenderer,
   utils
 } = require("../dist/flocc");
+const fs = require("fs");
+const PNG = require("pngjs").PNG;
+const pixelmatch = require("pixelmatch");
+const puppeteer = require("puppeteer");
 
 const color = "#ff0000";
 const width = 200;
@@ -33,4 +37,29 @@ it("Can add metrics to a LineChartRenderer", () => {
   expect(renderer.metrics).toHaveLength(2);
   renderer.metric("y", { fn: utils.sum });
   expect(renderer.metrics).toHaveLength(3);
+});
+
+it("Renders correctly", async () => {
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  await page.goto("http://localhost:3000/linechart", {
+    waitUntil: "networkidle2"
+  });
+  const filePath = __dirname + "/screenshots/linechart1.png";
+  const existingImage = fs.existsSync(filePath)
+    ? PNG.sync.read(fs.readFileSync(filePath))
+    : null;
+  await page.screenshot({ path: filePath });
+  if (!existingImage) {
+    await browser.close();
+    return;
+  }
+  const { width, height } = existingImage;
+  const newImage = PNG.sync.read(fs.readFileSync(filePath));
+  const diff = new PNG({ width, height });
+  expect(
+    pixelmatch(existingImage.data, newImage.data, diff.data, width, height)
+  ).toBe(0);
+
+  await browser.close();
 });

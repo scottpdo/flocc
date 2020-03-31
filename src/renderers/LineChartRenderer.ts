@@ -6,6 +6,7 @@ import { NumArray } from "../helpers/NumArray";
 import mean from "../utils/mean";
 import extractRoundNumbers from "../utils/extractRoundNumbers";
 
+const PADDING_BOTTOM = 10;
 const lineDash = [10, 10];
 
 type MetricFunction = (arr: Array<number>) => number;
@@ -110,8 +111,8 @@ class LineChartRenderer implements Renderer {
     const { height } = this;
     const { range } = this.opts;
     const { min, max } = range;
-    const pxPerUnit = height / (max - min);
-    return Math.round(height - (value - min) * pxPerUnit - 22);
+    const pxPerUnit = (height - 2 * PADDING_BOTTOM) / (max - min);
+    return Math.round(height - (value - min) * pxPerUnit) - 2 * PADDING_BOTTOM;
   }
 
   drawBackground() {
@@ -141,7 +142,7 @@ class LineChartRenderer implements Renderer {
     context.save();
     context.strokeStyle = "#999";
     markers.forEach(marker => {
-      if (this.y(marker) >= height - 10) return;
+      if (this.y(marker) >= height - PADDING_BOTTOM) return;
       context.beginPath();
       context.moveTo(textMaxWidth + 10, this.y(marker));
       context.lineTo(
@@ -170,7 +171,11 @@ class LineChartRenderer implements Renderer {
       }
 
       context.font = `${11 * window.devicePixelRatio}px Helvetica`;
-      context.fillText(marker.toLocaleString(), this.x(marker), height - 10);
+      context.fillText(
+        marker.toLocaleString(),
+        this.x(marker),
+        height - PADDING_BOTTOM
+      );
 
       context.strokeStyle = "black";
       context.lineWidth = 1;

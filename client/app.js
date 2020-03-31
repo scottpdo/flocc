@@ -15,10 +15,15 @@ const models = fs
 
 app.get("*", function(req, res) {
   const { path } = req;
-  if (!fs.existsSync(__dirname + "/models/" + path + ".ejs")) {
-    res.status(404).render("404");
+  if (path === "/") {
+    res.render("index", { path, models, nav: true });
   }
-  res.render("page", { path, models });
+
+  if (!fs.existsSync(__dirname + "/models/" + path + ".ejs")) {
+    res.status(404).render("404", { nav: true });
+  }
+
+  res.render("page", { path, models, nav: false });
 });
 
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));

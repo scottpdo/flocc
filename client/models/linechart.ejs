@@ -1,44 +1,48 @@
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-        <title>Client-side Tests</title>
-        <script src="/flocc.js"></script>
-    </head>
-    <body>
-        <div id="container"></div>
-        <div id="linechart"></div>
-        <script>
-            (function() {
-                const environment = new flocc.GridEnvironment(5, 5);
-                const renderer = new flocc.ASCIIRenderer(environment);
-                renderer.mount("#container");
-                const chart = new flocc.LineChartRenderer(environment, {
-                    background: '#eee'
-                });
-                chart.mount('#linechart');
+<div id="container"></div>
+<div id="linechart"></div>
+<script>
+  const { Environment, Agent, LineChartRenderer, utils } = flocc;
 
-                function setup() {
-                    environment.fill();
-                    environment.getAgents().map(agent => {
-                        agent.set("value", "-");
-                    });
-                }
+  const width = 500;
+  const height = 500;
 
-                function draw() {
-                    const center = environment.getAgentAt(4, 4);
-                    center.set("value", "o");
-                    environment.neighbors(center, 1, true).map(agent => {
-                        agent.set("value", "x");
-                    });
-                    environment.tick();
-                }
+  const environment = new Environment({ width, height });
+  const chart = new LineChartRenderer(environment, {
+    background: "#eee",
+    autoScale: true
+  });
+  chart.mount("#linechart");
+  chart.metric("x", {
+    fn: utils.median
+  });
+  chart.metric("y", {
+    fn: utils.mean,
+    color: "blue"
+  });
 
-                setup();
-                draw();
-            })();
-        </script>
-    </body>
-</html>
+  function tick(agent) {
+    return {
+      x: agent.get("x") + 1.025 * width * Math.sin(environment.time / 100),
+      y: (agent.get("y") * 2 + 1) % height
+    };
+  }
+
+  function setup() {
+    for (let i = 0; i < 200; i++) {
+      const agent = new Agent({
+        x: Math.abs(Math.sin(i) * width),
+        y: Math.abs(Math.cos(i) ** 2 * height)
+      });
+      agent.addRule(tick);
+      environment.addAgent(agent);
+    }
+  }
+
+  function run() {
+    environment.tick();
+    if (environment.time < width) run();
+  }
+
+  setup();
+  run();
+</script>
