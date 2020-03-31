@@ -1,0 +1,70 @@
+<div id="chart1"></div>
+<div id="chart2"></div>
+
+<script>
+  const environment = new Environment();
+  const x = new Agent({ x: 1 });
+  const y = new Agent({ y: 2 });
+  const z = new Agent({ z: 0 });
+
+  const chart1 = new LineChartRenderer(environment, {
+    autoScale: true,
+    autoScroll: true,
+    background: "#eee",
+    height: 200,
+    width: 500
+  });
+  chart1.mount("#chart1");
+  const fn = values => values.filter(v => v !== null)[0];
+  chart1.metric("x", { color: "red", fn });
+  chart1.metric("y", { color: "blue", fn });
+
+  const chart2 = new LineChartRenderer(environment, {
+    autoScale: true,
+    background: "#eee",
+    height: 200,
+    width: 500
+  });
+  chart2.mount("#chart2");
+  chart2.metric("z", { color: "green", fn });
+
+  const timeFactor = 0.0001;
+
+  function tickX() {
+    const i = 10 * (y.get("y") - x.get("x"));
+    return {
+      x: x.get("x") + i * timeFactor
+    };
+  }
+
+  function tickY() {
+    const i = x.get("x") * (28 - z.get("z")) - y.get("y");
+    return {
+      y: y.get("y") + i * timeFactor
+    };
+  }
+
+  function tickZ() {
+    const i = x.get("x") * y.get("y") - (8 / 3) * z.get("z");
+    return {
+      z: z.get("z") + i * timeFactor
+    };
+  }
+
+  (function setup() {
+    x.addRule(tickX);
+    y.addRule(tickY);
+    z.addRule(tickZ);
+
+    environment.addAgent(x);
+    environment.addAgent(y);
+    environment.addAgent(z);
+  })();
+
+  let t = 0;
+
+  (function draw() {
+    environment.tick(100);
+    if (environment.time < 1000 * 100) draw();
+  })();
+</script>

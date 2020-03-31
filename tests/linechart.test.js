@@ -39,13 +39,38 @@ it("Can add metrics to a LineChartRenderer", () => {
   expect(renderer.metrics).toHaveLength(3);
 });
 
-it("Renders correctly", async () => {
+it("Renders static LineChartRenderer test correctly", async () => {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
   await page.goto("http://localhost:3000/linechart", {
     waitUntil: "networkidle2"
   });
   const filePath = __dirname + "/screenshots/linechart1.png";
+  const existingImage = fs.existsSync(filePath)
+    ? PNG.sync.read(fs.readFileSync(filePath))
+    : null;
+  await page.screenshot({ path: filePath });
+  if (!existingImage) {
+    await browser.close();
+    return;
+  }
+  const { width, height } = existingImage;
+  const newImage = PNG.sync.read(fs.readFileSync(filePath));
+  const diff = new PNG({ width, height });
+  expect(
+    pixelmatch(existingImage.data, newImage.data, diff.data, width, height)
+  ).toBe(0);
+
+  await browser.close();
+});
+
+it("Renders static Lorenz attractor test correctly", async () => {
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  await page.goto("http://localhost:3000/lorenz-static", {
+    waitUntil: "networkidle2"
+  });
+  const filePath = __dirname + "/screenshots/linechart2.png";
   const existingImage = fs.existsSync(filePath)
     ? PNG.sync.read(fs.readFileSync(filePath))
     : null;
