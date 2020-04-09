@@ -150,6 +150,9 @@ class Terrain implements EnvironmentHelper {
     while (y < 0) y += height;
     while (y >= height) y -= height;
 
+    x = Math.round(x);
+    y = Math.round(y);
+
     const i = 4 * (x + width * y);
     if (grayscale) {
       return data[i];
