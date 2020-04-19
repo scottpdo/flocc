@@ -2,70 +2,72 @@
 <div id="histogram-vx"></div>
 <div id="histogram-vy"></div>
 <script>
-    const {
-        Agent,
-        Environment,
-        GridEnvironment,
-        Histogram,
-        ASCIIRenderer,
-        CanvasRenderer,
-        utils,
-        Vector,
-        KDTree,
-        Terrain
-    } = flocc;
-    const { random } = utils;
+  const {
+    Agent,
+    Environment,
+    GridEnvironment,
+    Histogram,
+    ASCIIRenderer,
+    CanvasRenderer,
+    utils,
+    Vector,
+    KDTree,
+    Terrain,
+    Colors
+  } = flocc;
+  const { random } = utils;
 
-    /* ------- PARAMETERS --------- */
-    const width = 700;
-    const height = 700;
+  /* ------- PARAMETERS --------- */
+  const width = 660;
+  const height = 660;
 
-    /* ---------------------------- */
+  /* ---------------------------- */
 
-    /* ------- SET UP ENVIRONMENT, RENDERER --------- */
+  /* ------- SET UP ENVIRONMENT, RENDERER --------- */
 
-    const environment = new Environment({
-        height,
-        width
+  const environment = new Environment({
+    height,
+    width
+  });
+  const renderer = new CanvasRenderer(environment, { width, height });
+  const container = document.getElementById("container");
+  renderer.mount(container);
+
+  const terrain = new Terrain(width / 4, height / 4, {
+    // grayscale: true,
+    scale: 4
+  });
+  environment.use(terrain);
+  console.log(terrain);
+
+  function match(p1, p2) {
+    return p1.r === p2.r && p1.g === p2.g && p1.b === p2.b && p1.a === p2.a;
+  }
+  const isAlive = (p) => match(p, ALIVE);
+
+  const DEAD = Colors.BLUE;
+  const ALIVE = Colors.RED;
+
+  function setup() {
+    terrain.init((x, y) => (Math.abs(Math.sin(x * y)) < 0.1 ? ALIVE : DEAD));
+
+    terrain.addRule((x, y) => {
+      const self = terrain.sample(x, y);
+      const isSelfAlive = isAlive(self);
+      const livingNeighbors = terrain.neighbors(x, y, 1, true).filter(isAlive)
+        .length;
+
+      if (isSelfAlive && livingNeighbors < 2) return DEAD;
+      if (isSelfAlive && livingNeighbors > 3) return DEAD;
+      if (!isSelfAlive && livingNeighbors === 3) return ALIVE;
     });
-    const renderer = new CanvasRenderer(environment, { width, height });
-    const container = document.getElementById("container");
-    renderer.mount(container);
+  }
 
-    const terrain = new Terrain(width, height, { grayscale: true });
-    environment.use(terrain);
-    console.log(terrain);
+  function render() {
+    environment.tick();
+    requestAnimationFrame(render);
+  }
 
-    const isAlive = p => p === ALIVE;
-
-    const DEAD = 0;
-    const ALIVE = 255;
-
-    function setup() {
-        for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                terrain.set(x, y, Math.abs(Math.sin(x * y)) < 0.1 ? 255 : 0);
-            }
-        }
-
-        terrain.addRule((x, y) => {
-            const self = terrain.sample(x, y);
-            const isSelfAlive = isAlive(self);
-            const livingNeighbors = terrain
-                .neighbors(x, y, 1, true)
-                .filter(isAlive).length;
-
-            if (isSelfAlive && livingNeighbors < 2) return DEAD;
-            if (isSelfAlive && livingNeighbors > 3) return DEAD;
-            if (!isSelfAlive && livingNeighbors === 3) return ALIVE;
-        });
-    }
-
-    function render() {
-        environment.tick();
-        requestAnimationFrame(render);
-    }
-
-    setup();
-    render();
+  setup();
+  render();
 </script>

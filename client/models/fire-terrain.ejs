@@ -24,7 +24,7 @@
   const line = new LineChartRenderer(environment, { width: 800, height: 300 });
   line.mount("#line");
 
-  const terrain = new Terrain(width, height);
+  const terrain = new Terrain(width / 3, height / 3, { scale: 3 });
   environment.use(terrain);
 
   const empty = { r: 0, g: 0, b: 0, a: 255 };

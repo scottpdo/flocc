@@ -126,11 +126,12 @@ class CanvasRenderer implements Renderer {
 
     if (environment.helpers.terrain) {
       const { terrain } = environment.helpers;
+      const { scale } = terrain.opts;
       const terrainContext = terrainBuffer.getContext("2d");
       const imageData = new ImageData(
         terrain.data,
-        terrain.width,
-        terrain.height
+        terrain.width * scale,
+        terrain.height * scale
       );
       terrainContext.putImageData(imageData, 0, 0);
       context.save();

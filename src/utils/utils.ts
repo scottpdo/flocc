@@ -1,6 +1,7 @@
 import clamp from "./clamp";
 import distance from "./distance";
 import gaussian from "./gaussian";
+import gcd from "./gcd";
 import manhattanDistance from "./manhattanDistance";
 import lerp from "./lerp";
 import remap from "./remap";
@@ -21,6 +22,7 @@ const utils = {
   clamp,
   distance,
   gaussian,
+  gcd,
   lerp,
   manhattanDistance,
   max,

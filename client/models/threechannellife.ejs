@@ -1,0 +1,71 @@
+<style>
+  body {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+</style>
+<div id="container"></div>
+<script>
+  const width = 600;
+  const height = 600;
+
+  const environment = new Environment({ width, height });
+  const renderer = new CanvasRenderer(environment, { width, height });
+  renderer.mount("#container");
+  const terrain = new Terrain(width / 2, height / 2, { scale: 2 });
+  environment.use(terrain);
+
+  function match(pixel1, pixel2) {
+    return (
+      pixel1.r === pixel2.r && pixel1.g === pixel2.g && pixel1.b === pixel2.b
+    );
+  }
+
+  function tick(x, y) {
+    const { r, g, b } = terrain.sample(x, y);
+    const neighbors = terrain.neighbors(x, y, 1, true);
+    let red = 0,
+      blue = 0,
+      green = 0,
+      white = 0;
+    neighbors.forEach((n) => {
+      red += n.r === 255;
+      green += n.g === 255;
+      blue += n.b === 255;
+      if (match(n, Colors.WHITE)) white++;
+    });
+    // if (red > 3 && green > 3 && blue > 3) return Colors.BLACK;
+    // if (red > 3 && green > 3) return Colors.BLUE;
+    // if (green > 3 && blue > 3) return Colors.RED;
+    // if (red > 3 && blue > 3) return Colors.GREEN;
+    return {
+      r: red < 2 || red > 3 ? r - 1 : red === 3 ? 255 : r,
+      g: green < 2 || green > 3 ? g - 1 : green === 3 ? 255 : g,
+      b: blue < 2 || blue > 3 ? b - 1 : blue === 3 ? 255 : b,
+      a: 255
+    };
+  }
+
+  function setup() {
+    terrain.init((x, y) => {
+      return {
+        r: Math.random() < 0.25 ? 255 : 0,
+        g: Math.random() < 0.25 ? 255 : 0,
+        b: Math.random() < 0.25 ? 255 : 0,
+        a: 255
+      };
+    });
+    terrain.addRule(tick);
+  }
+
+  function run() {
+    environment.tick();
+    requestAnimationFrame(run);
+  }
+
+  setup();
+  run();
+</script>
