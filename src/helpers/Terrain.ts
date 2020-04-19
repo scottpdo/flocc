@@ -1,11 +1,13 @@
 interface TerrainOptions {
   async: boolean;
   grayscale: boolean;
+  scale: number;
 }
 
 const defaultTerrainOptions: TerrainOptions = {
   async: false,
-  grayscale: false
+  grayscale: false,
+  scale: 1
 };
 
 interface Pixel {
@@ -55,8 +57,9 @@ class Terrain implements EnvironmentHelper {
     this.height = height;
     this.opts = Object.assign({}, defaultTerrainOptions);
     this.opts = Object.assign(this.opts, options);
+    const { scale } = this.opts;
 
-    const size = width * height * 4;
+    const size = scale ** 2 * width * height * 4;
     this.data = new Uint8ClampedArray(size);
     for (let i = 0; i < size; i += 4) {
       this.data[i] = 0;
@@ -143,7 +146,7 @@ class Terrain implements EnvironmentHelper {
    */
   sample(x: number, y: number): Pixel | number {
     const { data, width, height, opts } = this;
-    const { grayscale } = opts;
+    const { grayscale, scale } = opts;
 
     while (x < 0) x += width;
     while (x >= width) x -= width;
@@ -153,7 +156,7 @@ class Terrain implements EnvironmentHelper {
     x = Math.round(x);
     y = Math.round(y);
 
-    const i = 4 * (x + width * y);
+    const i = 4 * scale * (x + width * y * scale);
     if (grayscale) {
       return data[i];
     } else {
@@ -201,6 +204,48 @@ class Terrain implements EnvironmentHelper {
     return neighbors;
   }
 
+  _setAbstract(
+    data: Uint8ClampedArray,
+    x: number,
+    y: number,
+    r: number | Pixel,
+    g?: number,
+    b?: number,
+    a?: number
+  ): void {
+    const { width, height, opts } = this;
+    const { grayscale, scale } = opts;
+
+    while (x < 0) x += width;
+    while (x >= width) x -= width;
+    while (y < 0) y += height;
+    while (y >= height) y -= height;
+
+    let i = 4 * scale * (x + y * width * scale);
+
+    if (typeof r === "number") {
+      for (let dy = 0; dy < scale; dy++) {
+        if (dy > 0) i += 4 * scale * width;
+        for (let dx = 0; dx < scale; dx++) {
+          data[i + 4 * dx] = r;
+          data[i + 4 * dx + 1] = grayscale ? r : g === undefined ? r : g;
+          data[i + 4 * dx + 2] = grayscale ? r : b === undefined ? r : b;
+          data[i + 4 * dx + 3] = grayscale ? 255 : a === undefined ? 255 : a;
+        }
+      }
+    } else {
+      for (let dy = 0; dy < scale; dy++) {
+        if (dy > 0) i += 4 * scale * width;
+        for (let dx = 0; dx < scale; dx++) {
+          data[i + 4 * dx] = r.r;
+          data[i + 4 * dx + 1] = grayscale ? r.r : r.g;
+          data[i + 4 * dx + 2] = grayscale ? r.r : r.b;
+          data[i + 4 * dx + 3] = grayscale ? 255 : r.a;
+        }
+      }
+    }
+  }
+
   /**
    * Set new pixel data at a coordinate on the terrain. Only call this directly if
    * in async mode — otherwise you should return the new value from the update rule
@@ -220,27 +265,7 @@ class Terrain implements EnvironmentHelper {
     b?: number,
     a?: number
   ): void {
-    const { data, width, height, opts } = this;
-    const { grayscale } = opts;
-
-    while (x < 0) x += width;
-    while (x >= width) x -= width;
-    while (y < 0) y += height;
-    while (y >= height) y -= height;
-
-    const i = 4 * (x + width * y);
-
-    if (typeof r === "number") {
-      data[i] = r;
-      data[i + 1] = grayscale ? r : g === undefined ? r : g;
-      data[i + 2] = grayscale ? r : b === undefined ? r : b;
-      data[i + 3] = grayscale ? 255 : a === undefined ? 255 : a;
-    } else {
-      data[i] = r.r;
-      data[i + 1] = grayscale ? r.r : r.g;
-      data[i + 2] = grayscale ? r.r : r.b;
-      data[i + 3] = grayscale ? 255 : r.a;
-    }
+    this._setAbstract(this.data, x, y, r, g, b, a);
   }
 
   _setNext(
@@ -251,27 +276,7 @@ class Terrain implements EnvironmentHelper {
     b?: number,
     a?: number
   ): void {
-    const { nextData, width, height, opts } = this;
-    const { grayscale } = opts;
-
-    while (x < 0) x += width;
-    while (x >= width) x -= width;
-    while (y < 0) y += height;
-    while (y >= height) y -= height;
-
-    const i = 4 * (x + width * y);
-
-    if (typeof r === "number") {
-      nextData[i] = r;
-      nextData[i + 1] = grayscale ? r : g === undefined ? r : g;
-      nextData[i + 2] = grayscale ? r : b === undefined ? r : b;
-      nextData[i + 3] = grayscale ? 255 : a === undefined ? 255 : a;
-    } else {
-      nextData[i] = r.r;
-      nextData[i + 1] = grayscale ? r.r : r.g;
-      nextData[i + 2] = grayscale ? r.r : r.b;
-      nextData[i + 3] = grayscale ? 255 : r.a;
-    }
+    this._setAbstract(this.nextData, x, y, r, g, b, a);
   }
 
   _loop(): void {

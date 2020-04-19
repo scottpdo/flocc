@@ -91,31 +91,42 @@ it("Returning a number from the update rule sets that value on r/g/b", () => {
   }
 });
 
+const DEAD = 0;
+const ALIVE = 255;
+
+const isAlive = p => p === ALIVE;
+
+const lifeRule = (x, y) => {
+  const self = terrain.sample(x, y);
+  const isSelfAlive = isAlive(self);
+  const livingNeighbors = terrain.neighbors(x, y, 1, true).filter(isAlive)
+    .length;
+
+  if (isSelfAlive && livingNeighbors < 2) return DEAD;
+  if (isSelfAlive && livingNeighbors > 3) return DEAD;
+  if (!isSelfAlive && livingNeighbors === 3) return ALIVE;
+};
+
 it("Can even implement the Game of Life", () => {
   terrain = new Terrain(width, height, { grayscale: true });
   environment.use(terrain);
 
-  const DEAD = 0;
-  const ALIVE = 255;
+  terrain.init((x, y) => (Math.abs(Math.sin(x * y)) < 0.1 ? ALIVE : DEAD));
 
-  const isAlive = p => p === ALIVE;
+  terrain.addRule(lifeRule);
 
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      terrain.set(x, y, Math.abs(Math.sin(x * y)) < 0.1 ? ALIVE : DEAD);
-    }
-  }
+  environment.tick(10);
 
-  terrain.addRule((x, y) => {
-    const self = terrain.sample(x, y);
-    const isSelfAlive = isAlive(self);
-    const livingNeighbors = terrain.neighbors(x, y, 1, true).filter(isAlive)
-      .length;
+  expect(terrain.data).toMatchSnapshot();
+});
 
-    if (isSelfAlive && livingNeighbors < 2) return DEAD;
-    if (isSelfAlive && livingNeighbors > 3) return DEAD;
-    if (!isSelfAlive && livingNeighbors === 3) return ALIVE;
-  });
+it("Works when scaling up.", () => {
+  terrain = new Terrain(width, height, { scal3: 2 });
+  environment.use(terrain);
+
+  terrain.init((x, y) => (Math.abs(Math.sin(x * y)) < 0.1 ? ALIVE : DEAD));
+
+  terrain.addRule(lifeRule);
 
   environment.tick(10);
 

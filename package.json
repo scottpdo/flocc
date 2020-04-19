@@ -46,6 +46,7 @@
     ]
   },
   "prettier": {
-    "trailingComma": "none"
+    "trailingComma": "none",
+    "arrowParens": "avoid"
   }
 }

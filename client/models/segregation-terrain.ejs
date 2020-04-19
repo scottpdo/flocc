@@ -1,98 +1,104 @@
 <div id="container"></div>
 <script>
-    const {
-        Agent,
-        Environment,
-        Terrain,
-        CanvasRenderer,
-        utils,
-        Vector,
-        Rule
-    } = flocc;
+  const {
+    Agent,
+    Environment,
+    Terrain,
+    CanvasRenderer,
+    utils,
+    Vector,
+    Rule
+  } = flocc;
 
-    /* ---------- PARAMETERS ---------- */
+  /* ---------- PARAMETERS ---------- */
 
-    const MOVE_THRESHOLD = 0.72;
-    const width = 600;
-    const height = 600;
-    const PERCENT_EMPTY = 0.1;
+  const MOVE_THRESHOLD = 0.72;
+  const width = 400;
+  const height = 400;
+  const PERCENT_EMPTY = 0.1;
 
-    /* -------------------------------- */
+  /* -------------------------------- */
 
-    const container = document.getElementById("container");
-    const environment = new Environment({ width, height });
-    const renderer = new CanvasRenderer(environment, { width, height });
-    renderer.mount(container);
+  const container = document.getElementById("container");
+  const environment = new Environment({ width, height });
+  const renderer = new CanvasRenderer(environment, { width, height });
+  renderer.mount(container);
 
-    const terrain = new Terrain(width, height, {
-        async: true
+  const terrain = new Terrain(width, height, {
+    async: true
+    // randomizeOrder: true
+  });
+  environment.use(terrain);
+
+  const empty = { r: 255, g: 255, b: 255, a: 255 };
+  const red = { r: 255, g: 0, b: 0, a: 255 };
+  const blue = { r: 0, g: 0, b: 255, a: 255 };
+
+  function setup() {
+    terrain.init((x, y) => {
+      if (Math.random() < PERCENT_EMPTY) return empty;
+      return Math.random() > 0.5 ? red : blue;
     });
-    environment.use(terrain);
+  }
 
-    const empty = { r: 255, g: 255, b: 255, a: 255 };
-    const red = { r: 255, g: 0, b: 0, a: 255 };
-    const blue = { r: 0, g: 0, b: 255, a: 255 };
+  function existsCoord(x, y) {
+    return !areSame(terrain.sample(x, y), empty);
+  }
 
-    function setup() {
-        terrain.init((x, y) => {
-            if (Math.random() < PERCENT_EMPTY) return empty;
-            return Math.random() > 0.5 ? red : blue;
-        });
-    }
+  function existsPixel(px) {
+    return !areSame(px, empty);
+  }
 
-    function existsCoord(x, y) {
-        return !areSame(terrain.sample(x, y), empty);
-    }
+  function areSame(p1, p2) {
+    return p1.r === p2.r && p1.g === p2.g && p1.b === p2.b && p1.a === p2.a;
+  }
 
-    function existsPixel(px) {
-        return !areSame(px, empty);
-    }
+  function findOpenSpace() {
+    let space = null;
+    let i = 0;
+    do {
+      space = { x: utils.random(0, width), y: utils.random(0, height) };
+    } while (existsCoord(space.x, space.y));
+    return space;
+  }
 
-    function areSame(p1, p2) {
-        return p1.r === p2.r && p1.g === p2.g && p1.b === p2.b && p1.a === p2.a;
-    }
+  function swap(x1, y1, x2, y2) {
+    const p1 = terrain.sample(x1, y1);
+    const p2 = terrain.sample(x2, y2);
+    terrain.set(x2, y2, p1.r, p1.g, p1.b, p1.a);
+    terrain.set(x1, y1, p2.r, p2.g, p2.b, p2.a);
+  }
 
-    function findOpenSpace() {
-        let space = null;
-        do {
-            space = { x: utils.random(0, width), y: utils.random(0, height) };
-        } while (existsCoord(space.x, space.y));
-        return space;
-    }
+  let population = 0;
 
-    function swap(x1, y1, x2, y2) {
-        const p1 = terrain.sample(x1, y1);
-        const p2 = terrain.sample(x2, y2);
-        terrain.set(x2, y2, p1.r, p1.g, p1.b, p1.a);
-        terrain.set(x1, y1, p2.r, p2.g, p2.b, p2.a);
-    }
+  terrain.rule = (x, y) => {
+    const color = terrain.sample(x, y);
+    if (areSame(color, empty)) return;
+    population++;
 
-    let population = 0;
+    // let neighbors = 0;
+    // let percentLike = 0;
 
-    terrain.rule = (x, y) => {
-        const color = terrain.sample(x, y);
-        if (areSame(color, empty)) return;
-        population++;
+    const neighbors = terrain.neighbors(x, y, 1, true).filter(existsPixel);
+    const percentLike =
+      neighbors.filter((n) => areSame(color, n)).length / neighbors.length;
 
-        // let neighbors = 0;
-        // let percentLike = 0;
+    if (neighbors.length === 0) return;
+    if (percentLike >= MOVE_THRESHOLD) return;
 
-        const neighbors = terrain.neighbors(x, y, 1, true).filter(existsPixel);
-        const percentLike =
-            neighbors.filter(n => areSame(color, n)).length / neighbors.length;
+    const open = findOpenSpace();
+    if (open) swap(x, y, open.x, open.y);
+  };
 
-        if (neighbors.length === 0) return;
-        if (percentLike >= MOVE_THRESHOLD) return;
+  let t = new Date();
 
-        const open = findOpenSpace();
-        if (open) swap(x, y, open.x, open.y);
-    };
+  function render() {
+    environment.tick();
+    console.log(new Date() - t);
+    t = new Date();
+    requestAnimationFrame(render);
+  }
 
-    function render() {
-        environment.tick();
-        requestAnimationFrame(render);
-    }
-
-    setup();
-    render();
+  setup();
+  render();
 </script>
