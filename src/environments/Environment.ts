@@ -24,7 +24,7 @@ export const defaultTickOptions: TickOptions = {
   randomizeOrder: false
 };
 
-const defaultEnvironmentOptions: EnvironmentOptions = {
+const defaultEnvironmentOptions = {
   torus: true,
   height: 0,
   width: 0
