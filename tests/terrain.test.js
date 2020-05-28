@@ -121,7 +121,7 @@ it("Can even implement the Game of Life", () => {
 });
 
 it("Works when scaling up.", () => {
-  terrain = new Terrain(width, height, { scal3: 2 });
+  terrain = new Terrain(width, height, { scale: 2 });
   environment.use(terrain);
 
   terrain.init((x, y) => (Math.abs(Math.sin(x * y)) < 0.1 ? ALIVE : DEAD));

@@ -1,7 +1,7 @@
 interface TerrainOptions {
-  async: boolean;
-  grayscale: boolean;
-  scale: number;
+  async?: boolean;
+  grayscale?: boolean;
+  scale?: number;
 }
 
 const defaultTerrainOptions: TerrainOptions = {
@@ -17,7 +17,7 @@ interface Pixel {
   a: number;
 }
 
-type TerrainRule = (x: number, y: number) => Pixel | number;
+type TerrainRule = (x: number, y: number) => Pixel | number | void;
 
 export const Colors: { [name: string]: Pixel } = {
   BLACK: { r: 0, g: 0, b: 0, a: 255 },
@@ -79,7 +79,7 @@ class Terrain implements EnvironmentHelper {
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
         let result = rule(x, y);
-        if (result === undefined) result = this.sample(x, y);
+        if (!result) result = this.sample(x, y);
         if (typeof result === "number") {
           if (this.opts.grayscale) {
             this.set(x, y, result);
