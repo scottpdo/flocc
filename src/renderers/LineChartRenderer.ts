@@ -19,17 +19,17 @@ interface Metric {
 }
 
 interface MetricOptions {
-  color: string;
-  fn: MetricFunction;
+  color?: string;
+  fn?: MetricFunction;
 }
 
 interface LineChartRendererOptions {
-  autoScale: boolean;
-  autoScroll: boolean;
-  background: string;
-  height: number;
-  range: NRange;
-  width: number;
+  autoScale?: boolean;
+  autoScroll?: boolean;
+  background?: string;
+  height?: number;
+  range?: NRange;
+  width?: number;
 }
 
 const defaultRendererOptions: LineChartRendererOptions = {
@@ -44,7 +44,7 @@ const defaultRendererOptions: LineChartRendererOptions = {
   width: 500
 };
 
-const defaultMetricOptions: MetricOptions = {
+const defaultMetricOptions = {
   color: "#000",
   fn: mean
 };
@@ -88,12 +88,9 @@ class LineChartRenderer implements Renderer {
 
   metric(key: string, opts?: MetricOptions) {
     const buffer = new NumArray();
-    this.metrics.push(
-      Object.assign({}, defaultMetricOptions, opts, {
-        key,
-        buffer
-      })
-    );
+    const metric: Metric = { key, buffer, ...defaultMetricOptions };
+    Object.assign(metric, opts);
+    this.metrics.push(metric);
   }
 
   x(value: number): number {
