@@ -12,11 +12,13 @@ function primeFactorization(n: number): number[] {
   return factors.concat(n);
 }
 
+// Per the Hull–Dobell Theorem, this should iterate pseudo-randomly over
+// the range [0...m) with period = m
 export default function* series(m: number): IterableIterator<number> {
   // 1. m and c are relatively prime
   let c: number;
   do {
-    c = random(0, m - 1);
+    c = random(1, m - 1);
   } while (gcd(m, c) > 1);
   // 2. `a - 1` is divisible by all prime factors of m
   const factors = primeFactorization(m);
