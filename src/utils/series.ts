@@ -1,4 +1,3 @@
-import lcg from "./lcg";
 import random from "./random";
 import gcd from "./gcd";
 
