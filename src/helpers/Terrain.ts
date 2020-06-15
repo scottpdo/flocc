@@ -281,11 +281,21 @@ class Terrain implements EnvironmentHelper {
     this._setAbstract(this.nextData, x, y, r, g, b, a);
   }
 
+  _execute(x: number, y: number): void {
+    const { rule, opts } = this;
+    const { async } = opts;
+    let result = rule(x, y);
+    if (async) return;
+    // in synchronous mode, set result to this pixel if there was no return value
+    if (!result || result === undefined) result = this.sample(x, y);
+    // update on nextData
+    this._setNext(x, y, result);
+  }
+
   _loop({ randomizeOrder = false }: { randomizeOrder?: boolean }): void {
     const { rule, width, height, opts } = this;
     const { async } = opts;
     if (!rule) return;
-    const update = (async ? this.set : this._setNext).bind(this);
 
     if (randomizeOrder) {
       const generator = series(width * height);
@@ -293,26 +303,12 @@ class Terrain implements EnvironmentHelper {
         const index: number = generator.next().value;
         const x = index % width;
         const y = (index / width) | 0;
-        let result = rule(x, y);
-        if (async) continue;
-        // in synchronous mode, set result to this pixel if there was no return value
-        if (result === undefined) result = this.sample(x, y);
-        // update on nextData
-        update(x, y, result);
+        this._execute(x, y);
       }
     } else {
       for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
-          // Get result of rule.
-          let result = rule(x, y);
-          // If in async mode, then the rule should have made any necessary
-          // changes already
-          if (async) continue;
-
-          // in synchronous mode, set result to this pixel if there was no return value
-          if (result === undefined) result = this.sample(x, y);
-          // update on nextData
-          update(x, y, result);
+          this._execute(x, y);
         }
       }
     }
