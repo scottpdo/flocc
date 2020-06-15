@@ -287,7 +287,7 @@ class Terrain implements EnvironmentHelper {
     let result = rule(x, y);
     if (async) return;
     // in synchronous mode, set result to this pixel if there was no return value
-    if (!result || result === undefined) result = this.sample(x, y);
+    if (!result && result !== 0) result = this.sample(x, y);
     // update on nextData
     this._setNext(x, y, result);
   }
