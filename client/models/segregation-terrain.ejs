@@ -13,8 +13,8 @@
   /* ---------- PARAMETERS ---------- */
 
   const MOVE_THRESHOLD = 0.72;
-  const width = 400;
-  const height = 400;
+  const width = 600;
+  const height = 600;
   const PERCENT_EMPTY = 0.1;
 
   /* -------------------------------- */
@@ -24,9 +24,9 @@
   const renderer = new CanvasRenderer(environment, { width, height });
   renderer.mount(container);
 
-  const terrain = new Terrain(width, height, {
-    async: true
-    // randomizeOrder: true
+  const terrain = new Terrain(width / 2, height / 2, {
+    async: true,
+    scale: 2
   });
   environment.use(terrain);
 
@@ -81,7 +81,7 @@
 
     const neighbors = terrain.neighbors(x, y, 1, true).filter(existsPixel);
     const percentLike =
-      neighbors.filter((n) => areSame(color, n)).length / neighbors.length;
+      neighbors.filter(n => areSame(color, n)).length / neighbors.length;
 
     if (neighbors.length === 0) return;
     if (percentLike >= MOVE_THRESHOLD) return;
@@ -93,8 +93,8 @@
   let t = new Date();
 
   function render() {
-    environment.tick();
-    console.log(new Date() - t);
+    environment.tick({ randomizeOrder: true });
+    // console.log(new Date() - t);
     t = new Date();
     requestAnimationFrame(render);
   }
