@@ -7,6 +7,7 @@ import lerp from "./lerp";
 import remap from "./remap";
 import random from "./random";
 import sample from "./sample";
+import series from "./series";
 import shuffle from "./shuffle";
 import sum from "./sum";
 import max from "./max";
@@ -33,6 +34,7 @@ const utils = {
   remap,
   random,
   sample,
+  series,
   shuffle,
   sum,
   stdDev,
