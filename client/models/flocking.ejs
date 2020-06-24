@@ -2,144 +2,153 @@
 <div id="histogram-vx"></div>
 <div id="histogram-vy"></div>
 <script>
-    /*
+  /*
     Each agent in this model begins with a random direction, but is constantly shifting its direction to be closer to the average of its closest neighbors. Eventually, all agents will be moving in roughly the same direction.
     */
 
-    const {
-        Agent,
-        Environment,
-        GridEnvironment,
-        Histogram,
-        ASCIIRenderer,
-        CanvasRenderer,
-        utils,
-        Vector,
-        KDTree
-    } = flocc;
-    const { random } = utils;
+  const {
+    Agent,
+    Environment,
+    GridEnvironment,
+    Histogram,
+    ASCIIRenderer,
+    CanvasRenderer,
+    utils,
+    Vector,
+    KDTree
+  } = flocc;
 
-    /* ------- PARAMETERS --------- */
+  /* ------- PARAMETERS --------- */
 
-    const flockSize = 350;
-    const width = 600;
-    const height = 600;
+  const ALIGNMENT = 1;
+  const SEPARATION = 1;
+  const COHESION = 1;
+  const VISION = 15;
+  const MAX_SPEED = 3;
+  const MAX_FORCE = 0.15;
+  const flockSize = 320;
+  const width = window.innerWidth;
+  const height = window.innerHeight;
 
-    /* ---------------------------- */
+  /* ---------------------------- */
 
-    /* ------- SET UP ENVIRONMENT, RENDERER --------- */
+  /* ------- SET UP ENVIRONMENT, RENDERER --------- */
 
-    const environment = new Environment({
-        height,
-        width
-    });
-    const renderer = new CanvasRenderer(environment, { width, height });
-    let tree;
-    const container = document.getElementById("container");
-    renderer.mount(container);
+  const environment = new Environment({ width, height });
+  const renderer = new CanvasRenderer(environment, {
+    width,
+    height,
+    background: "pink"
+  });
+  const container = document.getElementById("container");
+  renderer.mount(container);
 
-    const histogramVX = new Histogram(environment, {
-        buckets: 5,
-        height: 200,
-        min: -0.5,
-        max: 0.5,
-        width: 800,
-        aboveMax: true,
-        belowMin: true
-    });
-    histogramVX.mount("#histogram-vx");
-    histogramVX.metric("vx");
+  let tree;
 
-    const histogramVY = new Histogram(environment, {
-        buckets: 10,
-        height: 200,
-        min: -1,
-        max: 1,
-        width: 800
-    });
-    histogramVY.mount("#histogram-vy");
-    histogramVY.metric("vy");
+  function setup() {
+    for (let i = 0; i < flockSize; i++) {
+      const agent = new Agent();
 
-    function setup() {
-        for (let i = 0; i < flockSize; i++) {
-            const angle = 2 * Math.random() * Math.PI;
-            const agent = new Agent({
-                p: new Vector(random(0, width), random(0, height)),
-                x: agent => agent.get("p").x,
-                y: agent => agent.get("p").y,
-                v: new Vector(Math.cos(angle), Math.sin(angle)),
-                shape: "arrow",
-                size: 2.5,
-                vx: a => a.get("v").x,
-                vy: a => a.get("v").y
-            });
+      agent.set("x", utils.random(0, width));
+      agent.set("y", utils.random(0, height));
 
-            agent.addRule(tick);
+      const angle = 2 * Math.random() * Math.PI;
 
-            environment.addAgent(agent);
-        }
+      agent.set("shape", "arrow");
+      agent.set("size", 2.5);
 
-        tree = new KDTree(environment.getAgents(), 2);
-        environment.use(tree);
+      agent.set("vx", Math.cos(angle));
+      agent.set("vy", Math.sin(angle));
+
+      agent.addRule(tick);
+
+      environment.addAgent(agent);
     }
 
-    function tick(agent) {
-        let { p, v } = agent.getData();
+    tree = new KDTree(environment.getAgents(), 2);
+    environment.use(tree);
+  }
 
-        p.x += v.x;
-        p.y += v.y;
-        if (p.x > width) p.x -= width;
-        if (p.x < 0) p.x += width;
-        if (p.y > height) p.y -= height;
-        if (p.y < 0) p.y += height;
+  function tick(agent) {
+    const { x, y, vx, vy } = agent.getData();
 
-        // update direction
-        const d = 30;
-        const neighbors = tree.agentsWithinDistance(agent, d);
-        if (neighbors.length < 1) return;
+    const pos = new Vector(x, y);
+    const vel = new Vector(vx, vy);
+    const acc = new Vector(0, 0);
 
-        const averageVelocity = new Vector();
-        const center = new Vector();
-        for (let i = 0; i < neighbors.length; i++) {
-            const neighbor = neighbors[i];
-            if (neighbor === agent) continue;
-            averageVelocity.add(neighbor.get("v"));
-            let x = neighbor.get("x");
-            let y = neighbor.get("y");
-            if (p.x + d > width && x < d) x += width;
-            if (p.x - d < 0 && x + d > width) x -= width;
-            if (p.y + d > height && y < d) y += height;
-            if (p.y - d < 0 && y + d > height) y -= height;
-            center.x += x;
-            center.y += y;
-        }
-        center.multiplyScalar(1 / neighbors.length);
+    const ip = pos.clone().multiplyScalar(-1);
+    const iv = vel.clone().multiplyScalar(-1);
 
-        const meanVel = neighbors.reduce(
-            (a, b) => a.add(b.get("v")),
-            new Vector()
-        );
-        meanVel.normalize();
-        meanVel.multiplyScalar(0.03);
+    const alignment = new Vector(0, 0);
+    const cohesion = new Vector(0, 0);
+    const separation = new Vector(0, 0);
+    let n = 0;
 
-        const towardCenter = p
-            .clone()
-            .add(center.multiplyScalar(-1))
-            .multiplyScalar(0.001);
+    const neighbors = tree.agentsWithinDistance(agent, VISION);
+    neighbors.forEach(a => {
+      let ax = a.get("x");
+      let ay = a.get("y");
+      let avx = a.get("vx");
+      let avy = a.get("vy");
 
-        v.add(towardCenter);
-        v.add(meanVel);
-        v.normalize();
+      alignment.x += avx;
+      alignment.y += avy;
+      cohesion.x += ax;
+      cohesion.y += ay;
+
+      const diff = pos
+        .clone()
+        .add(new Vector(-ax, -ay))
+        .multiplyScalar(1 / utils.distance(agent, a));
+      separation.add(diff);
+    });
+
+    if (neighbors.length > 0) {
+      const n = neighbors.length;
+      alignment.multiplyScalar(1 / n);
+      alignment.normalize().multiplyScalar(MAX_SPEED).add(iv);
+      if (alignment.length() > MAX_FORCE)
+        alignment.normalize().multiplyScalar(MAX_FORCE);
+
+      cohesion.multiplyScalar(1 / n);
+      cohesion.add(ip);
+      cohesion.normalize().multiplyScalar(MAX_SPEED);
+      cohesion.add(iv);
+      if (cohesion.length() > MAX_FORCE)
+        cohesion.normalize().multiplyScalar(MAX_FORCE);
+
+      separation.multiplyScalar(1 / n);
+      separation.normalize().multiplyScalar(MAX_SPEED);
+      separation.add(iv);
+      if (separation.length() > MAX_FORCE)
+        separation.normalize().multiplyScalar(MAX_FORCE);
     }
 
-    let t = new Date();
+    alignment.multiplyScalar(ALIGNMENT);
+    cohesion.multiplyScalar(COHESION);
+    separation.multiplyScalar(SEPARATION);
 
-    function render() {
-        environment.tick();
-        t = new Date();
-        requestAnimationFrame(render);
-    }
+    acc.add(alignment);
+    acc.add(cohesion);
+    acc.add(separation);
 
-    setup();
-    render();
+    pos.add(vel);
+    vel.add(acc);
+    if (vel.length() > MAX_SPEED) vel.normalize().multiplyScalar(MAX_SPEED);
+
+    return {
+      x: pos.x,
+      y: pos.y,
+      vx: vel.x,
+      vy: vel.y
+    };
+  }
+
+  function render() {
+    environment.tick({ randomizeOrder: true });
+    requestAnimationFrame(render);
+  }
+
+  setup();
+  render();
 </script>
