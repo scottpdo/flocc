@@ -1,3 +1,9 @@
+<style>
+  body {
+    overflow: hidden;
+  }
+</style>
+
 <div id="container"></div>
 <div id="histogram-vx"></div>
 <div id="histogram-vy"></div>
@@ -17,6 +23,8 @@
     Vector,
     KDTree
   } = flocc;
+
+  utils.seed(1);
 
   /* ------- PARAMETERS --------- */
 
@@ -52,7 +60,7 @@
       agent.set("x", utils.random(0, width));
       agent.set("y", utils.random(0, height));
 
-      const angle = 2 * Math.random() * Math.PI;
+      const angle = 2 * utils.uniform() * Math.PI;
 
       agent.set("shape", "arrow");
       agent.set("size", 2.5);

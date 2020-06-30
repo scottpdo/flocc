@@ -1,166 +1,156 @@
 <style>
-    html,
-    body {
-        margin: 0;
-        padding: 0;
-    }
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+  }
 </style>
 <div id="container"></div>
 <div id="line"></div>
 <div id="histogram"></div>
 <script>
-    const {
-        Agent,
-        Environment,
-        CanvasRenderer,
-        utils,
-        LineChartRenderer,
-        Histogram
-    } = window.flocc;
+  utils.seed(1);
 
-    const width = window.innerWidth;
-    const height = 80;
-    const POPULATION = 201;
+  const width = window.innerWidth;
+  const height = 80;
+  const POPULATION = 201;
 
-    let LEARNING = true;
-    let LEARNING_RATE = 0.4;
+  let LEARNING = true;
+  let LEARNING_RATE = 0.4;
 
-    let dem;
-    let rep;
+  let dem;
+  let rep;
 
-    const environment = new Environment({
-        width,
-        height,
-        torus: false
-    });
-    const renderer = new CanvasRenderer(environment, {
-        background: "#eee",
-        width,
-        height
-    });
-    renderer.mount("#container");
+  const environment = new Environment({
+    width,
+    height,
+    torus: false
+  });
+  const renderer = new CanvasRenderer(environment, {
+    background: "#eee",
+    width,
+    height
+  });
+  renderer.mount("#container");
 
-    const chart = new LineChartRenderer(environment, {
-        autoScale: true,
-        height: 300,
-        width,
-        range: {
-            max: POPULATION,
-            min: 0
-        }
-    });
-    chart.metric("dem", {
-        color: "blue",
-        fn: utils.sum
-    });
-    chart.metric("rep", {
-        color: "red",
-        fn: utils.sum
-    });
-    chart.mount("#line");
+  const chart = new LineChartRenderer(environment, {
+    autoScale: true,
+    height: 300,
+    width,
+    range: {
+      max: POPULATION,
+      min: 0
+    }
+  });
+  chart.metric("dem", {
+    color: "blue",
+    fn: utils.sum
+  });
+  chart.metric("rep", {
+    color: "red",
+    fn: utils.sum
+  });
+  chart.mount("#line");
 
-    const histogram = new Histogram(environment, {
-        buckets: 5,
-        width: window.innerWidth,
-        height: 200,
-        scale: "relative",
-        max: width
-    });
-    histogram.metric("x");
-    histogram.mount("#histogram");
+  const histogram = new Histogram(environment, {
+    buckets: 5,
+    width: window.innerWidth,
+    height: 200,
+    scale: "relative",
+    max: width
+  });
+  histogram.metric("x");
+  histogram.mount("#histogram");
 
-    function vote(agent) {
-        const distanceDem = utils.distance(agent, dem);
-        const distanceRep = utils.distance(agent, rep);
-        if (distanceDem < distanceRep) {
-            dem.increment("votes");
-            return {
-                dem: 1,
-                rep: 0
-            };
+  function vote(agent) {
+    const distanceDem = utils.distance(agent, dem);
+    const distanceRep = utils.distance(agent, rep);
+    if (distanceDem < distanceRep) {
+      dem.increment("votes");
+      return {
+        dem: 1,
+        rep: 0
+      };
+    } else {
+      rep.increment("votes");
+      return {
+        dem: 0,
+        rep: 1
+      };
+    }
+  }
+
+  function shift(agent) {
+    const { votes } = agent.getData();
+    if (votes < POPULATION / 2) {
+      agent.increment("x", agent.get("direction"));
+      // prevent ideological crossover
+      // or going out of ideological bounds
+      const min = agent.get("color") === "blue" ? 0 : width / 2;
+      const max = agent.get("color") === "blue" ? width / 2 : width;
+      agent.set("x", utils.clamp(agent.get("x"), min, max));
+
+      if (LEARNING) {
+        let choices = [1, -1];
+        if (LEARNING_RATE === 1) {
+          choices = [agent.get("lastVotes") > votes ? -1 : 1];
         } else {
-            rep.increment("votes");
-            return {
-                dem: 0,
-                rep: 1
-            };
+          for (let i = LEARNING_RATE; i > 0; i -= 0.1) {
+            choices.push(agent.get("lastVotes") > votes ? -1 : 1);
+          }
         }
+        agent.set("direction", agent.get("direction") * utils.sample(choices));
+      } else if (!LEARNING) {
+        agent.set("direction", utils.sample([1, -1]));
+      }
+
+      agent.set("lastVotes", votes);
     }
 
-    function shift(agent) {
-        const { votes } = agent.getData();
-        if (votes < POPULATION / 2) {
-            agent.increment("x", agent.get("direction"));
-            // prevent ideological crossover
-            // or going out of ideological bounds
-            const min = agent.get("color") === "blue" ? 0 : width / 2;
-            const max = agent.get("color") === "blue" ? width / 2 : width;
-            agent.set("x", utils.clamp(agent.get("x"), min, max));
+    return { votes: 0 };
+  }
 
-            if (LEARNING) {
-                let choices = [1, -1];
-                if (LEARNING_RATE === 1) {
-                    choices = [agent.get("lastVotes") > votes ? -1 : 1];
-                } else {
-                    for (let i = LEARNING_RATE; i > 0; i -= 0.1) {
-                        choices.push(agent.get("lastVotes") > votes ? -1 : 1);
-                    }
-                }
-                agent.set(
-                    "direction",
-                    agent.get("direction") * utils.sample(choices)
-                );
-            } else if (!LEARNING) {
-                agent.set("direction", utils.sample([1, -1]));
-            }
-
-            agent.set("lastVotes", votes);
-        }
-
-        return { votes: 0 };
+  function setup() {
+    for (let i = 0; i < 201; i++) {
+      let x;
+      do {
+        x = utils.gaussian(width / 2, width / 4);
+      } while (x < 0 || x > width);
+      const agent = new Agent({
+        x,
+        y: height / 2,
+        size: 1
+      });
+      agent.addRule(vote);
+      environment.addAgent(agent);
     }
+    dem = new Agent({
+      x: utils.random(0, width / 4),
+      y: height / 2,
+      size: 8,
+      color: "blue",
+      votes: 0,
+      direction: utils.sample([1, -1])
+    });
+    dem.addRule(shift);
+    environment.addAgent(dem);
+    rep = new Agent({
+      x: utils.random((3 * width) / 4, width),
+      y: height / 2,
+      size: 8,
+      color: "red",
+      votes: 0,
+      direction: utils.sample([1, -1])
+    });
+    rep.addRule(shift);
+    environment.addAgent(rep);
+  }
 
-    function setup() {
-        for (let i = 0; i < 201; i++) {
-            let x;
-            do {
-                x = utils.gaussian(width / 2, width / 4);
-            } while (x < 0 || x > width);
-            const agent = new Agent({
-                x,
-                y: height / 2,
-                size: 1
-            });
-            agent.addRule(vote);
-            environment.addAgent(agent);
-        }
-        dem = new Agent({
-            x: utils.random(0, width / 4),
-            y: height / 2,
-            size: 8,
-            color: "blue",
-            votes: 0,
-            direction: utils.sample([1, -1])
-        });
-        dem.addRule(shift);
-        environment.addAgent(dem);
-        rep = new Agent({
-            x: utils.random((3 * width) / 4, width),
-            y: height / 2,
-            size: 8,
-            color: "red",
-            votes: 0,
-            direction: utils.sample([1, -1])
-        });
-        rep.addRule(shift);
-        environment.addAgent(rep);
-    }
+  function draw() {
+    environment.tick();
+    requestAnimationFrame(draw);
+  }
 
-    function draw() {
-        environment.tick();
-        requestAnimationFrame(draw);
-    }
-
-    setup();
-    draw();
+  setup();
+  draw();
 </script>

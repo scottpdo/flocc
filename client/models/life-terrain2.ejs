@@ -13,7 +13,9 @@
     Terrain,
     Colors
   } = flocc;
-  const { random } = utils;
+
+  utils.seed(1);
+
   /* ---------- PARAMETERS ---------- */
   /* -------------------------------- */
   // how many cells are ALIVE at the start
@@ -54,7 +56,7 @@
 
   function setup() {
     terrain.init((x, y) => {
-      return Math.random() < PERCENT_ALIVE_AT_START ? ALIVE : DEAD;
+      return utils.uniform() < PERCENT_ALIVE_AT_START ? ALIVE : DEAD;
     });
   }
 
