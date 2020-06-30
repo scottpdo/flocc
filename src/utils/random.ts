@@ -1,4 +1,4 @@
-import { getSeed } from "./seed";
+import PRNG from "./internal/PRNG";
 
 /**
  * Return a random integer (or float)
@@ -12,10 +12,7 @@ function random(
   max: number = 1,
   float: boolean = false
 ): number {
-  let r =
-    getSeed() === null
-      ? Math.random() * (max - min)
-      : /* TODO: seed */ Math.random() * (max - min);
+  let r = (PRNG.getSeed() === null ? Math : PRNG).random() * (max - min);
   if (!float) r = Math.round(r);
   return min + r;
 }

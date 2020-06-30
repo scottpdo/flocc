@@ -7,6 +7,7 @@ import lerp from "./lerp";
 import remap from "./remap";
 import random from "./random";
 import sample from "./sample";
+import seed from "./seed";
 import series from "./series";
 import shuffle from "./shuffle";
 import sum from "./sum";
@@ -16,6 +17,7 @@ import median from "./median";
 import min from "./min";
 import percentile from "./percentile";
 import stdDev from "./stdDev";
+import uniform from "./uniform";
 import uuid from "./uuid";
 import zfill from "./zfill";
 
@@ -34,10 +36,12 @@ const utils = {
   remap,
   random,
   sample,
+  seed,
   series,
   shuffle,
   sum,
   stdDev,
+  uniform,
   uuid,
   zfill
 };
