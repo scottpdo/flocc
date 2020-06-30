@@ -1,4 +1,5 @@
 import copyArray from "./copyArray";
+import random from "./random";
 
 /**
  * Creates an array of shuffled values, using a version of the
@@ -16,8 +17,7 @@ export default function shuffle<T>(array: T[]): T[] {
   const lastIndex: number = length - 1;
   const result: T[] = copyArray(array);
   while (++index < length) {
-    const rand: number =
-      index + Math.floor(Math.random() * (lastIndex - index + 1));
+    const rand: number = index + random(0, lastIndex - index);
     const value: T = result[rand];
     result[rand] = result[index];
     result[index] = value;
