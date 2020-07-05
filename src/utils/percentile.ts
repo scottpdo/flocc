@@ -1,4 +1,4 @@
-import copyArray from "./copyArray";
+import copyArray from "./internal/copyArray";
 import min from "./min";
 import max from "./max";
 import lerp from "./lerp";

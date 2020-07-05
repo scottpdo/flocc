@@ -1,4 +1,4 @@
-import copyArray from "./copyArray";
+import copyArray from "./internal/copyArray";
 import random from "./random";
 
 /**

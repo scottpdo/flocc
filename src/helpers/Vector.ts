@@ -1,7 +1,7 @@
 /// <reference path="../types/Point.d.ts" />
 import sum from "../utils/sum";
 import lerp from "../utils/lerp";
-import copyArray from "../utils/copyArray";
+import copyArray from "../utils/internal/copyArray";
 
 class Vector implements Point {
   data: Array<number>;
