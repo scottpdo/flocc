@@ -10,19 +10,24 @@
 <script>
   const environment = new Environment();
 
-  const renderer = new TableRenderer(environment);
+  const renderer = new TableRenderer(environment, {
+    limit: 10,
+    order: "asc",
+    precision: 5,
+    sortKey: "x"
+  });
   renderer.columns = ["i", "x"];
   renderer.mount("#table");
 
   function tick(agent) {
     let { x } = agent.getData();
-    x += utils.random(0, 10);
+    x += utils.random(0, 10, true);
     if (x > 10) x -= 10;
     return { x };
   }
 
   (function setup() {
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 25; i++) {
       const a = new Agent({
         i,
         x: (i * 81) % 7

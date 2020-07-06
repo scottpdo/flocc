@@ -2,14 +2,20 @@
 import { Environment } from "../environments/Environment";
 
 interface TableRendererOptions {
+  limit?: number;
+  order?: "asc" | "desc";
   precision?: number;
   refresh?: number;
+  sortKey?: string;
   type?: "csv" | "table";
 }
 
 const defaultTableRendererOptions: TableRendererOptions = {
+  limit: Infinity,
+  order: "desc",
   precision: 3,
   refresh: 500,
+  sortKey: null,
   type: "table"
 };
 
@@ -51,28 +57,36 @@ export class TableRenderer implements Renderer {
   }
 
   renderHTMLTable(): string {
-    const { columns, environment } = this;
-    return (
-      `<table><thead>` +
-      `<tr><td>${columns.join("</td><td>")}</td></tr>` +
-      `</thead>` +
+    const { columns, environment, opts } = this;
+    const { limit, order, sortKey } = opts;
+    const thead =
+      `<thead>` + `<tr><td>${columns.join("</td><td>")}</td></tr>` + `</thead>`;
+    const sortedAgentData = Array.from(environment.getAgents());
+    if (sortKey !== null) {
+      sortedAgentData.sort((a, b) => {
+        const first = order === "asc" ? a : b;
+        const second = first === a ? b : a;
+        return first.get(sortKey) - second.get(sortKey);
+      });
+    }
+    const tbody =
       `<tbody>` +
-      environment
-        .getAgents()
+      sortedAgentData
+        .slice(0, limit)
         .map(agent => {
           return `<tr><td>${columns
             .map(key => {
               const v = agent.get(key);
-              if (typeof v === "number")
+              if (typeof v === "number") {
                 return precision(v, this.opts.precision);
+              }
               return v;
             })
             .join("</td><td>")}</td></tr>`;
         })
         .join("") +
-      `</tbody>` +
-      `</table>`
-    );
+      `</tbody>`;
+    return `<table>${thead}${tbody}</table>`;
   }
 
   render(): void {
