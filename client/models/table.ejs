@@ -1,3 +1,10 @@
+<style>
+  table,
+  td {
+    border: 1px solid black;
+  }
+</style>
+
 <div id="table"></div>
 
 <script>
@@ -9,7 +16,7 @@
 
   function tick(agent) {
     let { x } = agent.getData();
-    x++;
+    x += utils.random(0, 10);
     if (x > 10) x -= 10;
     return { x };
   }
