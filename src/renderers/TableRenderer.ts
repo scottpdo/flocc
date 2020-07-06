@@ -1,7 +1,11 @@
 /// <reference path="./Renderer.d.ts" />
 import { Environment } from "../environments/Environment";
+import { Agent } from "../agents/Agent";
+
+type TableFilter = (agent: Agent) => boolean;
 
 interface TableRendererOptions {
+  filter?: TableFilter;
   limit?: number;
   order?: "asc" | "desc";
   precision?: number;
@@ -11,6 +15,7 @@ interface TableRendererOptions {
 }
 
 const defaultTableRendererOptions: TableRendererOptions = {
+  filter: null,
   limit: Infinity,
   order: "desc",
   precision: 3,
@@ -58,12 +63,14 @@ export class TableRenderer implements Renderer {
 
   renderHTMLTable(): string {
     const { columns, environment, opts } = this;
-    const { limit, order, sortKey } = opts;
+    const { filter, limit, order, sortKey } = opts;
     const thead =
       `<thead>` + `<tr><td>${columns.join("</td><td>")}</td></tr>` + `</thead>`;
-    const sortedAgentData = Array.from(environment.getAgents());
+    const filteredAgentData = filter
+      ? environment.getAgents().filter(filter)
+      : Array.from(environment.getAgents());
     if (sortKey !== null) {
-      sortedAgentData.sort((a, b) => {
+      filteredAgentData.sort((a, b) => {
         const first = order === "asc" ? a : b;
         const second = first === a ? b : a;
         return first.get(sortKey) - second.get(sortKey);
@@ -71,7 +78,7 @@ export class TableRenderer implements Renderer {
     }
     const tbody =
       `<tbody>` +
-      sortedAgentData
+      filteredAgentData
         .slice(0, limit)
         .map(agent => {
           return `<tr><td>${columns

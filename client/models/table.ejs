@@ -11,6 +11,7 @@
   const environment = new Environment();
 
   const renderer = new TableRenderer(environment, {
+    filter: a => a.get("x") > 8,
     limit: 10,
     order: "asc",
     precision: 5,
