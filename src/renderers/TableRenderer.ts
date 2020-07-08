@@ -64,17 +64,25 @@ export class TableRenderer implements Renderer {
     const columns = escape
       ? this.columns.map(c => escapeStringQuotes(c))
       : this.columns;
+    if (columns.length === 0) return "";
     return start + columns.join(joiner) + end;
   }
 
   serializeRows(
-    joiner: string,
+    cellJoiner: string,
+    rowJoiner: string,
     start: string = "",
     end: string = "",
+    rowStart: string = "",
+    rowEnd: string = "",
     escape: boolean = false
   ): string {
     const { columns, environment, opts } = this;
     const { filter, limit, order, sortKey } = opts;
+
+    // if no agents, don't return anything
+    if (environment.getAgents().length === 0) return "";
+
     // filter agent data if there is a filter function,
     // otherwise duplicate environment.getAgents() as a new array
     const agents = filter
@@ -88,34 +96,39 @@ export class TableRenderer implements Renderer {
         return first.get(sortKey) - second.get(sortKey);
       });
     }
-    return agents
-      .slice(0, limit)
-      .map(agent => {
-        return (
-          start +
-          columns
-            .map(key => {
-              const v = agent.get(key);
-              if (typeof v === "number") {
-                return precision(v, this.opts.precision);
-                // include double-quotes and escape inner double-quotes
-              } else if (typeof v === "string") {
-                return escape ? escapeStringQuotes(v) : v;
-              }
-              return v ? v.toString() : "";
-            })
-            .join(joiner) +
-          end
-        );
-      })
-      .join("");
+    return (
+      start +
+      agents
+        .slice(0, limit)
+        .map(agent => {
+          return (
+            rowStart +
+            columns
+              .map(key => {
+                const v = agent.get(key);
+                if (typeof v === "number") {
+                  return precision(v, this.opts.precision);
+                  // include double-quotes and escape inner double-quotes
+                } else if (typeof v === "string") {
+                  return escape ? escapeStringQuotes(v) : v;
+                }
+                return v ? v.toString() : "";
+              })
+              .join(cellJoiner) +
+            rowEnd
+          );
+        })
+        .join(rowJoiner) +
+      end
+    );
   }
 
   renderCSV(): string {
-    return (
-      this.serializeColumns(",", "", "\n", true) +
-      this.serializeRows(",", "", "\n", true)
-    );
+    const columns = this.serializeColumns(",", "", "", true);
+    if (columns === "") return "";
+    const rows = this.serializeRows(",", "\n", "", "", "", "", true);
+    if (rows === "") return columns;
+    return columns + "\n" + rows;
   }
 
   renderHTMLTable(): string {
@@ -124,24 +137,15 @@ export class TableRenderer implements Renderer {
       "<thead><tr><td>",
       "</td></tr></thead>"
     );
-    const tbody =
-      "<tbody>" +
-      this.serializeRows("</td><td>", "<tr><td>", "</td></tr>") +
-      "</tbody>";
+    const tbody = this.serializeRows(
+      "</td><td>",
+      "",
+      "<tbody>",
+      "</tbody>",
+      "<tr><td>",
+      "</td></tr>"
+    );
     return `<table>${thead}${tbody}</table>`;
-  }
-
-  render(): void {
-    // server
-    if (typeof window === "undefined") {
-      console.log(this.output());
-      // browser
-    } else {
-      if (+new Date() - this.lastRendered >= this.opts.refresh) {
-        this.table.innerHTML = this.output();
-        this.lastRendered = +new Date();
-      }
-    }
   }
 
   output(): string {
@@ -150,6 +154,19 @@ export class TableRenderer implements Renderer {
       return this.renderCSV();
     } else if (type === "table") {
       return this.renderHTMLTable();
+    }
+  }
+
+  render(): void {
+    if (typeof window === "undefined") {
+      // server: don't automatically write anything
+      return;
+    }
+
+    // browser
+    if (+new Date() - this.lastRendered >= this.opts.refresh) {
+      this.table.innerHTML = this.output();
+      this.lastRendered = +new Date();
     }
   }
 }
