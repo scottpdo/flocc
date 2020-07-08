@@ -1,5 +1,4 @@
 const { Agent, Environment, TableRenderer } = require("../dist/flocc");
-const csval = require("csval");
 
 it("Instantiates an empty TableRenderer", () => {
   const environment = new Environment();

@@ -6,10 +6,10 @@
   "module": "dist/flocc.es.js",
   "typings": "dist/main.d.ts",
   "scripts": {
-    "build": "rollup -c",
+    "build": "rollup -c && node replace-version",
     "watch": "rollup -cw",
     "dev": "concurrently 'npm run watch' 'node client/app.js' 'browser-sync start --watch dist/flocc.js'",
-    "test": "jest",
+    "test": "node replace-version && jest",
     "perf": "node ./performance/agent.js"
   },
   "author": "Scott Donaldson <sd@scottland.cc> (https://scottland.cc)",
