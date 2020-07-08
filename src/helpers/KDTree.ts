@@ -3,7 +3,7 @@ import { BBox } from "./BBox";
 import median from "../utils/median";
 import sample from "../utils/sample";
 import { Vector } from "./Vector";
-import { utils } from "../utils/utils";
+import min from "../utils/min";
 import distance from "../utils/distance";
 
 const MAX_IN_LEAF = 5;
@@ -156,7 +156,7 @@ class KDTree {
     );
 
     // get the distance of the nearest candidate agent in this subtree
-    let nearestDistance = utils.min(candidates.map(a => distance(a, pt)));
+    let nearestDistance = min(candidates.map(a => distance(a, pt)));
     let trees: KDTree[];
 
     // if there are no other candidates, then slowly expand the circle outward
@@ -165,7 +165,7 @@ class KDTree {
     while (nearestDistance === Infinity) {
       trees = this.subtreesWithinDistance(pt, testDistance);
       candidates = arrayOfTreesToAgents(trees).filter(a => a !== pt);
-      nearestDistance = utils.min(candidates.map(a => distance(a, pt)));
+      nearestDistance = min(candidates.map(a => distance(a, pt)));
       testDistance *= 3;
     }
 

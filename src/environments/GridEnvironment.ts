@@ -5,8 +5,6 @@ import { Cell } from "../agents/Cell";
 import { Environment, TickOptions, defaultTickOptions } from "./Environment";
 
 import shuffle from "../utils/shuffle";
-import { Rule } from "../helpers/Rule";
-import { utils } from "../utils/utils";
 
 const hash = (x: number, y: number): string =>
   x.toString() + "," + y.toString();
@@ -166,7 +164,7 @@ class GridEnvironment extends Environment {
    * (if there is one at that cell coordinate).
    * @param {Function} callback
    */
-  loop(callback: Function = function() {}): void {
+  loop(callback: Function = function () {}): void {
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
         const agent = this.getAgentAt(x, y);
@@ -270,7 +268,7 @@ class GridEnvironment extends Environment {
    */
   _executeCellRules(randomizeOrder: boolean) {
     if (randomizeOrder) {
-      utils.shuffle(this._cellHashes).forEach(hash => {
+      shuffle(this._cellHashes).forEach(hash => {
         const { x, y } = unhash(hash);
         const cell = this.getCell(x, y);
         if (!cell) return;
@@ -293,7 +291,7 @@ class GridEnvironment extends Environment {
    */
   _executeEnqueuedCellRules(randomizeOrder: boolean) {
     if (randomizeOrder) {
-      utils.shuffle(this._cellHashes).forEach(hash => {
+      shuffle(this._cellHashes).forEach(hash => {
         const { x, y } = unhash(hash);
         const cell = this.getCell(x, y);
         if (!cell) return;
