@@ -15,3 +15,5 @@ export { Histogram } from "./renderers/Histogram";
 export { LineChartRenderer } from "./renderers/LineChartRenderer";
 
 export { utils } from "./utils/utils";
+
+export { default as VERSION } from "./version";
