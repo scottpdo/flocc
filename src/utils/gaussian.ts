@@ -1,4 +1,4 @@
-import random from "./random";
+import uniform from "./uniform";
 
 /**
  * Given a mean and standard deviation,
@@ -11,8 +11,8 @@ export default function gaussian(mean: number = 0, sd: number = 1): number {
   let y: number, x1: number, x2: number, w: number;
 
   do {
-    x1 = 2 * random(0, 1, true) - 1;
-    x2 = 2 * random(0, 1, true) - 1;
+    x1 = 2 * uniform() - 1;
+    x2 = 2 * uniform() - 1;
     w = x1 * x1 + x2 * x2;
   } while (w >= 1);
 
