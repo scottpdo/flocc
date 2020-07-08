@@ -1,3 +1,2 @@
-const p = require("../package.json");
-const version: string = p.version;
+const version: string = "%%VERSION%%";
 export default version;
