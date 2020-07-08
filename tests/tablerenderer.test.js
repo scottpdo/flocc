@@ -58,6 +58,15 @@ it("Renders tables and CSVs with agents", () => {
   expect(renderer.output()).toBe('"i"\n0\n1\n2');
 });
 
+it("Escapes quotes in strings in CSVs", () => {
+  const environment = new Environment();
+  environment.addAgent(new Agent({ name: 'aa"' }));
+  const renderer = new TableRenderer(environment, { type: "csv" });
+  renderer.columns = ["name"];
+  // need to escape the escape character
+  expect(renderer.output()).toBe('"name"\n"aa\\""');
+});
+
 it("Can filter out data", () => {
   const environment = new Environment();
   for (let i = 0; i < 3; i++) {
