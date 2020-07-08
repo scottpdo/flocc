@@ -1,14 +1,6 @@
 <div id="container"></div>
 <script>
-  const {
-    Agent,
-    Environment,
-    Terrain,
-    CanvasRenderer,
-    utils,
-    Vector,
-    Rule
-  } = flocc;
+  utils.seed(1);
 
   /* ---------- PARAMETERS ---------- */
 
@@ -24,9 +16,9 @@
   const renderer = new CanvasRenderer(environment, { width, height });
   renderer.mount(container);
 
-  const terrain = new Terrain(width / 2, height / 2, {
+  const terrain = new Terrain(width / 3, height / 3, {
     async: true,
-    scale: 2
+    scale: 3
   });
   environment.use(terrain);
 
@@ -36,8 +28,8 @@
 
   function setup() {
     terrain.init((x, y) => {
-      if (Math.random() < PERCENT_EMPTY) return empty;
-      return Math.random() > 0.5 ? red : blue;
+      if (utils.uniform() < PERCENT_EMPTY) return empty;
+      return utils.uniform() > 0.5 ? red : blue;
     });
   }
 

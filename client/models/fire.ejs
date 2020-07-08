@@ -1,137 +1,135 @@
 <div id="container"></div>
 <div id="histogram"></div>
 <script>
-    const {
-        Agent,
-        Environment,
-        GridEnvironment,
-        ASCIIRenderer,
-        CanvasRenderer,
-        utils,
-        Vector,
-        Rule
-    } = flocc;
+  const {
+    Agent,
+    Environment,
+    GridEnvironment,
+    ASCIIRenderer,
+    CanvasRenderer,
+    utils,
+    Vector,
+    Rule
+  } = flocc;
 
-    const PERCENT_FULL = 0.57;
-    const environment = new GridEnvironment(60, 60);
-    const renderer = new CanvasRenderer(environment, {
-        background: "#494949",
-        scale: 10,
-        width: 600,
-        height: 600
-    });
-    renderer.mount("#container");
+  utils.seed(1);
 
-    const steps = [
+  const PERCENT_FULL = 0.57;
+  const environment = new GridEnvironment(60, 60);
+  const renderer = new CanvasRenderer(environment, {
+    background: "#494949",
+    scale: 10,
+    width: 600,
+    height: 600
+  });
+  renderer.mount("#container");
+
+  const steps = [
+    [
+      "if",
+      [
+        "and",
+        ["eq", ["get", "x"], 0],
+        ["eq", ["key", ["environment"], "time"], 0]
+      ],
+      ["set", "r", 255]
+    ],
+    [
+      /* set local var for this agent's neighbors */
+      "local",
+      "neighbors",
+      ["method", "environment", "neighbors", "agent", 1]
+    ],
+    [
+      /* only use neighbors that exist (some might be null) */
+      "local",
+      "existingNeighbors",
+      ["filter", ["local", "neighbors"], ["or", false]]
+    ],
+    [
+      /* get data of neighors */
+      "local",
+      "existingNeighborsData",
+      ["map", ["local", "existingNeighbors"], ["method", "getData"]]
+    ],
+    [
+      "local",
+      "neighborsR",
+      ["map", ["local", "existingNeighborsData"], ["key", "r"]]
+    ],
+    ["local", "neighborsRGt0", ["filter", ["local", "neighborsR"], ["gt", 0]]],
+    [
+      "if",
+      ["gt", ["key", ["local", "neighborsRGt0"], "length"], 0],
+      [
+        ["enqueue", "r", 255],
         [
-            "if",
-            [
-                "and",
-                ["eq", ["get", "x"], 0],
-                ["eq", ["key", ["environment"], "time"], 0]
-            ],
-            ["set", "r", 255]
-        ],
-        [
-            /* set local var for this agent's neighbors */
-            "local",
-            "neighbors",
-            ["method", "environment", "neighbors", "agent", 1]
-        ],
-        [
-            /* only use neighbors that exist (some might be null) */
-            "local",
-            "existingNeighbors",
-            ["filter", ["local", "neighbors"], ["or", false]]
-        ],
-        [
-            /* get data of neighors */
-            "local",
-            "existingNeighborsData",
-            ["map", ["local", "existingNeighbors"], ["method", "getData"]]
-        ],
-        [
-            "local",
-            "neighborsR",
-            ["map", ["local", "existingNeighborsData"], ["key", "r"]]
-        ],
-        [
-            "local",
-            "neighborsRGt0",
-            ["filter", ["local", "neighborsR"], ["gt", 0]]
-        ],
-        [
-            "if",
-            ["gt", ["key", ["local", "neighborsRGt0"], "length"], 0],
-            [
-                ["enqueue", "r", 255],
-                [
-                    "if",
-                    ["gt", ["get", "a"], 0.33],
-                    ["set", "a", ["subtract", ["get", "a"], 0.01]]
-                ]
-            ]
+          "if",
+          ["gt", ["get", "a"], 0.33],
+          ["set", "a", ["subtract", ["get", "a"], 0.01]]
         ]
-    ];
+      ]
+    ]
+  ];
 
-    const rule = new Rule(environment, steps);
-    const histogram = new Histogram(environment, {
-        color: "fuchsia",
-        buckets: 6,
-        // scale: "relative",
-        width: 500,
-        height: 250
-    });
-    histogram.mount("#histogram");
-    histogram.metric("a");
+  const rule = new Rule(environment, steps);
+  const histogram = new Histogram(environment, {
+    color: "fuchsia",
+    buckets: 6,
+    // scale: "relative",
+    width: 500,
+    height: 250
+  });
+  histogram.mount("#histogram");
+  histogram.metric("a");
 
-    function tick(agent) {
-        const neighbors = environment.neighbors(agent, 1);
-        if (agent.get("x") === 0 && environment.time === 0) agent.set("r", 255);
-        if (neighbors.filter(n => !!n && n.get("r") > 0).length > 0) {
-            agent.enqueue(() => {
-                agent.set("r", 255);
-                if (agent.get("a") > 0.33) agent.decrement("a", 0.01);
-            });
-        }
+  function tick(agent) {
+    const neighbors = environment.neighbors(agent, 1);
+    if (agent.get("x") === 0 && environment.time === 0) agent.set("r", 255);
+    if (neighbors.filter(n => !!n && n.get("r") > 0).length > 0) {
+      agent.enqueue(() => {
+        agent.set("r", 255);
+        if (agent.get("a") > 0.33) agent.decrement("a", 0.01);
+      });
     }
+  }
 
-    // this function allows us to use the 'color' key as an alias to the
-    // agent's individual r/g/b/a values
-    function getColor(agent) {
-        return `rgb(
+  // this function allows us to use the 'color' key as an alias to the
+  // agent's individual r/g/b/a values
+  function getColor(agent) {
+    return `rgb(
       ${agent.get("r")},
       ${agent.get("g")},
       ${agent.get("b")},
       ${agent.get("a")}
     )`;
-    }
+  }
 
-    function setup() {
-        // add agents here
-        environment.loop((x, y) => {
-            if (Math.random() > PERCENT_FULL) return;
-            const agent = new Agent();
-            agent.set("width", 8);
-            agent.set("height", 8);
-            agent.set("shape", "rect");
-            agent.set("r", 0);
-            agent.set("g", 0);
-            agent.set("b", 0);
-            agent.set("a", 1);
-            agent.set("color", getColor);
-            agent.addRule(rule);
-            environment.addAgentAt(x, y, agent);
-        });
-    }
+  function setup() {
+    // add agents here
+    environment.loop((x, y) => {
+      if (utils.uniform() > PERCENT_FULL) return;
+      const agent = new Agent();
+      agent.set("width", 8);
+      agent.set("height", 8);
+      agent.set("shape", "rect");
+      agent.set("r", 0);
+      agent.set("g", 0);
+      agent.set("b", 0);
+      agent.set("a", 1);
+      agent.set("color", getColor);
+      agent.addRule(rule);
+      environment.addAgentAt(x, y, agent);
+    });
+  }
 
-    function run() {
-        environment.tick();
-        window.requestAnimationFrame(run);
-        // console.log("ticking");
-        // setTimeout(run, 250);
-    }
+  function run() {
+    environment.tick();
+    window.requestAnimationFrame(run);
+    // console.log("ticking");
+    // setTimeout(run, 250);
+  }
 
-    setup();
-    run();
+  setup();
+  run();
 </script>
