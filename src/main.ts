@@ -16,3 +16,5 @@ export { LineChartRenderer } from "./renderers/LineChartRenderer";
 export { TableRenderer } from "./renderers/TableRenderer";
 
 export { utils } from "./utils/utils";
+
+export { default as VERSION } from "./version";
