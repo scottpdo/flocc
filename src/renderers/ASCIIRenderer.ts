@@ -9,6 +9,10 @@ class ASCIIRenderer implements Renderer {
   pre: HTMLPreElement;
 
   constructor(environment: GridEnvironment, opts: Object = {}) {
+    console.warn(
+      "As of Flocc v0.5.0, ASCIIEnvironment is **DEPRECATED**. It will be **REMOVED** in v0.6.0. The Terrain helper should be used for 2-dimensional grid-like data, with CanvasRenderer to visualize. Read more about Terrains here: https://flocc.network/docs/terrain"
+    );
+
     this.environment = environment;
     environment.renderers.push(this);
 

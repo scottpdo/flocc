@@ -22,6 +22,10 @@ class GridEnvironment extends Environment {
   constructor(width: number = 2, height: number = 2) {
     super();
 
+    console.warn(
+      "As of Flocc v0.5.0, GridEnvironment is **DEPRECATED**. It will be **REMOVED** in v0.6.0. The Terrain helper should be used for 2-dimensional grid-like data. Read more about Terrains here: https://flocc.network/docs/terrain"
+    );
+
     this.height = height;
     this.width = width;
 
@@ -81,9 +85,8 @@ class GridEnvironment extends Environment {
     if (!cell) throw new Error("Can't add an Agent to a non-existent Cell!");
 
     // If there is already an agent at this location,
-    // overwrite it (with a warning). Remove the existing agent...
+    // overwrite it. Remove the existing agent...
     if (cell.get("agent")) {
-      console.warn(`Overwriting agent at ${x}, ${y}.`);
       this.removeAgentAt(x, y);
     }
 
