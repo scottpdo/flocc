@@ -1,4 +1,12 @@
 /*
+ * All of the below is taken from the `random-seed` library (via NPM).
+ * Modifications made to convert it to TypeScript and remove a few
+ * unused methods.
+ * - Scott Donaldson, July 2020
+ *
+ */
+
+/*
  * random-seed
  * https://github.com/skratchdot/random-seed
  *
