@@ -1,14 +1,14 @@
 const { utils } = require("../dist/flocc");
-const { random, seed } = utils;
+const { seed, uniform } = utils;
 
 it("Initially instantiates with no seed.", () => {
   const a = [];
   const b = [];
   while (a.length < 10) {
-    a.push(random(0, 1, true));
+    a.push(uniform());
   }
   while (b.length < 10) {
-    b.push(random(0, 1, true));
+    b.push(uniform());
   }
   a.forEach((ai, i) => {
     expect(ai).not.toBe(b[i]);
@@ -31,7 +31,7 @@ it("After seeding, produces repeatable pseudo-random values", () => {
     0.010195111586840722
   ];
   while (a.length < 10) {
-    a.push(random(0, 1, true));
+    a.push(uniform());
   }
   a.forEach((ai, i) => {
     expect(ai).toBeCloseTo(aExpected[i]);
@@ -43,11 +43,11 @@ it("Can re-seed to produce the same pseudo-random values", () => {
   const a = [];
   const b = [];
   while (a.length < 10) {
-    a.push(random(0, 1, true));
+    a.push(uniform());
   }
   seed(1);
   while (b.length < 10) {
-    b.push(random(0, 1, true));
+    b.push(uniform());
   }
   a.forEach((ai, i) => {
     expect(ai).toBe(b[i]);
@@ -58,11 +58,11 @@ it("Can unseed to produce new pseudo-random values", () => {
   seed(1);
   const firstValue = 0.3566528179889171;
   let secondValue;
-  expect(random(0, 1, true)).toBeCloseTo(firstValue);
+  expect(uniform()).toBeCloseTo(firstValue);
   seed(null);
-  secondValue = random(0, 1, true);
+  secondValue = uniform();
   seed(1);
-  expect(random(0, 1, true)).toBeCloseTo(firstValue);
+  expect(uniform()).toBeCloseTo(firstValue);
   seed(null);
-  expect(random(0, 1, true)).not.toBe(secondValue);
+  expect(uniform()).not.toBe(secondValue);
 });

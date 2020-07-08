@@ -1,4 +1,4 @@
-import random from "./random";
+import uniform from "./uniform";
 
 function uuid(): Function {
   // http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/21963136#21963136
@@ -10,10 +10,10 @@ function uuid(): Function {
   }
 
   return function generate(): string {
-    const d0: number = (random(0, 1, true) * 0xffffffff) | 0;
-    const d1: number = (random(0, 1, true) * 0xffffffff) | 0;
-    const d2: number = (random(0, 1, true) * 0xffffffff) | 0;
-    const d3: number = (random(0, 1, true) * 0xffffffff) | 0;
+    const d0: number = (uniform() * 0xffffffff) | 0;
+    const d1: number = (uniform() * 0xffffffff) | 0;
+    const d2: number = (uniform() * 0xffffffff) | 0;
+    const d3: number = (uniform() * 0xffffffff) | 0;
 
     const uuid =
       lut[d0 & 0xff] +

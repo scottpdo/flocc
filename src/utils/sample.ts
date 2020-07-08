@@ -1,4 +1,5 @@
 import random from "./random";
+import uniform from "./uniform";
 
 /**
  * Gets a random element from `array`.
@@ -22,7 +23,7 @@ export default function sample(array: any[], weights?: number[]): any {
   });
 
   for (let i = 0; i < array.length; i++) {
-    if (random(0, 1, true) < cumulativeWeights[i] / sum) return array[i];
+    if (uniform() < cumulativeWeights[i] / sum) return array[i];
   }
 
   return null;
