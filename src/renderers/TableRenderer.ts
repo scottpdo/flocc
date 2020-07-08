@@ -29,6 +29,8 @@ const precision = (n: number, d: number): number => {
   return Math.round(n * 10 ** d) / 10 ** d;
 };
 
+const escapeStringQuotes = (s: string): string => `"${s.replace(/"/g, '\\"')}"`;
+
 export class TableRenderer implements Renderer {
   columns: string[];
   environment: Environment;
@@ -53,46 +55,79 @@ export class TableRenderer implements Renderer {
     this.table = container;
   }
 
-  renderCSV(): string {
-    const { columns, environment } = this;
-    const rows = environment.getAgents().map(agent => {
-      return columns.map(key => agent.get(key)).join(",");
-    });
-    return columns.join(",") + "\n" + rows.join("\n");
+  serializeColumns(
+    joiner: string,
+    start: string = "",
+    end: string = "",
+    escape: boolean = false
+  ): string {
+    const columns = escape
+      ? this.columns.map(c => escapeStringQuotes(c))
+      : this.columns;
+    return start + columns.join(joiner) + end;
   }
 
-  renderHTMLTable(): string {
+  serializeRows(
+    joiner: string,
+    start: string = "",
+    end: string = "",
+    escape: boolean = false
+  ): string {
     const { columns, environment, opts } = this;
     const { filter, limit, order, sortKey } = opts;
-    const thead =
-      `<thead>` + `<tr><td>${columns.join("</td><td>")}</td></tr>` + `</thead>`;
-    const filteredAgentData = filter
+    // filter agent data if there is a filter function,
+    // otherwise duplicate environment.getAgents() as a new array
+    const agents = filter
       ? environment.getAgents().filter(filter)
       : Array.from(environment.getAgents());
+    // if there is a sortKey, sort the agents
     if (sortKey !== null) {
-      filteredAgentData.sort((a, b) => {
+      agents.sort((a, b) => {
         const first = order === "asc" ? a : b;
         const second = first === a ? b : a;
         return first.get(sortKey) - second.get(sortKey);
       });
     }
-    const tbody =
-      `<tbody>` +
-      filteredAgentData
-        .slice(0, limit)
-        .map(agent => {
-          return `<tr><td>${columns
+    return agents
+      .slice(0, limit)
+      .map(agent => {
+        return (
+          start +
+          columns
             .map(key => {
               const v = agent.get(key);
               if (typeof v === "number") {
                 return precision(v, this.opts.precision);
+                // include double-quotes and escape inner double-quotes
+              } else if (typeof v === "string") {
+                return escape ? escapeStringQuotes(v) : v;
               }
-              return v;
+              return v ? v.toString() : "";
             })
-            .join("</td><td>")}</td></tr>`;
-        })
-        .join("") +
-      `</tbody>`;
+            .join(joiner) +
+          end
+        );
+      })
+      .join("");
+  }
+
+  renderCSV(): string {
+    return (
+      this.serializeColumns(",", "", "\n", true) +
+      this.serializeRows(",", "", "\n", true)
+    );
+  }
+
+  renderHTMLTable(): string {
+    const thead = this.serializeColumns(
+      "</td><td>",
+      "<thead><tr><td>",
+      "</td></tr></thead>"
+    );
+    const tbody =
+      "<tbody>" +
+      this.serializeRows("</td><td>", "<tr><td>", "</td></tr>") +
+      "</tbody>";
     return `<table>${thead}${tbody}</table>`;
   }
 

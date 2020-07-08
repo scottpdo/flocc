@@ -11,13 +11,14 @@
   const environment = new Environment();
 
   const renderer = new TableRenderer(environment, {
-    filter: a => a.get("x") > 8,
+    filter: a => a.get("x") > 5,
     limit: 10,
     order: "asc",
     precision: 5,
     sortKey: "x"
+    // type: "csv"
   });
-  renderer.columns = ["i", "x"];
+  renderer.columns = ["i", "x", "name"];
   renderer.mount("#table");
 
   function tick(agent) {
@@ -31,7 +32,8 @@
     for (let i = 0; i < 25; i++) {
       const a = new Agent({
         i,
-        x: (i * 81) % 7
+        x: (i * 81) % 7,
+        name: 'a"b"c'
       });
       a.addRule(tick);
       environment.addAgent(a);
