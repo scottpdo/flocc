@@ -24,7 +24,7 @@
     KDTree
   } = flocc;
 
-  utils.seed(1);
+  utils.seed(6);
 
   /* ------- PARAMETERS --------- */
 
@@ -35,8 +35,8 @@
   const MAX_SPEED = 3;
   const MAX_FORCE = 0.15;
   const flockSize = 320;
-  const width = window.innerWidth;
-  const height = window.innerHeight;
+  const width = 500;
+  const height = 500;
 
   /* ---------------------------- */
 
@@ -57,6 +57,7 @@
     for (let i = 0; i < flockSize; i++) {
       const agent = new Agent();
 
+      agent.set("color", "black");
       agent.set("x", utils.random(0, width));
       agent.set("y", utils.random(0, height));
 
@@ -107,7 +108,7 @@
       const diff = pos
         .clone()
         .add(new Vector(-ax, -ay))
-        .multiplyScalar(1 / utils.distance(agent, a));
+        .multiplyScalar(1 / Math.max(utils.distance(agent, a), 0.0001));
       separation.add(diff);
     });
 
