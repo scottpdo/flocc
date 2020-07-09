@@ -8,6 +8,7 @@ const fs = require("fs");
 const PNG = require("pngjs").PNG;
 const pixelmatch = require("pixelmatch");
 const puppeteer = require("puppeteer");
+let browser, page;
 
 const color = "#ff0000";
 const width = 200;
@@ -40,19 +41,25 @@ it("Can add metrics to a LineChartRenderer", () => {
 });
 
 it("Renders static LineChartRenderer test correctly", async () => {
-  const browser = await puppeteer.launch();
-  const page = await browser.newPage();
-  await page.goto("http://localhost:3000/linechart", {
-    waitUntil: "networkidle2"
-  });
+  browser = await puppeteer.launch();
+  page = await browser.newPage();
+  try {
+    await page.goto("http://localhost:3000/linechart", {
+      waitUntil: "networkidle2"
+    });
+  } catch {
+    console.warn(
+      "Could not connect to localhost:3000, so skipping a LineChartRenderer test. Run `npm run dev` in a separate terminal window to make sure all tests run."
+    );
+    return await browser.close();
+  }
   const filePath = __dirname + "/screenshots/linechart1.png";
   const existingImage = fs.existsSync(filePath)
     ? PNG.sync.read(fs.readFileSync(filePath))
     : null;
   await page.screenshot({ path: filePath });
   if (!existingImage) {
-    await browser.close();
-    return;
+    return await browser.close();
   }
   const { width, height } = existingImage;
   const newImage = PNG.sync.read(fs.readFileSync(filePath));
@@ -65,11 +72,18 @@ it("Renders static LineChartRenderer test correctly", async () => {
 });
 
 it("Renders static Lorenz attractor test correctly", async () => {
-  const browser = await puppeteer.launch();
-  const page = await browser.newPage();
-  await page.goto("http://localhost:3000/lorenz-static", {
-    waitUntil: "networkidle2"
-  });
+  browser = await puppeteer.launch();
+  page = await browser.newPage();
+  try {
+    await page.goto("http://localhost:3000/lorenz-static", {
+      waitUntil: "networkidle2"
+    });
+  } catch {
+    console.warn(
+      "Could not connect to localhost:3000, so skipping a LineChartRenderer test. Run `npm run dev` in a separate terminal window to make sure all tests run."
+    );
+    return await browser.close();
+  }
   const filePath = __dirname + "/screenshots/linechart2.png";
   const existingImage = fs.existsSync(filePath)
     ? PNG.sync.read(fs.readFileSync(filePath))
