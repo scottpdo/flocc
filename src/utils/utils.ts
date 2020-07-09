@@ -1,45 +1,22 @@
-import clamp from "./clamp";
-import distance from "./distance";
-import gaussian from "./gaussian";
-import gcd from "./gcd";
-import manhattanDistance from "./manhattanDistance";
-import lerp from "./lerp";
-import remap from "./remap";
-import random from "./random";
-import sample from "./sample";
-import series from "./series";
-import shuffle from "./shuffle";
-import sum from "./sum";
-import max from "./max";
-import mean from "./mean";
-import median from "./median";
-import min from "./min";
-import percentile from "./percentile";
-import stdDev from "./stdDev";
-import uuid from "./uuid";
-import zfill from "./zfill";
-
-const utils = {
-  clamp,
-  distance,
-  gaussian,
-  gcd,
-  lerp,
-  manhattanDistance,
-  max,
-  mean,
-  median,
-  min,
-  percentile,
-  remap,
-  random,
-  sample,
-  series,
-  shuffle,
-  sum,
-  stdDev,
-  uuid,
-  zfill
-};
-
-export { utils };
+export { default as clamp } from "./clamp";
+export { default as distance } from "./distance";
+export { default as gaussian } from "./gaussian";
+export { default as gcd } from "./gcd";
+export { default as manhattanDistance } from "./manhattanDistance";
+export { default as lerp } from "./lerp";
+export { default as remap } from "./remap";
+export { default as random } from "./random";
+export { default as sample } from "./sample";
+export { default as seed } from "./seed";
+export { default as series } from "./series";
+export { default as shuffle } from "./shuffle";
+export { default as sum } from "./sum";
+export { default as max } from "./max";
+export { default as mean } from "./mean";
+export { default as median } from "./median";
+export { default as min } from "./min";
+export { default as percentile } from "./percentile";
+export { default as stdDev } from "./stdDev";
+export { default as uniform } from "./uniform";
+export { default as uuid } from "./uuid";
+export { default as zfill } from "./zfill";

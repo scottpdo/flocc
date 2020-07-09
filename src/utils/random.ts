@@ -1,3 +1,5 @@
+import PRNG from "./internal/PRNG";
+
 /**
  * Return a random integer (or float)
  * between `min` and `max`
@@ -10,7 +12,7 @@ function random(
   max: number = 1,
   float: boolean = false
 ): number {
-  let r = Math.random() * (max - min);
+  let r = (PRNG.getSeed() === null ? Math : PRNG).random() * (max - min);
   if (!float) r = Math.round(r);
   return min + r;
 }

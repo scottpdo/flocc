@@ -1,20 +1,22 @@
 {
   "name": "flocc",
-  "version": "0.4.8",
+  "version": "0.5.0",
   "description": "Agent-based modeling in JavaScript in the browser or server.",
   "main": "dist/flocc.js",
   "module": "dist/flocc.es.js",
   "typings": "dist/main.d.ts",
   "scripts": {
-    "build": "rollup -c",
+    "build": "rollup -c && node replace-version",
     "watch": "rollup -cw",
     "dev": "concurrently 'npm run watch' 'node client/app.js' 'browser-sync start --watch dist/flocc.js'",
-    "test": "jest",
+    "test": "node replace-version && jest",
     "perf": "node ./performance/agent.js"
   },
   "author": "Scott Donaldson <sd@scottland.cc> (https://scottland.cc)",
   "license": "ISC",
   "devDependencies": {
+    "@rollup/plugin-json": "^4.1.0",
+    "@types/node": "^14.0.19",
     "browser-sync": "2.26.7",
     "concurrently": "5.1.0",
     "ejs": "^3.0.2",

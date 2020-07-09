@@ -3,18 +3,7 @@
 <div id="container"></div>
 <div id="chart"></div>
 <script>
-  const {
-    Agent,
-    Environment,
-    GridEnvironment,
-    ASCIIRenderer,
-    CanvasRenderer,
-    utils,
-    Vector,
-    Network,
-    LineChartRenderer
-  } = flocc;
-
+  utils.seed(1);
   /* ----- PARAMETERS ----- */
   const POPULATION = 60;
   const REWIRING_PROBABILITY = 0.2;
@@ -69,10 +58,10 @@
 
     network.agents.forEach((agent, i) => {
       network.neighbors(agent).forEach(neighbor => {
-        if (Math.random() < REWIRING_PROBABILITY) {
+        if (utils.uniform() < REWIRING_PROBABILITY) {
           network.disconnect(agent, neighbor);
 
-          const j = Math.floor(Math.random() * POPULATION);
+          const j = utils.random(0, POPULATION);
           network.connect(agent, network.get(j));
         }
       });

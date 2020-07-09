@@ -5,8 +5,6 @@ import { Cell } from "../agents/Cell";
 import { Environment, TickOptions, defaultTickOptions } from "./Environment";
 
 import shuffle from "../utils/shuffle";
-import { Rule } from "../helpers/Rule";
-import { utils } from "../utils/utils";
 
 const hash = (x: number, y: number): string =>
   x.toString() + "," + y.toString();
@@ -23,6 +21,10 @@ class GridEnvironment extends Environment {
 
   constructor(width: number = 2, height: number = 2) {
     super();
+
+    console.warn(
+      "As of Flocc v0.5.0, GridEnvironment is **DEPRECATED**. It will be **REMOVED** in v0.6.0. The Terrain helper should be used for 2-dimensional grid-like data. Read more about Terrains here: https://flocc.network/docs/terrain"
+    );
 
     this.height = height;
     this.width = width;
@@ -83,9 +85,8 @@ class GridEnvironment extends Environment {
     if (!cell) throw new Error("Can't add an Agent to a non-existent Cell!");
 
     // If there is already an agent at this location,
-    // overwrite it (with a warning). Remove the existing agent...
+    // overwrite it. Remove the existing agent...
     if (cell.get("agent")) {
-      console.warn(`Overwriting agent at ${x}, ${y}.`);
       this.removeAgentAt(x, y);
     }
 
@@ -166,7 +167,7 @@ class GridEnvironment extends Environment {
    * (if there is one at that cell coordinate).
    * @param {Function} callback
    */
-  loop(callback: Function = function() {}): void {
+  loop(callback: Function = function () {}): void {
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
         const agent = this.getAgentAt(x, y);
@@ -270,7 +271,7 @@ class GridEnvironment extends Environment {
    */
   _executeCellRules(randomizeOrder: boolean) {
     if (randomizeOrder) {
-      utils.shuffle(this._cellHashes).forEach(hash => {
+      shuffle(this._cellHashes).forEach(hash => {
         const { x, y } = unhash(hash);
         const cell = this.getCell(x, y);
         if (!cell) return;
@@ -293,7 +294,7 @@ class GridEnvironment extends Environment {
    */
   _executeEnqueuedCellRules(randomizeOrder: boolean) {
     if (randomizeOrder) {
-      utils.shuffle(this._cellHashes).forEach(hash => {
+      shuffle(this._cellHashes).forEach(hash => {
         const { x, y } = unhash(hash);
         const cell = this.getCell(x, y);
         if (!cell) return;
