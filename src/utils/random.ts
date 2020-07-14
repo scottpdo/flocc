@@ -12,9 +12,13 @@ function random(
   max: number = 1,
   float: boolean = false
 ): number {
-  let r = (PRNG.getSeed() === null ? Math : PRNG).random() * (max - min);
-  if (!float) r = Math.round(r);
-  return min + r;
+  const rand = (PRNG.getSeed() === null ? Math : PRNG).random();
+  const length = `${rand}`.length - 1;
+  if (float) {
+    return Math.min(min + rand * (max - min + parseFloat(`1e-${length}`)), max);
+  } else {
+    return min + Math.floor(rand * (max - min + 1));
+  }
 }
 
 export default random;
