@@ -22,8 +22,9 @@ export default function sample(array: any[], weights?: number[]): any {
     return value;
   });
 
+  const r = uniform();
   for (let i = 0; i < array.length; i++) {
-    if (uniform() < cumulativeWeights[i] / sum) return array[i];
+    if (r < cumulativeWeights[i] / sum) return array[i];
   }
 
   return null;

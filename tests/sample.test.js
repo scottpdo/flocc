@@ -24,9 +24,9 @@ it("Samples an array with weights.", () => {
   // given 10% chance of 20, 10% chance of 30, and 80% chance of 40,
   // the below values should be safe, although there is a minute chance
   // that this will fail
-  expect(output.filter(el => el === 20).length).toBeLessThan(250);
-  expect(output.filter(el => el === 30).length).toBeLessThan(250);
-  expect(output.filter(el => el === 40).length).toBeGreaterThan(650);
+  expect(output.filter(el => el === 20).length).toBeLessThan(150);
+  expect(output.filter(el => el === 30).length).toBeLessThan(150);
+  expect(output.filter(el => el === 40).length).toBeGreaterThan(750);
 
   // test with complex types and weights not yet normalized
   const [a, b, c] = [{ a: 1 }, { b: 2 }, { c: 3 }];
@@ -37,7 +37,7 @@ it("Samples an array with weights.", () => {
   while (output2.length < 1000) output2.push(sample(arr2, weights2));
 
   // same as above
-  expect(output2.filter(el => el === a).length).toBeLessThan(250);
-  expect(output2.filter(el => el === b).length).toBeLessThan(250);
-  expect(output2.filter(el => el === c).length).toBeGreaterThan(650);
+  expect(output2.filter(el => el === a).length).toBeLessThan(150);
+  expect(output2.filter(el => el === b).length).toBeLessThan(150);
+  expect(output2.filter(el => el === c).length).toBeGreaterThan(750);
 });
