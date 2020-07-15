@@ -1,6 +1,7 @@
 /// <reference path="./Renderer.d.ts" />
 /// <reference path="./CanvasRendererOptions.d.ts" />
 import { Environment } from "../environments/Environment";
+import { Agent } from "../agents/Agent";
 
 const defaultOptions: CanvasRendererOptions = {
   autoPosition: false,
@@ -140,7 +141,9 @@ class CanvasRenderer implements Renderer {
       context.restore();
     }
 
-    const connectionsDrawn = new Map();
+    // Map of connections that have been drawn between an agent and and its neighbors
+    // (check against this in order to not draw connections twice)
+    const connectionsDrawn = new Map<Agent, Agent[]>();
 
     environment.getAgents().forEach(agent => {
       const { x, y, vx, vy, color, shape, size = 1 } = agent.getData();
@@ -153,18 +156,15 @@ class CanvasRenderer implements Renderer {
 
       // always draw connections to other agents directly to the canvas context
       if (this.environment.helpers.network) {
+        connectionsDrawn.set(agent, []);
         const { network } = this.environment.helpers;
         if (!network.neighbors(agent)) return;
         for (let neighbor of network.neighbors(agent)) {
-          if (
-            connectionsDrawn.get(agent) === neighbor ||
-            connectionsDrawn.get(neighbor) === agent
-          ) {
+          if (connectionsDrawn.get(neighbor)?.includes(agent)) {
             break;
           }
 
-          connectionsDrawn.set(agent, neighbor);
-          connectionsDrawn.set(neighbor, agent);
+          connectionsDrawn.get(agent).push(neighbor);
 
           const nx = neighbor.get("x");
           const ny = neighbor.get("y");
