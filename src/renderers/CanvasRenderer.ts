@@ -161,7 +161,7 @@ class CanvasRenderer implements Renderer {
         if (!network.neighbors(agent)) return;
         for (let neighbor of network.neighbors(agent)) {
           if (connectionsDrawn.get(neighbor)?.includes(agent)) {
-            break;
+            continue;
           }
 
           connectionsDrawn.get(agent).push(neighbor);
