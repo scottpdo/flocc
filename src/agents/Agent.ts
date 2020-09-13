@@ -1,6 +1,7 @@
 /// <reference path="../types/Data.d.ts" />
 /// <reference path="../types/DataObj.d.ts" />
 import { Environment } from "../environments/Environment";
+import type { KDTree } from "../helpers/KDTree";
 import uuid from "../utils/uuid";
 import { Rule } from "../helpers/Rule";
 
@@ -33,6 +34,8 @@ class Agent implements DataObj {
   // this has been reset, that means that there is an infinite loop, and the call
   // will throw an error.
   __retrievingData: string = null;
+
+  __tree: KDTree = null;
 
   constructor(data: Data = {}) {
     this.set(data);
@@ -210,6 +213,11 @@ class Agent implements DataObj {
       const data = this.executeRule(ruleObj);
       if (data) this.set(data);
     }
+  }
+
+  getSubTree(): KDTree {
+    if (this.environment.helpers.kdtree === null) return null;
+    return this.__tree;
   }
 }
 

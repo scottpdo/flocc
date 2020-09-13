@@ -83,3 +83,26 @@ it("Finds all agents within a given distance.", () => {
   neighbors = tree.agentsWithinDistance(point, 1);
   expect(neighbors.length).toBeGreaterThan(0);
 });
+
+it("Handles adding and removing agents", () => {
+  const point = { x: 5.2, y: 2.1, z: 3 };
+  let nearest = tree.nearestNeighbor(point);
+  expect(nearest.get("x")).toBe(5);
+  expect(nearest.get("y")).toBe(2);
+  expect(nearest.get("z")).toBe(3);
+
+  // now remove that nearest one
+  environment.removeAgent(nearest);
+  environment.tick();
+  nearest = tree.nearestNeighbor(point);
+  expect(nearest.get("x")).toBe(6);
+  expect(nearest.get("y")).toBe(2);
+  expect(nearest.get("z")).toBe(3);
+
+  // now add an even closer one
+  environment.addAgent(new Agent({ x: 5.1, y: 2, z: 3 }));
+  environment.tick();
+  expect(nearest.get("x")).toBe(5.1);
+  expect(nearest.get("y")).toBe(2);
+  expect(nearest.get("z")).toBe(3);
+});
