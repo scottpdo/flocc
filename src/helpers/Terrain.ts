@@ -177,7 +177,8 @@ class Terrain implements EnvironmentHelper {
    * (https://en.wikipedia.org/wiki/Von_Neumann_neighborhood) or the Moore neighborhood
    * (https://en.wikipedia.org/wiki/Moore_neighborhood).
    *
-   * @param {Agent} agent - the agent whose neighbors to retrieve
+   * @param {number} x - The x coordinate
+   * @param {number} y - The y coordinate
    * @param {number} radius - how far to look for neighbors
    * @param {boolean} moore - whether to use the Moore neighborhood or von Neumann (defaults to von Neumann)
    * @returns {Pixel[] | number[]} - An array of numbers (grayscale only) or pixel-like objects
