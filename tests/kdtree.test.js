@@ -102,6 +102,7 @@ it("Handles adding and removing agents", () => {
   // now add an even closer one
   environment.addAgent(new Agent({ x: 5.1, y: 2, z: 3 }));
   environment.tick();
+  nearest = tree.nearestNeighbor(point);
   expect(nearest.get("x")).toBe(5.1);
   expect(nearest.get("y")).toBe(2);
   expect(nearest.get("z")).toBe(3);

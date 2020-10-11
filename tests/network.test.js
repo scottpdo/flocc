@@ -12,13 +12,21 @@ it("Correctly instantiates an empty network.", () => {
 });
 
 it("Correctly adds agents to a network.", () => {
-  network.addAgent(a0);
+  let success = network.addAgent(a0);
+  expect(success).toBe(true);
   expect(network.size()).toEqual(1);
+
+  success = network.addAgent(a0);
+  expect(success).toBe(false);
 });
 
 it("Correctly removes an agent from the network.", () => {
-  network.removeAgent(a0);
+  let success = network.removeAgent(a0);
+  expect(success).toBe(true);
   expect(network.size()).toEqual(0);
+
+  success = network.removeAgent(a0);
+  expect(success).toBe(false);
 });
 
 it("Correctly detects whether agents are in the network or not..", () => {
@@ -48,6 +56,11 @@ it("Correctly detects whether agents are connected or not.", () => {
   expect(network.areConnected(a0, a1)).toBe(true);
   expect(network.areConnected(a0, a2)).toBe(false);
   expect(network.areConnected(a1, a2)).toBe(false);
+});
+
+it("Returns null when trying to get neighbors of an agent not in the network.", () => {
+  const b = new Agent();
+  expect(network.neighbors(b)).toBeNull();
 });
 
 it("Correctly returns the neighbors of an agent in the network.", () => {

@@ -4,7 +4,7 @@ import { Environment } from "../environments/Environment";
 import shuffle from "../utils/shuffle";
 
 interface AdjacencyList {
-  [id: string]: Array<Agent>;
+  [id: string]: Agent[];
 }
 
 interface AgentCallback {
@@ -22,7 +22,7 @@ class Network implements EnvironmentHelper {
    * list (JS array) of all the agents
    * in the order they were added to the graph
    */
-  agents: Array<Agent>;
+  agents: Agent[];
 
   constructor() {
     this.data = {};
@@ -31,28 +31,36 @@ class Network implements EnvironmentHelper {
 
   /**
    * Add an agent to the network.
+   * Returns `true` if the agent was successfully added.
+   * Returns `false` if the agent was already in the network.
    * @param {Agent} agent
    */
-  addAgent(agent: Agent) {
-    if (!this.data[agent.id]) {
+  addAgent(agent: Agent): boolean {
+    if (!this.isInNetwork(agent)) {
       this.data[agent.id] = [];
       this.agents.push(agent);
+      return true;
     }
+    return false;
   }
 
   /**
    * Add all agents in an environment to this network.
    * @param {Environment} environment
    */
-  addFromEnvironment(environment: Environment) {
+  addFromEnvironment(environment: Environment): void {
     environment.getAgents().forEach(agent => this.addAgent(agent));
   }
 
   /**
    * Remove an agent from the network.
+   * Returns `true` if the agent was successfully removed.
+   * Returns `false` if the agent was not in the network to begin with.
    * @param {Agent} agent
    */
-  removeAgent(agent: Agent) {
+  removeAgent(agent: Agent): boolean {
+    if (!this.isInNetwork(agent)) return false;
+
     if (this.neighbors(agent)) {
       this.neighbors(agent).forEach(neighbor => {
         this.disconnect(agent, neighbor);
@@ -62,6 +70,8 @@ class Network implements EnvironmentHelper {
 
     const idx = this.indexOf(agent);
     if (idx >= 0) this.agents.splice(idx, 1);
+
+    return true;
   }
 
   /**
@@ -98,7 +108,7 @@ class Network implements EnvironmentHelper {
   }
 
   /**
-   * Are the two given agents connected in the network?
+   * Returns `true` if the given agents are connected in the network.
    * @param {Agent} a1
    * @param {Agent} a2
    */
@@ -110,7 +120,7 @@ class Network implements EnvironmentHelper {
   }
 
   /**
-   * Like with connect, returns true if the edge was successfully
+   * Like with connect, returns `true` if the edge was successfully
    * removed, false if otherwise (if edge did not exist in the first place).
    * @param {agent} a1
    * @param {agent} a2
@@ -131,14 +141,14 @@ class Network implements EnvironmentHelper {
   }
 
   /**
-   * Number of agents in the graph.
+   * Number of agents in the network.
    */
   size(): number {
     return this.agents.length;
   }
 
   /**
-   * Given a callback function, loop over all the agents in the graph
+   * Given a callback function, loop over all the agents in the network
    * and invoke the callback, passing the agent + its index as parameters.
    * @param {Function} cb
    */
@@ -151,14 +161,7 @@ class Network implements EnvironmentHelper {
    * @param {Function} cb
    */
   forEachRand(cb: AgentCallback) {
-    let arr = [];
-    for (let i = 0; i < this.size(); i++) arr.push(i);
-    arr = shuffle(arr);
-
-    for (let i = 0; i < arr.length; i++) {
-      const idx = arr[i];
-      cb(this.agents[idx], i);
-    }
+    shuffle(this.agents).forEach(cb);
   }
 
   /**
@@ -189,10 +192,11 @@ class Network implements EnvironmentHelper {
 
   /**
    * Return the agents that are neighbors of a given agent
-   * (in a JS array).
+   * (in a JS array). If the agent is not in the network, returns `null`.
    * @param {Agent} agent
    */
-  neighbors(agent: Agent): Array<Agent> {
+  neighbors(agent: Agent): Agent[] | null {
+    if (!this.isInNetwork(agent)) return null;
     return this.data[agent.id];
   }
 

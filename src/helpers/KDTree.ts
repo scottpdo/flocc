@@ -1,4 +1,4 @@
-import type { Agent } from "../agents/Agent";
+import { Agent } from "../agents/Agent";
 import { BBox } from "./BBox";
 import median from "../utils/median";
 import sample from "../utils/sample";
