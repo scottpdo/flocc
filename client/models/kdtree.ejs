@@ -1,101 +1,107 @@
 <div id="container"></div>
 <div id="histogram"></div>
 <script>
-    const PERCENT_FULL = 0.57;
-    const [width, height] = [600, 600];
-    const environment = new Environment({
-        width,
-        height
+  utils.seed(1);
+  const PERCENT_FULL = 0.57;
+  const [width, height] = [600, 600];
+  const environment = new Environment({
+    width,
+    height
+  });
+  const renderer = new CanvasRenderer(environment, {
+    background: "#ccc",
+    width,
+    height
+  });
+  renderer.mount("#container");
+
+  let tree;
+  let rando;
+
+  function tick(agent) {
+    agent.set("size", agent === rando ? 6 : 1);
+    agent.increment("x", agent === rando ? 1 : utils.random(0, 1) * 6 - 3);
+    agent.increment("y", utils.random(0, 1) * 6 - 3);
+    // if (agent === rando) console.log(agent.getData());
+  }
+
+  function setup() {
+    // add agents here
+    for (let i = 0; i < 600; i++) {
+      const agent = new Agent({
+        x: utils.random(0, width),
+        y: utils.random(0, height)
+      });
+      agent.addRule(tick);
+      environment.addAgent(agent);
+    }
+    tree = new KDTree(environment.getAgents(), 2);
+    environment.use(tree);
+
+    rando = utils.sample(environment.getAgents());
+    // rando.set({
+    //   size: 5,
+    //   color: "yellow"
+    // });
+  }
+
+  function draw(tree, color = "black") {
+    const axis = tree.axis();
+    renderer.context.beginPath();
+    const dpr = window.devicePixelRatio;
+    const median = tree.median * dpr;
+    renderer.context.strokeStyle = color;
+    if (axis === "x") {
+      renderer.context.moveTo(median, tree.bbox.min.y * dpr);
+      renderer.context.lineTo(median, tree.bbox.max.y * dpr);
+    } else if (axis === "y") {
+      renderer.context.moveTo(tree.bbox.min.x * dpr, median);
+      renderer.context.lineTo(tree.bbox.max.x * dpr, median);
+    }
+    renderer.context.stroke();
+    if (tree.left) draw(tree.left, "blue");
+    if (tree.right) draw(tree.right, "red");
+  }
+
+  function run() {
+    environment.tick();
+    const center = new Vector();
+    const rx = rando.get("x");
+    const ry = rando.get("x");
+    const d = 120;
+    const neighbors = tree.agentsWithinDistance(rando, d);
+    neighbors.forEach(a => {
+      let { x, y } = a.getData();
+      if (rx + d > width && x < d) x += width;
+      if (rx - d < 0 && x + d > width) x -= width;
+      if (ry + d > height && y < d) y += height;
+      if (ry - d < 0 && y + d > height) y -= height;
+      center.x += x;
+      center.y += y;
+      a.set("size", 3);
     });
-    const renderer = new CanvasRenderer(environment, {
-        background: "#ccc",
-        width,
-        height
-    });
-    renderer.mount("#container");
+    center.multiplyScalar(1 / neighbors.length);
 
-    let tree;
-    let rando;
+    renderer.render();
+    // draw(tree);
 
-    function tick(agent) {
-        agent.set("size", agent === rando ? 6 : 1);
-        agent.increment("x", agent === rando ? 1 : utils.random(0, 1) * 6 - 3);
-        agent.increment("y", utils.random(0, 1) * 6 - 3);
-        // if (agent === rando) console.log(agent.getData());
-    }
+    // console.log(rando.__subtree.bbox.min.data);
+    // console.log(rando.__subtree.bbox.max.data);
 
-    function setup() {
-        // add agents here
-        for (let i = 0; i < 600; i++) {
-            const agent = new Agent();
-            // agent.set("size", 1);
-            agent.set({
-                x: utils.random(0, width),
-                y: utils.random(0, height)
-            });
-            agent.addRule(tick);
-            environment.addAgent(agent);
-        }
-        tree = new KDTree(environment.getAgents(), 2);
-        environment.use(tree);
+    // renderer.context.fillStyle = "red";
+    // renderer.context.beginPath();
+    // renderer.context.arc(
+    //   window.devicePixelRatio * center.x,
+    //   window.devicePixelRatio * center.y,
+    //   10,
+    //   0,
+    //   2 * Math.PI
+    // );
+    // renderer.context.fill();
 
-        rando = utils.sample(environment.getAgents());
-    }
+    requestAnimationFrame(run);
+  }
 
-    function draw(tree, color = "black") {
-        const axis = tree.axis();
-        renderer.context.beginPath();
-        const dpr = window.devicePixelRatio;
-        const median = tree.median * dpr;
-        renderer.context.strokeStyle = color;
-        if (axis === "x") {
-            renderer.context.moveTo(median, tree.bbox.min.y * dpr);
-            renderer.context.lineTo(median, tree.bbox.max.y * dpr);
-        } else if (axis === "y") {
-            renderer.context.moveTo(tree.bbox.min.x * dpr, median);
-            renderer.context.lineTo(tree.bbox.max.x * dpr, median);
-        }
-        renderer.context.stroke();
-        if (tree.left) draw(tree.left, "blue");
-        if (tree.right) draw(tree.right, "red");
-    }
-
-    function run() {
-        environment.tick();
-        const center = new Vector();
-        const rx = rando.get("x");
-        const ry = rando.get("x");
-        const d = 120;
-        const neighbors = tree.agentsWithinDistance(rando, d);
-        neighbors.forEach(a => {
-            let { x, y } = a.getData();
-            if (rx + d > width && x < d) x += width;
-            if (rx - d < 0 && x + d > width) x -= width;
-            if (ry + d > height && y < d) y += height;
-            if (ry - d < 0 && y + d > height) y -= height;
-            center.x += x;
-            center.y += y;
-            a.set("size", 3);
-        });
-        center.multiplyScalar(1 / neighbors.length);
-
-        renderer.render();
-        // draw(tree);
-
-        renderer.context.fillStyle = "red";
-        renderer.context.beginPath();
-        renderer.context.arc(
-            window.devicePixelRatio * center.x,
-            window.devicePixelRatio * center.y,
-            10,
-            0,
-            2 * Math.PI
-        );
-        renderer.context.fill();
-
-        requestAnimationFrame(run);
-    }
-
-    setup();
-    run();
+  setup();
+  run();
 </script>

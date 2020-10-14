@@ -35,7 +35,7 @@ class Agent implements DataObj {
   // will throw an error.
   __retrievingData: string = null;
 
-  __tree: KDTree = null;
+  __subtree: KDTree = null;
 
   constructor(data: Data = {}) {
     this.set(data);
@@ -103,6 +103,22 @@ class Agent implements DataObj {
           if (key === "x" && value < 0) this.data[key] += width;
           if (key === "y" && value > height) this.data[key] -= height;
           if (key === "y" && value < 0) this.data[key] += height;
+        }
+
+        if (this.environment && this.environment.helpers.kdtree) {
+          let subtree = this.__subtree;
+          let bbox = subtree.bbox;
+          // if the agent is no longer contained within its
+          // subtree's bounding box, then
+          // traverse the tree and mark the highest level
+          // tree that will need to rebalance, starting with the parent
+          // of the agent's current subtree
+          while (!bbox.contains(this)) {
+            if (subtree === this.environment.helpers.kdtree) break;
+            subtree = subtree.parent;
+            bbox = subtree.bbox;
+          }
+          subtree.needsUpdating = true;
         }
       }
     };
@@ -213,11 +229,6 @@ class Agent implements DataObj {
       const data = this.executeRule(ruleObj);
       if (data) this.set(data);
     }
-  }
-
-  getSubTree(): KDTree {
-    if (this.environment.helpers.kdtree === null) return null;
-    return this.__tree;
   }
 }
 

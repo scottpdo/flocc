@@ -182,10 +182,24 @@ class KDTree {
     return candidates[0];
   }
 
-  rebalance(agents: Agent[]): void {
-    this.agents = agents;
+  rebalance(agents: Agent[] = this.agents): void {
+    // only rebalance if the tree has been marked as needing updating.
+    // otherwise, recursively rebalance left and right subtrees
+    if (!this.needsUpdating) {
+      if (this.left) this.left.rebalance();
+      if (this.right) this.right.rebalance();
+      return;
+    }
 
-    if (agents.length <= MAX_IN_LEAF) return;
+    // if not given a set of agents against which to rebalance,
+    // use the agents that are currently tracked in this tree
+    if (agents) {
+      this.agents = agents;
+    } else {
+      agents = this.agents;
+    }
+
+    if (!agents || agents.length <= MAX_IN_LEAF) return;
 
     const axis = this.axis();
     if (axis === null) {
@@ -199,41 +213,55 @@ class KDTree {
     );
     if (this.median === null) return;
 
-    const left: Agent[] = [];
-    const right: Agent[] = [];
+    const left = new KDTree([], this.dimension, this.depth + 1);
+    const right = new KDTree([], this.dimension, this.depth + 1);
+
     agents.forEach(agent => {
-      if (this.needsUpdating) {
-        for (let i = 0; i < this.dimension; i++) {
-          const coord = getCoord(i);
-          if (agent.get(coord) < this.bbox.min[coord])
-            this.bbox.min[coord] = agent.get(coord);
-          if (agent.get(coord) > this.bbox.max[coord])
-            this.bbox.max[coord] = agent.get(coord);
-        }
+      for (let i = 0; i < this.dimension; i++) {
+        const coord = getCoord(i);
+        if (agent.get(coord) < this.bbox.min[coord])
+          this.bbox.min[coord] = agent.get(coord);
+        if (agent.get(coord) > this.bbox.max[coord])
+          this.bbox.max[coord] = agent.get(coord);
       }
+
       if (agent.get(axis) < this.median) {
-        left.push(agent);
+        left.agents.push(agent);
+        agent.__subtree = left;
       } else {
-        right.push(agent);
+        right.agents.push(agent);
+        agent.__subtree = right;
       }
     });
 
     this.needsUpdating = false;
 
-    if (left.length > 0) {
+    if (left.agents.length > 0) {
+      this.left = left;
       const leftBBox = this.bbox.clone();
       if (axis === "x") leftBBox.max.x = this.median;
       if (axis === "y") leftBBox.max.y = this.median;
-      this.left = new KDTree(left, this.dimension, this.depth + 1, leftBBox);
-      this.left.parent = this;
+      left.bbox = leftBBox;
+      left.parent = this;
+      left.rebalance();
     }
-    if (right.length > 0) {
+
+    if (right.agents.length > 0) {
+      this.right = right;
       const rightBBox = this.bbox.clone();
       if (axis === "x") rightBBox.min.x = this.median;
       if (axis === "y") rightBBox.min.y = this.median;
-      this.right = new KDTree(right, this.dimension, this.depth + 1, rightBBox);
-      this.right.parent = this;
+      right.bbox = rightBBox;
+      right.parent = this;
+      right.rebalance();
     }
+  }
+
+  removeAgent(agent: Agent): boolean {
+    if (!this.agents.includes(agent)) return false;
+    this.agents.splice(this.agents.indexOf(agent), 1);
+    this.needsUpdating = true;
+    this.rebalance();
   }
 }
 

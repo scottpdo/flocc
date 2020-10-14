@@ -183,7 +183,7 @@ class Environment extends Agent {
 
     this._executeEnqueuedAgentRules(randomizeOrder);
 
-    if (this.helpers.kdtree) this.helpers.kdtree.rebalance(this.agents);
+    if (this.helpers.kdtree) this.helpers.kdtree.rebalance();
 
     const { terrain } = this.helpers;
     if (terrain && terrain.rule) terrain._loop({ randomizeOrder });

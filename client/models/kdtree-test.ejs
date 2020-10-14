@@ -1,0 +1,55 @@
+<div id="container"></div>
+<script>
+  utils.seed(1);
+
+  const [width, height] = [400, 400];
+  const environment = new Environment({ width, height });
+  const renderer = new CanvasRenderer(environment, { width, height });
+  renderer.mount("#container");
+  const tree = new KDTree([], 2);
+  environment.use(tree);
+
+  function draw(tree, color = "black") {
+    const axis = tree.axis();
+    renderer.context.beginPath();
+    const dpr = window.devicePixelRatio;
+    const median = tree.median * dpr;
+    renderer.context.strokeStyle = color;
+    if (axis === "x") {
+      renderer.context.moveTo(median, tree.bbox.min.y * dpr);
+      renderer.context.lineTo(median, tree.bbox.max.y * dpr);
+    } else if (axis === "y") {
+      renderer.context.moveTo(tree.bbox.min.x * dpr, median);
+      renderer.context.lineTo(tree.bbox.max.x * dpr, median);
+    }
+    renderer.context.stroke();
+    if (tree.left) draw(tree.left, "blue");
+    if (tree.right) draw(tree.right, "red");
+  }
+
+  function tick(agent) {
+    agent.increment("x");
+    agent.increment("y");
+  }
+
+  for (let i = 0; i < 100; i++) {
+    environment.addAgent(
+      new Agent({
+        x: i * 4,
+        y: 2 * Math.round(Math.sin(i) * 100) + 200
+      })
+    );
+  }
+
+  environment.getAgents()[10].addRule(tick);
+
+  tree.agents = environment.getAgents();
+  tree.rebalance();
+
+  function run() {
+    environment.tick();
+    draw(tree);
+    requestAnimationFrame(run);
+  }
+  run();
+</script>

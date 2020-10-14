@@ -107,3 +107,8 @@ it("Handles adding and removing agents", () => {
   expect(nearest.get("y")).toBe(2);
   expect(nearest.get("z")).toBe(3);
 });
+
+it(".__subtree member is correctly set for agents", () => {
+  const agent = environment.getAgents()[0]; // at 0, 0, 0
+  expect(agent.__subtree).toBeInstanceOf(KDTree);
+});
