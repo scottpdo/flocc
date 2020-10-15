@@ -76,6 +76,12 @@ class Environment extends Agent {
     agent.environment = this;
     this.agents.push(agent);
     this.agentsById.set(agent.id, agent);
+
+    if (this.helpers.kdtree) {
+      this.helpers.kdtree.agents.push(agent);
+      this.helpers.kdtree.needsUpdating = true;
+      this.helpers.kdtree.rebalance();
+    }
   }
 
   /**
@@ -87,6 +93,10 @@ class Environment extends Agent {
     const index = this.agents.indexOf(agent);
     this.agents.splice(index, 1);
     this.agentsById.delete(agent.id);
+
+    if (this.helpers.kdtree) {
+      this.helpers.kdtree.removeAgent(agent);
+    }
   }
 
   /**
@@ -183,7 +193,7 @@ class Environment extends Agent {
 
     this._executeEnqueuedAgentRules(randomizeOrder);
 
-    if (this.helpers.kdtree) this.helpers.kdtree.rebalance(this.agents);
+    if (this.helpers.kdtree) this.helpers.kdtree.rebalance();
 
     const { terrain } = this.helpers;
     if (terrain && terrain.rule) terrain._loop({ randomizeOrder });

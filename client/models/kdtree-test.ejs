@@ -1,0 +1,62 @@
+<div id="container"></div>
+<script>
+  utils.seed(1);
+
+  const [width, height] = [250, 250];
+  const environment = new Environment({ width, height, torus: false });
+  const renderer = new CanvasRenderer(environment, { width, height });
+  renderer.mount("#container");
+
+  for (let x = 0; x < 25; x++) {
+    for (let y = 0; y < 25; y++) {
+      for (let z = 0; z < 25; z++) {
+        const agent = new Agent();
+        agent.set({ x: x * 10, y: y * 10, z: z * 10 });
+        environment.addAgent(agent);
+      }
+    }
+  }
+
+  const tree = new KDTree(environment.getAgents(), 3);
+  environment.use(tree);
+
+  function draw(tree, color = "black") {
+    const axis = tree.axis();
+    renderer.context.beginPath();
+    const dpr = window.devicePixelRatio;
+    const median = tree.median * dpr;
+    if (!tree.left && !tree.right) {
+      renderer.context.strokeStyle = color;
+      if (axis === "x") {
+        renderer.context.moveTo(median, tree.bbox.min.y * dpr);
+        renderer.context.lineTo(median, tree.bbox.max.y * dpr);
+      } else if (axis === "y") {
+        renderer.context.moveTo(tree.bbox.min.x * dpr, median);
+        renderer.context.lineTo(tree.bbox.max.x * dpr, median);
+      }
+    }
+    renderer.context.stroke();
+    if (tree.left) draw(tree.left, "blue");
+    if (tree.right) draw(tree.right, "red");
+  }
+
+  function run() {
+    environment.tick();
+    draw(tree);
+    const point = { x: 52, y: 21, z: 30 };
+    let nearest = tree.nearestNeighbor(point);
+    console.log(tree.agents.length);
+    console.log(nearest.get("x"), nearest.get("y"), nearest.get("z"));
+    environment.removeAgent(nearest);
+    console.log(tree.agents.length);
+    nearest = tree.nearestNeighbor(point);
+    console.log(nearest.get("x"), nearest.get("y"), nearest.get("z"));
+    const agent = new Agent({ x: 52, y: 21, z: 30 });
+    environment.addAgent(agent);
+    console.log(tree.agents.length);
+    console.log(tree.agents.includes(agent));
+    nearest = tree.nearestNeighbor(point);
+    console.log(nearest.get("x"), nearest.get("y"), nearest.get("z"));
+  }
+  run();
+</script>

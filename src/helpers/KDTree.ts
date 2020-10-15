@@ -63,6 +63,7 @@ class KDTree {
         : depth % dimension === 2
         ? "z"
         : null;
+
     return axis;
   }
 
@@ -142,6 +143,12 @@ class KDTree {
     }
   };
 
+  /**
+   * Return all the Agents in this KDTree that are within `d` distance
+   * of the given Point or Agent `pt`.
+   * @param {Point | Agent} pt
+   * @param {number} d
+   */
   agentsWithinDistance(pt: Point | Agent, d: number): Agent[] {
     const trees = this.subtreesWithinDistance(pt, d);
     return arrayOfTreesToAgents(trees).filter(
@@ -149,6 +156,11 @@ class KDTree {
     );
   }
 
+  /**
+   * Returns the Agent in this KDTree that is closest spatially to the
+   * given Point or Agent `pt`.
+   * @param {Point | Agent} pt
+   */
   nearestNeighbor(pt: Agent | Point): Agent {
     // locate the subtree this point is in
     let candidates: Agent[] = this.locateSubtree(pt).agents.filter(
@@ -182,10 +194,30 @@ class KDTree {
     return candidates[0];
   }
 
-  rebalance(agents: Agent[]): void {
-    this.agents = agents;
+  /**
+   * Rebalance the KDTree (if it has been marked as needing updating).
+   * Optionally pass the agents that belong to this tree (relevant for trees
+   * of higher depth than the top level).
+   * @param {Agent[]} agents
+   */
+  rebalance(agents: Agent[] = this.agents): void {
+    // only rebalance if the tree has been marked as needing updating.
+    // otherwise, recursively rebalance left and right subtrees
+    if (!this.needsUpdating) {
+      if (this.left) this.left.rebalance();
+      if (this.right) this.right.rebalance();
+      return;
+    }
 
-    if (agents.length <= MAX_IN_LEAF) return;
+    // if not given a set of agents against which to rebalance,
+    // use the agents that are currently tracked in this tree
+    if (agents) {
+      this.agents = Array.from(agents);
+    } else {
+      agents = this.agents;
+    }
+
+    if (!agents || agents.length <= MAX_IN_LEAF) return;
 
     const axis = this.axis();
     if (axis === null) {
@@ -199,41 +231,57 @@ class KDTree {
     );
     if (this.median === null) return;
 
-    const left: Agent[] = [];
-    const right: Agent[] = [];
+    const left = new KDTree([], this.dimension, this.depth + 1);
+    const right = new KDTree([], this.dimension, this.depth + 1);
+
     agents.forEach(agent => {
-      if (this.needsUpdating) {
-        for (let i = 0; i < this.dimension; i++) {
-          const coord = getCoord(i);
-          if (agent.get(coord) < this.bbox.min[coord])
-            this.bbox.min[coord] = agent.get(coord);
-          if (agent.get(coord) > this.bbox.max[coord])
-            this.bbox.max[coord] = agent.get(coord);
-        }
+      for (let i = 0; i < this.dimension; i++) {
+        const coord = getCoord(i);
+        if (agent.get(coord) < this.bbox.min[coord])
+          this.bbox.min[coord] = agent.get(coord);
+        if (agent.get(coord) > this.bbox.max[coord])
+          this.bbox.max[coord] = agent.get(coord);
       }
+
       if (agent.get(axis) < this.median) {
-        left.push(agent);
+        left.agents.push(agent);
+        agent.__subtree = left;
       } else {
-        right.push(agent);
+        right.agents.push(agent);
+        agent.__subtree = right;
       }
     });
 
     this.needsUpdating = false;
 
-    if (left.length > 0) {
+    if (left.agents.length > 0) {
+      this.left = left;
       const leftBBox = this.bbox.clone();
       if (axis === "x") leftBBox.max.x = this.median;
       if (axis === "y") leftBBox.max.y = this.median;
-      this.left = new KDTree(left, this.dimension, this.depth + 1, leftBBox);
-      this.left.parent = this;
+      if (axis === "z") leftBBox.max.z = this.median;
+      left.bbox = leftBBox;
+      left.parent = this;
+      left.rebalance();
     }
-    if (right.length > 0) {
+
+    if (right.agents.length > 0) {
+      this.right = right;
       const rightBBox = this.bbox.clone();
       if (axis === "x") rightBBox.min.x = this.median;
       if (axis === "y") rightBBox.min.y = this.median;
-      this.right = new KDTree(right, this.dimension, this.depth + 1, rightBBox);
-      this.right.parent = this;
+      if (axis === "z") rightBBox.min.z = this.median;
+      right.bbox = rightBBox;
+      right.parent = this;
+      right.rebalance();
     }
+  }
+
+  removeAgent(agent: Agent, rebalance = true): boolean {
+    if (!this.agents.includes(agent)) return false;
+    this.agents.splice(this.agents.indexOf(agent), 1);
+    this.needsUpdating = true;
+    if (rebalance) this.rebalance();
   }
 }
 

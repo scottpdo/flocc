@@ -1,5 +1,7 @@
 const { Agent, Environment, Vector, KDTree, utils } = require("../dist/flocc");
 
+utils.seed(1);
+
 const environment = new Environment({
   torus: false,
   width: 25,
@@ -19,8 +21,8 @@ for (let x = 0; x < 25; x++) {
 const tree = new KDTree(environment.getAgents(), 3);
 environment.use(tree);
 
-it("Has the same agents as environment at top level.", () => {
-  expect(tree.agents).toBe(environment.getAgents());
+it("Has the same number agents as environment at top level.", () => {
+  expect(tree.agents).toHaveLength(environment.getAgents().length);
 });
 
 it("Has depth 0 at the top level", () => {
@@ -82,4 +84,32 @@ it("Finds all agents within a given distance.", () => {
   point = new Vector(5.2, 2.1, 3);
   neighbors = tree.agentsWithinDistance(point, 1);
   expect(neighbors.length).toBeGreaterThan(0);
+});
+
+it("Handles adding and removing agents", () => {
+  const point = { x: 5.2, y: 2.1, z: 3 };
+  let nearest = tree.nearestNeighbor(point);
+  expect(tree.agents.includes(nearest)).toBe(true);
+  expect(nearest.get("x")).toBe(5);
+  expect(nearest.get("y")).toBe(2);
+  expect(nearest.get("z")).toBe(3);
+
+  // now remove that nearest one
+  environment.removeAgent(nearest);
+  expect(tree.agents.includes(nearest)).toBe(false);
+  nearest = tree.nearestNeighbor(point);
+  expect(nearest.get("x")).toBe(6);
+  expect(nearest.get("y")).toBe(2);
+  expect(nearest.get("z")).toBe(3);
+
+  // now add an even closer one
+  const agent = new Agent({ x: 5.1, y: 2, z: 3 });
+  environment.addAgent(agent);
+  nearest = tree.nearestNeighbor(point);
+  expect(nearest).toBe(agent);
+});
+
+it(".__subtree member is correctly set for agents", () => {
+  const agent = environment.getAgents()[0]; // at 0, 0, 0
+  expect(agent.__subtree).toBeInstanceOf(KDTree);
 });
