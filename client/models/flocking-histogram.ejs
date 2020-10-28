@@ -57,14 +57,14 @@
   const vyHistogram = new Histogram(environment, {
     buckets: 4,
     min: -1,
-    // color: ['blue', 'red', 'green'],
+    color: ['blue', 'red', 'green'],
     max: 1,
     aboveMax: true,
     belowMin: true,
     height: 250
   })
   vyHistogram.mount('#histogram-vy');
-  vyHistogram.metric("vy")
+  vyHistogram.metric("vx", "vy", "vz")
 
   let tree;
 
@@ -80,7 +80,7 @@
 
       agent.set("vx", Math.cos(angle));
       agent.set("vy", Math.sin(angle));
-      // agent.set('vz', utils.uniform());
+      agent.set('vz', Math.tan(angle));
 
       agent.addRule(tick);
 
