@@ -117,7 +117,9 @@ class Histogram implements Renderer {
       this.maxValue = environment.getAgents().length;
     } else {
       if (Array.isArray(metric)) {
-        const arrayOfBucketValues = metric.map(this.getBucketValues);
+        const arrayOfBucketValues = metric.map(metric =>
+          this.getBucketValues(metric)
+        );
         // maxValue is maximum of maximum value across metrics
         this.maxValue = getMax(arrayOfBucketValues.map(getMax));
       } else {
@@ -136,11 +138,11 @@ class Histogram implements Renderer {
     const markers = extractRoundNumbers({ min: yMin, max: yMax });
     context.fillStyle = "black";
     context.font = `${14 * window.devicePixelRatio}px Helvetica`;
+
     // determine the width of the longest marker
-    markers.forEach(marker => {
-      const { width } = context.measureText(marker.toLocaleString());
-      if (width > this.markerWidth) this.markerWidth = width;
-    });
+    this.markerWidth = getMax(
+      markers.map(marker => context.measureText(marker.toLocaleString()).width)
+    );
 
     // draw horizontal lines
     markers.forEach(marker => {
@@ -164,7 +166,7 @@ class Histogram implements Renderer {
     // write labels below bars
     bucketValues
       .map((v, i) => {
-        if (buckets instanceof Array) return buckets[i].toString();
+        if (Array.isArray(buckets)) return buckets[i].toString();
         if (i === 0 && belowMin) {
           return `< ${min}`;
         } else if (i === bucketValues.length - 1 && aboveMax) {
@@ -291,7 +293,7 @@ class Histogram implements Renderer {
       );
     } else {
       const bucketValues = this.getBucketValues(metric);
-      this.drawMarkers(this.getBucketValues(metric));
+      this.drawMarkers(bucketValues);
       this.drawBuckets(bucketValues);
     }
   }

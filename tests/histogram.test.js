@@ -59,15 +59,22 @@ it("Correctly renders with agents", () => {
 });
 
 it("Correctly renders with discrete buckets", () => {
-  histogram.opts.background = "yellow";
-  histogram.opts.buckets = [1, 2, 3];
+  const env = new Environment();
+  const h = new Histogram(env, {
+    background: 'yellow',
+    buckets: [1, 2, 3],
+    width,
+    height
+  });
+  h.metric("x");
+  h.mount(container);
   for (let i = 0; i < 10; i++) {
-    const agent = new Agent();
-    agent.set("x", i % 4);
-    environment.addAgent(agent);
+    const agent = new Agent({ x: i % 4 });
+    env.addAgent(agent);
   }
-  environment.tick();
-  const calls = histogram.canvas.getContext("2d").__getDrawCalls();
+  env.tick();
+  expect(true).toBe(true);
+  const calls = h.canvas.getContext("2d").__getDrawCalls();
   expect(calls).toMatchSnapshot();
 });
 
