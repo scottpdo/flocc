@@ -15,7 +15,7 @@ interface HistogramOptions {
   aboveMax: boolean;
   belowMin: boolean;
   buckets: number | any[];
-  color: string;
+  color: string | string[];
   epsilon: number;
   height: number;
   max: number;
@@ -43,10 +43,11 @@ class Histogram implements Renderer {
   /** @member HTMLCanvasElement */
   canvas: HTMLCanvasElement = document.createElement("canvas");
   background: HTMLCanvasElement = document.createElement("canvas");
-  _metric: string;
+  _metric: string | string[];
   opts: HistogramOptions = defaultHistogramOptions;
   height: number;
   markerWidth: number = 0;
+  maxValue: number;
   width: number;
 
   constructor(environment: Environment, opts?: HistogramOptions) {
@@ -65,8 +66,23 @@ class Histogram implements Renderer {
     environment.renderers.push(this);
   }
 
-  metric(_metric: string): void {
-    this._metric = _metric;
+  /**
+   * Add a metric or metrics to this Histogram. For a single metric, pass the
+   * string matching the key of Agent data you would like to count. For multiple metrics,
+   * pass either an array of strings or strings as separate parameters, e.g.
+   * - `histogram.metric("one", "two", "three");` or
+   * - `histogram.metric(["one", "two", "three"]);`
+   * @param {string | string[]}_metric
+   * @param {string[]} otherMetrics
+   */
+  metric(_metric: string | string[], ...otherMetrics: string[]): void {
+    if (Array.isArray(_metric)) {
+      this._metric = _metric;
+    } else if (otherMetrics && otherMetrics.length > 0) {
+      this._metric = [_metric].concat(otherMetrics);
+    } else {
+      this._metric = _metric;
+    }
   }
 
   mount(el: string | HTMLElement): void {
@@ -88,18 +104,35 @@ class Histogram implements Renderer {
     );
   }
 
-  y(value: number, maxValue: number): number {
-    const { height } = this;
+  y(value: number): number {
+    const { height, maxValue } = this;
     return remap(value, 0, maxValue, height - PADDING_AT_BOTTOM, 0);
+  }
+
+  setMaxValue(): void {
+    const { environment } = this;
+    const metric = this._metric;
+    const { scale } = this.opts;
+    if (scale === "fixed") {
+      this.maxValue = environment.getAgents().length;
+    } else {
+      if (Array.isArray(metric)) {
+        const arrayOfBucketValues = metric.map(this.getBucketValues);
+        // maxValue is maximum of maximum value across metrics
+        this.maxValue = getMax(arrayOfBucketValues.map(getMax));
+      } else {
+        const bucketValues = this.getBucketValues(metric);
+        this.maxValue = getMax(bucketValues);
+      }
+    }
   }
 
   drawMarkers(bucketValues: number[]): void {
     const context = this.canvas.getContext("2d");
-    const { environment, height, width } = this;
-    const agents = environment.getAgents();
-    const { aboveMax, belowMin, buckets, scale, min, max } = this.opts;
+    const { height, width } = this;
+    const { aboveMax, belowMin, buckets, min, max } = this.opts;
     const yMin = 0;
-    const yMax = scale === "fixed" ? agents.length : getMax(bucketValues);
+    const yMax = this.maxValue;
     const markers = extractRoundNumbers({ min: yMin, max: yMax });
     context.fillStyle = "black";
     context.font = `${14 * window.devicePixelRatio}px Helvetica`;
@@ -109,18 +142,18 @@ class Histogram implements Renderer {
       if (width > this.markerWidth) this.markerWidth = width;
     });
 
-    // draw lines
+    // draw horizontal lines
     markers.forEach(marker => {
       context.textAlign = "right";
       context.textBaseline = "middle";
       context.fillText(
         marker.toLocaleString(),
         this.markerWidth,
-        this.y(marker, yMax)
+        this.y(marker)
       );
       context.beginPath();
-      context.moveTo(this.markerWidth + 10, this.y(marker, yMax));
-      context.lineTo(this.width, this.y(marker, yMax));
+      context.moveTo(this.markerWidth + 10, this.y(marker));
+      context.lineTo(this.width, this.y(marker));
       context.setLineDash(LINE_DASH);
       context.stroke();
     });
@@ -162,78 +195,105 @@ class Histogram implements Renderer {
       });
   }
 
-  render(): void {
-    if (!this._metric) return;
-    const { canvas, environment, width, height } = this;
+  drawBuckets(bucketValues: number[], offset: number = 0): void {
+    const { canvas } = this;
     const metric = this._metric;
-    const {
-      aboveMax,
-      belowMin,
-      buckets,
-      color,
-      epsilon,
-      scale,
-      max,
-      min
-    } = this.opts;
+    const numMetrics = Array.isArray(metric) ? metric.length : 1;
+    const { aboveMax, belowMin, color, width, height } = this.opts;
     const context = canvas.getContext("2d");
+    context.fillStyle = Array.isArray(color)
+      ? color[offset % color.length]
+      : color;
 
-    const agents = environment.getAgents();
+    const numBuckets = bucketValues.length;
 
-    context.clearRect(0, 0, width, height);
+    let barWidth =
+      (width - PADDING_AT_LEFT - PADDING_AT_RIGHT - this.markerWidth) /
+      numBuckets;
+    barWidth *= 0.8;
 
-    // initialize map of bucket values --
-    // array of length `buckets`, initialized to all zeros,
-    // plus 1 if aboveMax, plus another 1 if belowMin
-    const numBuckets =
-      buckets instanceof Array
-        ? buckets.length
-        : buckets + (aboveMax ? 1 : 0) + (belowMin ? 1 : 0);
-    const bucketValues = new Array(numBuckets).fill(0);
-
-    const data = environment.stat(metric);
-
-    data.forEach(value => {
-      // Calculate index of bucket this agent's value says it belongs in.
-      // If given an array of discrete bucket values, only match the exact
-      // (or within epsilon) one
-      if (Array.isArray(buckets)) {
-        const index = buckets.findIndex(
-          v => v === value || Math.abs(v - value) <= epsilon
-        );
-        return bucketValues[index]++;
-      }
-
-      // Shortcut if value is above max and we are allowing
-      // values above the max.
-      if (aboveMax && value > max) {
-        return bucketValues[bucketValues.length - 1]++;
-        // Same thing but for below min.
-      } else if (belowMin && value < min) {
-        return bucketValues[0]++;
-        // Otherwise, only track if the value is in the allowed range.
-      } else if (value >= min && value <= max) {
-        const index =
-          Math.floor(remap(value, min, max, 0, 0.999999) * buckets) +
-          (belowMin ? 1 : 0);
-        bucketValues[index]++;
-      }
-    });
-
-    this.drawMarkers(bucketValues);
-
-    context.fillStyle = color;
-
-    const maxValue = scale === "fixed" ? agents.length : getMax(bucketValues);
     bucketValues.forEach((value, i) => {
-      const mappedValue = remap(value, 0, maxValue, 0, 1);
+      const mappedValue = remap(value, 0, this.maxValue, 0, 1);
+      let x = this.x(((0.1 + i) * width) / numBuckets);
       context.fillRect(
-        this.x(((i + 0.1) * width) / numBuckets),
+        x + (offset * barWidth - (numMetrics - 1)) / numMetrics + offset,
         remap(mappedValue, 0, 1, height - PADDING_AT_BOTTOM, 0),
-        (0.8 * (width - this.markerWidth)) / numBuckets,
+        barWidth / numMetrics,
         remap(mappedValue, 0, 1, 0, height - PADDING_AT_BOTTOM)
       );
     });
+  }
+
+  getBucketValues(metric: string): number[] {
+    const { environment } = this;
+    const { aboveMax, belowMin, buckets, epsilon, min, max } = this.opts;
+
+    // this won't change in the same environment tick, so memoize it
+    return environment.memo(() => {
+      // initialize map of bucket values --
+      // array of length `buckets`, initialized to all zeros,
+      // plus 1 if aboveMax, plus another 1 if belowMin
+      const numBuckets = Array.isArray(buckets)
+        ? buckets.length
+        : buckets + (aboveMax ? 1 : 0) + (belowMin ? 1 : 0);
+      const bucketValues = new Array(numBuckets).fill(0);
+      const data = environment.stat(metric);
+
+      data.forEach(value => {
+        // Calculate index of bucket this agent's value says it belongs in.
+        // If given an array of discrete bucket values, only match the exact
+        // (or within epsilon) one
+        if (Array.isArray(buckets)) {
+          const index = buckets.findIndex(
+            v => v === value || Math.abs(v - value) <= epsilon
+          );
+          return bucketValues[index]++;
+        }
+
+        // Shortcut if value is above max and we are allowing
+        // values above the max.
+        if (aboveMax && value > max) {
+          return bucketValues[bucketValues.length - 1]++;
+          // Same thing but for below min.
+        } else if (belowMin && value < min) {
+          return bucketValues[0]++;
+          // Otherwise, only track if the value is in the allowed range.
+        } else if (value >= min && value <= max) {
+          const index =
+            Math.floor(remap(value, min, max, 0, 0.999999) * buckets) +
+            (belowMin ? 1 : 0);
+          bucketValues[index]++;
+        }
+      });
+
+      return bucketValues;
+    }, metric);
+  }
+
+  render(): void {
+    if (!this._metric) return;
+
+    const { canvas, width, height } = this;
+    const metric = this._metric;
+    const context = canvas.getContext("2d");
+
+    context.clearRect(0, 0, width, height);
+
+    this.setMaxValue();
+
+    if (Array.isArray(metric)) {
+      const arrayOfBucketValues = metric.map(metric =>
+        this.getBucketValues(metric)
+      );
+      this.drawMarkers(arrayOfBucketValues[0]);
+      arrayOfBucketValues.forEach((bucketValues, i) =>
+        this.drawBuckets(bucketValues, i)
+      );
+    } else {
+      const bucketValues = this.getBucketValues(metric);
+      this.drawMarkers(this.getBucketValues(metric));
+      this.drawBuckets(bucketValues);
+    }
   }
 }
 
