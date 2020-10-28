@@ -43,13 +43,27 @@
   /* ------- SET UP ENVIRONMENT, RENDERER --------- */
 
   const environment = new Environment({ width, height });
-  const renderer = new CanvasRenderer(environment, {
-    width,
-    height,
-    background: "pink"
-  });
-  const container = document.getElementById("container");
-  renderer.mount(container);
+  const vxHistogram = new Histogram(environment, {
+    buckets: 4,
+    min: -1,
+    max: 1,
+    aboveMax: true,
+    belowMin: true,
+    height: 250
+  })
+  vxHistogram.mount('#histogram-vx');
+  vxHistogram.metric('vx')
+
+  const vyHistogram = new Histogram(environment, {
+    buckets: 4,
+    min: -1,
+    max: 1,
+    aboveMax: true,
+    belowMin: true,
+    height: 250
+  })
+  vyHistogram.mount('#histogram-vy');
+  vyHistogram.metric('vy')
 
   let tree;
 
@@ -155,7 +169,7 @@
 
   function render() {
     environment.tick({ randomizeOrder: true });
-    requestAnimationFrame(render);
+    // requestAnimationFrame(render);
   }
 
   setup();

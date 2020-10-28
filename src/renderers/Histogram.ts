@@ -6,7 +6,10 @@ import remap from "../utils/remap";
 import { default as getMax } from "../utils/max";
 import extractRoundNumbers from "../utils/extractRoundNumbers";
 
-const lineDash = [10, 10];
+const LINE_DASH = [10, 10];
+const PADDING_AT_BOTTOM = 60;
+const PADDING_AT_LEFT = 20;
+const PADDING_AT_RIGHT = 30;
 
 interface HistogramOptions {
   aboveMax: boolean;
@@ -76,12 +79,18 @@ class Histogram implements Renderer {
 
   x(value: number): number {
     const { width, markerWidth } = this;
-    return remap(value, 0, width, markerWidth, width);
+    return remap(
+      value,
+      0,
+      width,
+      markerWidth + PADDING_AT_LEFT,
+      width - PADDING_AT_RIGHT
+    );
   }
 
   y(value: number, maxValue: number): number {
     const { height } = this;
-    return remap(value, 0, maxValue, height - 30, 0);
+    return remap(value, 0, maxValue, height - PADDING_AT_BOTTOM, 0);
   }
 
   drawMarkers(bucketValues: number[]): void {
@@ -112,13 +121,14 @@ class Histogram implements Renderer {
       context.beginPath();
       context.moveTo(this.markerWidth + 10, this.y(marker, yMax));
       context.lineTo(this.width, this.y(marker, yMax));
-      context.setLineDash(lineDash);
+      context.setLineDash(LINE_DASH);
       context.stroke();
     });
 
     const numBuckets =
       bucketValues.length - (aboveMax ? 1 : 0) - (belowMin ? 1 : 0);
 
+    // write labels below bars
     bucketValues
       .map((v, i) => {
         if (buckets instanceof Array) return buckets[i].toString();
@@ -130,21 +140,25 @@ class Histogram implements Renderer {
         const currentIndex = i - (belowMin ? 1 : 0);
         return (
           remap(currentIndex, 0, numBuckets, min, max).toLocaleString() +
-          "–" +
+          "..." +
           remap(currentIndex + 1, 0, numBuckets, min, max).toLocaleString()
         );
       })
       .forEach((label, i) => {
-        context.textAlign = "center";
-        context.textBaseline = "alphabetic";
-        context.fillText(
-          label,
+        context.save();
+        context.translate(
           this.x(
             (i * width) / bucketValues.length +
               (0.5 * width) / bucketValues.length
           ),
-          height - 3
+          height - 50
         );
+        context.rotate(Math.PI / 4);
+        context.font = `${12 * window.devicePixelRatio}px Helvetica`;
+        context.textAlign = "left";
+        context.textBaseline = "middle";
+        context.fillText(label, 0, 0);
+        context.restore();
       });
   }
 
@@ -180,21 +194,29 @@ class Histogram implements Renderer {
     const data = environment.stat(metric);
 
     data.forEach(value => {
-      // calculate index of bucket this agent's value says it belongs in
-      const bucketIndex =
-        buckets instanceof Array
-          ? buckets.findIndex(
-              v => v === value || Math.abs(v - value) <= epsilon
-            )
-          : Math.floor(remap(value, min, max, 0, 0.999999) * buckets);
+      // Calculate index of bucket this agent's value says it belongs in.
+      // If given an array of discrete bucket values, only match the exact
+      // (or within epsilon) one
+      if (Array.isArray(buckets)) {
+        const index = buckets.findIndex(
+          v => v === value || Math.abs(v - value) <= epsilon
+        );
+        return bucketValues[index]++;
+      }
 
-      // increment the corresponding value in the bucketValues array
-      if (bucketIndex >= 0 && bucketIndex < bucketValues.length) {
-        bucketValues[bucketIndex + (belowMin ? 1 : 0)]++;
-      } else if (bucketIndex >= bucketValues.length - 1 && aboveMax) {
-        bucketValues[bucketValues.length - 1]++;
-      } else if (bucketIndex < 0 && belowMin) {
-        bucketValues[0]++;
+      // Shortcut if value is above max and we are allowing
+      // values above the max.
+      if (aboveMax && value > max) {
+        return bucketValues[bucketValues.length - 1]++;
+        // Same thing but for below min.
+      } else if (belowMin && value < min) {
+        return bucketValues[0]++;
+        // Otherwise, only track if the value is in the allowed range.
+      } else if (value >= min && value <= max) {
+        const index =
+          Math.floor(remap(value, min, max, 0, 0.999999) * buckets) +
+          (belowMin ? 1 : 0);
+        bucketValues[index]++;
       }
     });
 
@@ -207,9 +229,9 @@ class Histogram implements Renderer {
       const mappedValue = remap(value, 0, maxValue, 0, 1);
       context.fillRect(
         this.x(((i + 0.1) * width) / numBuckets),
-        remap(mappedValue, 0, 1, height - 30, 0),
+        remap(mappedValue, 0, 1, height - PADDING_AT_BOTTOM, 0),
         (0.8 * (width - this.markerWidth)) / numBuckets,
-        remap(mappedValue, 0, 1, 0, height - 30)
+        remap(mappedValue, 0, 1, 0, height - PADDING_AT_BOTTOM)
       );
     });
   }
