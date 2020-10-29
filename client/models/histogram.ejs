@@ -1,6 +1,8 @@
 <div id="container"></div>
 <script>
     const { Agent, Environment, utils, Histogram } = flocc;
+    utils.seed(1);
+
     let environment = null;
 
     const SECONDS_PER_TICK = 10;
@@ -173,9 +175,9 @@
             }
         }
         const histogram = new Histogram(environment, {
-            aboveMax: true,
             belowMin: true,
-            buckets: 5
+            aboveMax: true,
+            buckets: 7
         });
         histogram.mount("#container");
         histogram.metric("hunger");

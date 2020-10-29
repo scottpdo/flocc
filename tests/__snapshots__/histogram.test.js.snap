@@ -22,15 +22,15 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "0–0.25",
-      "x": 25,
-      "y": 397,
+      "text": "0...0.25",
+      "x": 0,
+      "y": 0,
     },
     "transform": Array [
-      1,
-      0,
-      0,
-      1,
+      0.7071067811865476,
+      0.7071067811865475,
+      -0.7071067811865475,
+      0.7071067811865476,
       0,
       0,
     ],
@@ -39,15 +39,15 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "0.25–0.5",
-      "x": 75,
-      "y": 397,
+      "text": "0.25...0.5",
+      "x": 0,
+      "y": 0,
     },
     "transform": Array [
-      1,
-      0,
-      0,
-      1,
+      0.7071067811865476,
+      0.7071067811865475,
+      -0.7071067811865475,
+      0.7071067811865476,
       0,
       0,
     ],
@@ -56,15 +56,15 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "0.5–0.75",
-      "x": 125,
-      "y": 397,
+      "text": "0.5...0.75",
+      "x": 0,
+      "y": 0,
     },
     "transform": Array [
-      1,
-      0,
-      0,
-      1,
+      0.7071067811865476,
+      0.7071067811865475,
+      -0.7071067811865475,
+      0.7071067811865476,
       0,
       0,
     ],
@@ -73,15 +73,15 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "0.75–1",
-      "x": 175,
-      "y": 397,
+      "text": "0.75...1",
+      "x": 0,
+      "y": 0,
     },
     "transform": Array [
-      1,
-      0,
-      0,
-      1,
+      0.7071067811865476,
+      0.7071067811865475,
+      -0.7071067811865475,
+      0.7071067811865476,
       0,
       0,
     ],
@@ -114,7 +114,7 @@ Array [
       "maxWidth": null,
       "text": "0",
       "x": 3,
-      "y": 370,
+      "y": 340,
     },
     "transform": Array [
       1,
@@ -144,7 +144,7 @@ Array [
         Object {
           "props": Object {
             "x": 13,
-            "y": 370,
+            "y": 340,
           },
           "transform": Array [
             1,
@@ -159,7 +159,7 @@ Array [
         Object {
           "props": Object {
             "x": 200,
-            "y": 370,
+            "y": 340,
           },
           "transform": Array [
             1,
@@ -188,7 +188,7 @@ Array [
       "maxWidth": null,
       "text": "20",
       "x": 3,
-      "y": 296,
+      "y": 272,
     },
     "transform": Array [
       1,
@@ -218,7 +218,7 @@ Array [
         Object {
           "props": Object {
             "x": 13,
-            "y": 296,
+            "y": 272,
           },
           "transform": Array [
             1,
@@ -233,7 +233,7 @@ Array [
         Object {
           "props": Object {
             "x": 200,
-            "y": 296,
+            "y": 272,
           },
           "transform": Array [
             1,
@@ -262,7 +262,7 @@ Array [
       "maxWidth": null,
       "text": "40",
       "x": 3,
-      "y": 222,
+      "y": 204,
     },
     "transform": Array [
       1,
@@ -292,7 +292,7 @@ Array [
         Object {
           "props": Object {
             "x": 13,
-            "y": 222,
+            "y": 204,
           },
           "transform": Array [
             1,
@@ -307,7 +307,7 @@ Array [
         Object {
           "props": Object {
             "x": 200,
-            "y": 222,
+            "y": 204,
           },
           "transform": Array [
             1,
@@ -336,7 +336,7 @@ Array [
       "maxWidth": null,
       "text": "60",
       "x": 3,
-      "y": 148,
+      "y": 136,
     },
     "transform": Array [
       1,
@@ -366,7 +366,7 @@ Array [
         Object {
           "props": Object {
             "x": 13,
-            "y": 148,
+            "y": 136,
           },
           "transform": Array [
             1,
@@ -381,7 +381,7 @@ Array [
         Object {
           "props": Object {
             "x": 200,
-            "y": 148,
+            "y": 136,
           },
           "transform": Array [
             1,
@@ -410,7 +410,7 @@ Array [
       "maxWidth": null,
       "text": "80",
       "x": 3,
-      "y": 74,
+      "y": 68,
     },
     "transform": Array [
       1,
@@ -440,7 +440,7 @@ Array [
         Object {
           "props": Object {
             "x": 13,
-            "y": 74,
+            "y": 68,
           },
           "transform": Array [
             1,
@@ -455,7 +455,7 @@ Array [
         Object {
           "props": Object {
             "x": 200,
-            "y": 74,
+            "y": 68,
           },
           "transform": Array [
             1,
@@ -556,77 +556,77 @@ Array [
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "0–0.25",
-      "x": 27.625,
-      "y": 397,
+      "text": "0...0.25",
+      "x": 0,
+      "y": 0,
     },
     "transform": Array [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
+      0.7071067811865476,
+      0.7071067811865475,
+      -0.7071067811865475,
+      0.7071067811865476,
+      41.375,
+      350,
     ],
     "type": "fillText",
   },
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "0.25–0.5",
-      "x": 76.875,
-      "y": 397,
+      "text": "0.25...0.5",
+      "x": 0,
+      "y": 0,
     },
     "transform": Array [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
+      0.7071067811865476,
+      0.7071067811865475,
+      -0.7071067811865475,
+      0.7071067811865476,
+      78.125,
+      350,
     ],
     "type": "fillText",
   },
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "0.5–0.75",
-      "x": 126.125,
-      "y": 397,
+      "text": "0.5...0.75",
+      "x": 0,
+      "y": 0,
     },
     "transform": Array [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
+      0.7071067811865476,
+      0.7071067811865475,
+      -0.7071067811865475,
+      0.7071067811865476,
+      114.875,
+      350,
     ],
     "type": "fillText",
   },
   Object {
     "props": Object {
       "maxWidth": null,
-      "text": "0.75–1",
-      "x": 175.375,
-      "y": 397,
+      "text": "0.75...1",
+      "x": 0,
+      "y": 0,
     },
     "transform": Array [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
+      0.7071067811865476,
+      0.7071067811865475,
+      -0.7071067811865475,
+      0.7071067811865476,
+      151.625,
+      350,
     ],
     "type": "fillText",
   },
   Object {
     "props": Object {
-      "height": 3.7,
-      "width": 39.400000000000006,
-      "x": 7.925,
-      "y": 366.3,
+      "height": 3.4,
+      "width": 29.400000000000002,
+      "x": 26.675,
+      "y": 336.6,
     },
     "transform": Array [
       1,
@@ -641,9 +641,9 @@ Array [
   Object {
     "props": Object {
       "height": 0,
-      "width": 39.400000000000006,
-      "x": 57.17500000000001,
-      "y": 370,
+      "width": 29.400000000000002,
+      "x": 63.425000000000004,
+      "y": 340,
     },
     "transform": Array [
       1,
@@ -658,9 +658,9 @@ Array [
   Object {
     "props": Object {
       "height": 0,
-      "width": 39.400000000000006,
-      "x": 106.425,
-      "y": 370,
+      "width": 29.400000000000002,
+      "x": 100.175,
+      "y": 340,
     },
     "transform": Array [
       1,
@@ -674,10 +674,10 @@ Array [
   },
   Object {
     "props": Object {
-      "height": 3.7,
-      "width": 39.400000000000006,
-      "x": 155.675,
-      "y": 366.3,
+      "height": 3.4,
+      "width": 29.400000000000002,
+      "x": 136.925,
+      "y": 336.6,
     },
     "transform": Array [
       1,
@@ -716,7 +716,7 @@ Array [
       "maxWidth": null,
       "text": "0",
       "x": 2,
-      "y": 370,
+      "y": 340,
     },
     "transform": Array [
       1,
@@ -746,7 +746,7 @@ Array [
         Object {
           "props": Object {
             "x": 12,
-            "y": 370,
+            "y": 340,
           },
           "transform": Array [
             1,
@@ -761,7 +761,7 @@ Array [
         Object {
           "props": Object {
             "x": 200,
-            "y": 370,
+            "y": 340,
           },
           "transform": Array [
             1,
@@ -790,7 +790,7 @@ Array [
       "maxWidth": null,
       "text": "2",
       "x": 2,
-      "y": 296,
+      "y": 272,
     },
     "transform": Array [
       1,
@@ -820,7 +820,7 @@ Array [
         Object {
           "props": Object {
             "x": 12,
-            "y": 296,
+            "y": 272,
           },
           "transform": Array [
             1,
@@ -835,7 +835,7 @@ Array [
         Object {
           "props": Object {
             "x": 200,
-            "y": 296,
+            "y": 272,
           },
           "transform": Array [
             1,
@@ -864,7 +864,7 @@ Array [
       "maxWidth": null,
       "text": "4",
       "x": 2,
-      "y": 222,
+      "y": 204,
     },
     "transform": Array [
       1,
@@ -894,7 +894,7 @@ Array [
         Object {
           "props": Object {
             "x": 12,
-            "y": 222,
+            "y": 204,
           },
           "transform": Array [
             1,
@@ -909,7 +909,7 @@ Array [
         Object {
           "props": Object {
             "x": 200,
-            "y": 222,
+            "y": 204,
           },
           "transform": Array [
             1,
@@ -938,7 +938,7 @@ Array [
       "maxWidth": null,
       "text": "6",
       "x": 2,
-      "y": 148,
+      "y": 136,
     },
     "transform": Array [
       1,
@@ -968,7 +968,7 @@ Array [
         Object {
           "props": Object {
             "x": 12,
-            "y": 148,
+            "y": 136,
           },
           "transform": Array [
             1,
@@ -983,7 +983,7 @@ Array [
         Object {
           "props": Object {
             "x": 200,
-            "y": 148,
+            "y": 136,
           },
           "transform": Array [
             1,
@@ -1012,7 +1012,7 @@ Array [
       "maxWidth": null,
       "text": "8",
       "x": 2,
-      "y": 74,
+      "y": 68,
     },
     "transform": Array [
       1,
@@ -1042,7 +1042,7 @@ Array [
         Object {
           "props": Object {
             "x": 12,
-            "y": 74,
+            "y": 68,
           },
           "transform": Array [
             1,
@@ -1057,7 +1057,7 @@ Array [
         Object {
           "props": Object {
             "x": 200,
-            "y": 74,
+            "y": 68,
           },
           "transform": Array [
             1,
@@ -1159,16 +1159,16 @@ Array [
     "props": Object {
       "maxWidth": null,
       "text": "1",
-      "x": 35.00000000000001,
-      "y": 397,
+      "x": 0,
+      "y": 0,
     },
     "transform": Array [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
+      0.7071067811865476,
+      0.7071067811865475,
+      -0.7071067811865475,
+      0.7071067811865476,
+      46.66666666666667,
+      350,
     ],
     "type": "fillText",
   },
@@ -1176,16 +1176,16 @@ Array [
     "props": Object {
       "maxWidth": null,
       "text": "2",
-      "x": 101,
-      "y": 397,
+      "x": 0,
+      "y": 0,
     },
     "transform": Array [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
+      0.7071067811865476,
+      0.7071067811865475,
+      -0.7071067811865475,
+      0.7071067811865476,
+      96,
+      350,
     ],
     "type": "fillText",
   },
@@ -1193,25 +1193,25 @@ Array [
     "props": Object {
       "maxWidth": null,
       "text": "3",
-      "x": 167.00000000000003,
-      "y": 397,
+      "x": 0,
+      "y": 0,
     },
     "transform": Array [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
+      0.7071067811865476,
+      0.7071067811865475,
+      -0.7071067811865475,
+      0.7071067811865476,
+      145.33333333333334,
+      350,
     ],
     "type": "fillText",
   },
   Object {
     "props": Object {
-      "height": 111,
-      "width": 52.800000000000004,
-      "x": 8.6,
-      "y": 259,
+      "height": 102,
+      "width": 39.46666666666667,
+      "x": 26.933333333333334,
+      "y": 238,
     },
     "transform": Array [
       1,
@@ -1225,10 +1225,10 @@ Array [
   },
   Object {
     "props": Object {
-      "height": 74,
-      "width": 52.800000000000004,
-      "x": 74.60000000000001,
-      "y": 296,
+      "height": 68,
+      "width": 39.46666666666667,
+      "x": 76.26666666666668,
+      "y": 272,
     },
     "transform": Array [
       1,
@@ -1242,10 +1242,10 @@ Array [
   },
   Object {
     "props": Object {
-      "height": 74,
-      "width": 52.800000000000004,
-      "x": 140.6,
-      "y": 296,
+      "height": 68,
+      "width": 39.46666666666667,
+      "x": 125.6,
+      "y": 272,
     },
     "transform": Array [
       1,
