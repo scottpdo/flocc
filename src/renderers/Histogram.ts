@@ -85,6 +85,11 @@ class Histogram implements Renderer {
     }
   }
 
+  /**
+   * Mount this renderer to a DOM element. Pass either a string representing a
+   * CSS selector matching the element (i.e. `"#element-id") or the element itself.
+   * @param {string | HTMLElement} el
+   */
   mount(el: string | HTMLElement): void {
     const container = typeof el === "string" ? document.querySelector(el) : el;
     if (container) {
