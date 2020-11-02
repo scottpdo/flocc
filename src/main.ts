@@ -14,6 +14,7 @@ export { CanvasRenderer } from "./renderers/CanvasRenderer";
 export { Histogram } from "./renderers/Histogram";
 export { LineChartRenderer } from "./renderers/LineChartRenderer";
 export { TableRenderer } from "./renderers/TableRenderer";
+export { Heatmap } from "./renderers/Heatmap";
 
 export * as utils from "./utils/utils";
 
