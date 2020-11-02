@@ -4,10 +4,22 @@
 import { Environment } from "../environments/Environment";
 import remap from "../utils/remap";
 
+const PADDING_AT_BOTTOM = 60;
+const PADDING_AT_LEFT = 60;
+
 interface HeatmapAxis extends NRange {
   buckets: number;
   key: string;
 }
+
+const isAxisObject = (obj: any): obj is HeatmapAxis => {
+  return (
+    obj &&
+    typeof obj !== "string" &&
+    obj.hasOwnProperty("buckets") &&
+    obj.hasOwnProperty("key")
+  );
+};
 
 interface HeatmapOptions {
   x: string | HeatmapAxis;
@@ -33,6 +45,9 @@ class Heatmap implements Renderer {
   opts: HeatmapOptions;
   width: number;
   height: number;
+  buckets: number[];
+  localMax: number;
+  lastUpdatedScale: Date;
 
   constructor(environment: Environment, opts?: HeatmapOptions) {
     this.environment = environment;
@@ -46,6 +61,12 @@ class Heatmap implements Renderer {
     this.canvas.style.width = width + "px";
     this.canvas.style.height = height + "px";
     environment.renderers.push(this);
+
+    this.buckets = new Array(this.getBuckets("x") * this.getBuckets("y")).fill(
+      0
+    );
+
+    this.drawMarkers();
   }
 
   /**
@@ -61,31 +82,143 @@ class Heatmap implements Renderer {
     }
   }
 
-  //   x(value: number): number {
-  //     const { width } = this;
-  //     return remap(value, 0, width, 0, width);
-  //   }
+  x(value: number): number {
+    const { width } = this;
+    return remap(value, 0, width, PADDING_AT_LEFT, width);
+  }
 
-  //   y() {}
+  y(value: number): number {
+    const { height } = this;
+    return remap(value, 0, height, 0, height - PADDING_AT_BOTTOM);
+  }
 
-  render() {
-    const { environment, canvas, width, height } = this;
+  getKey(axis: "x" | "y"): string {
+    const a = this.opts[axis];
+    if (isAxisObject(a)) {
+      return a.key;
+    } else {
+      return a;
+    }
+  }
+
+  getBuckets(axis: "x" | "y"): number {
+    const a = this.opts[axis];
+    if (isAxisObject(a)) return a.buckets;
+    return 10;
+  }
+
+  getMin(axis: "x" | "y"): number {
+    const a = this.opts[axis];
+    if (isAxisObject(a)) {
+      return a.min;
+    } else {
+      return 0;
+    }
+  }
+
+  getMax(axis: "x" | "y"): number {
+    const a = this.opts[axis];
+    if (isAxisObject(a)) {
+      return a.max;
+    } else {
+      return 1;
+    }
+  }
+
+  drawMarkers() {
+    const { canvas, width, height } = this;
     const context = canvas.getContext("2d");
-    const { x, y } = this.opts;
-    const xKey = typeof x === "string" ? x : x.key;
-    const yKey = typeof y === "string" ? y : y.key;
-    const xBuckets = typeof x === "string" ? 10 : x.buckets;
-    const yBuckets = typeof y === "string" ? 10 : y.buckets;
-    const xMin = typeof x === "string" ? 0 : x.min;
-    const yMin = typeof y === "string" ? 0 : y.min;
-    const xMax = typeof x === "string" ? 0 : x.max;
-    const yMax = typeof y === "string" ? 0 : y.max;
 
-    // calculate and fill buckets
-    const buckets = new Array(xBuckets * yBuckets).fill(0);
+    context.strokeStyle = "black";
+    context.lineWidth = 1;
+    context.moveTo(PADDING_AT_LEFT - 1, 0);
+    context.lineTo(PADDING_AT_LEFT - 1, height - PADDING_AT_BOTTOM + 1);
+    context.lineTo(width, height - PADDING_AT_BOTTOM + 1);
+    context.stroke();
 
-    let localMax = 0;
+    context.lineWidth = 0;
+    const gradient = context.createLinearGradient(10, 0, PADDING_AT_LEFT, 0);
+    gradient.addColorStop(0, "white");
+    gradient.addColorStop(1, "black");
+    context.fillStyle = gradient;
+    context.fillRect(
+      10,
+      height - PADDING_AT_BOTTOM + 10,
+      PADDING_AT_LEFT - 20,
+      20
+    );
+  }
 
+  updateScale() {
+    const { canvas, width, height } = this;
+    const context = canvas.getContext("2d");
+
+    if (!this.lastUpdatedScale || +new Date() - +this.lastUpdatedScale > 250) {
+      context.clearRect(0, height - 30, PADDING_AT_LEFT, 30);
+
+      context.fillStyle = "black";
+      context.font = `${12 * window.devicePixelRatio}px Helvetica`;
+      context.textAlign = "center";
+      context.fillText("0", 10, height - 15);
+      context.fillText(
+        this.localMax.toString(),
+        PADDING_AT_LEFT - 10,
+        height - 15
+      );
+
+      this.lastUpdatedScale = new Date();
+    }
+  }
+
+  drawRectangles() {
+    const { canvas, width, height } = this;
+    const context = canvas.getContext("2d");
+    const xBuckets = this.getBuckets("x");
+    const yBuckets = this.getBuckets("y");
+
+    // clear background by drawing white rectangle
+    context.fillStyle = "white";
+    context.fillRect(PADDING_AT_LEFT, 0, width, height - PADDING_AT_BOTTOM);
+
+    for (let i = 0; i < this.buckets.length; i++) {
+      // alpha corresponds to the number of agents in the bucket
+      const a = remap(this.buckets[i], 0, this.localMax, 0, 1);
+      // always a black rectangle, just at different opacities
+      context.fillStyle = `rgba(0, 0, 0, ${a})`;
+      const w = width / xBuckets;
+      const h = height / yBuckets;
+      const x = w * (i % xBuckets);
+      const y = h * ((i / xBuckets) | 0);
+      context.fillRect(
+        this.x(x),
+        this.y(y),
+        w * ((width - PADDING_AT_LEFT) / width),
+        h * ((height - PADDING_AT_BOTTOM) / height)
+      );
+    }
+  }
+
+  resetBuckets() {
+    for (let i = 0; i < this.getBuckets("x") * this.getBuckets("y"); i++) {
+      this.buckets[i] = 0;
+    }
+  }
+
+  updateBuckets() {
+    const { environment } = this;
+    const xKey = this.getKey("x");
+    const yKey = this.getKey("y");
+    const xMin = this.getMin("x");
+    const yMin = this.getMin("y");
+    const xMax = this.getMax("x");
+    const yMax = this.getMax("y");
+    const xBuckets = this.getBuckets("x");
+    const yBuckets = this.getBuckets("y");
+
+    // reset localMax
+    this.localMax = 0;
+
+    // loop over agents and fill appropriate buckets
     environment.getAgents().forEach(agent => {
       const xValue = agent.get(xKey);
       const yValue = agent.get(yKey);
@@ -98,24 +231,22 @@ class Heatmap implements Renderer {
         yBucket < yBuckets
       ) {
         const index = xBucket + yBucket * xBuckets;
-        buckets[index]++;
-        if (buckets[index] > localMax) localMax = buckets[index];
+        this.buckets[index]++;
+        if (this.buckets[index] > this.localMax) {
+          this.localMax = this.buckets[index];
+        }
       }
     });
+  }
 
-    // now draw
-    context.clearRect(0, 0, width, height);
-    context.fillStyle = "white";
-    context.fillRect(0, 0, width, height);
-    buckets.forEach((bucket, i) => {
-      const a = remap(bucket, 0, localMax, 0, 1);
-      context.fillStyle = `rgba(0, 0, 0, ${a})`;
-      const w = width / xBuckets;
-      const h = height / yBuckets;
-      const x = w * (i % xBuckets);
-      const y = h * ((i / xBuckets) | 0);
-      context.fillRect(x, y, w, h);
-    });
+  render() {
+    this.updateBuckets();
+
+    this.drawRectangles();
+    this.updateScale();
+
+    // reset
+    this.resetBuckets();
   }
 }
 
