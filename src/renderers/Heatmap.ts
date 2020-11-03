@@ -2,7 +2,6 @@
 /// <reference path="../types/Point.d.ts" />
 /// <reference path="../types/NRange.d.ts" />
 import { Environment } from "../environments/Environment";
-import extractRoundNumbers from "../utils/extractRoundNumbers";
 import remap from "../utils/remap";
 
 const PADDING_AT_BOTTOM = 60;
@@ -14,12 +13,7 @@ interface HeatmapAxis extends NRange {
 }
 
 const isAxisObject = (obj: any): obj is HeatmapAxis => {
-  return (
-    obj &&
-    typeof obj !== "string" &&
-    obj.hasOwnProperty("buckets") &&
-    obj.hasOwnProperty("key")
-  );
+  return obj && typeof obj !== "string";
 };
 
 interface HeatmapOptions {
@@ -68,6 +62,7 @@ class Heatmap implements Renderer {
       0
     );
 
+    console.log(this.opts);
     this.drawMarkers();
   }
 
@@ -84,14 +79,34 @@ class Heatmap implements Renderer {
     }
   }
 
+  /**
+   * Map a value (on the range x-min to x-max) onto canvas space to draw it along the x-axis.
+   * @param value
+   */
   x(value: number): number {
     const { width } = this;
-    return remap(value, 0, width, PADDING_AT_LEFT, width);
+    return remap(
+      value,
+      this.getMin("x"),
+      this.getMax("x"),
+      PADDING_AT_LEFT,
+      width
+    );
   }
 
+  /**
+   * Map a value (on the range y-min to y-max) onto canvas space to draw it along the y-axis.
+   * @param value
+   */
   y(value: number): number {
     const { height } = this;
-    return remap(value, 0, height, height - PADDING_AT_BOTTOM, 0);
+    return remap(
+      value,
+      this.getMin("y"),
+      this.getMax("y"),
+      height - PADDING_AT_BOTTOM,
+      0
+    );
   }
 
   getKey(axis: "x" | "y"): string {
@@ -105,13 +120,13 @@ class Heatmap implements Renderer {
 
   getBuckets(axis: "x" | "y"): number {
     const a = this.opts[axis];
-    if (isAxisObject(a)) return a.buckets;
+    if (isAxisObject(a) && a.hasOwnProperty("buckets")) return a.buckets;
     return 10;
   }
 
   getMin(axis: "x" | "y"): number {
     const a = this.opts[axis];
-    if (isAxisObject(a)) {
+    if (isAxisObject(a) && a.hasOwnProperty("min")) {
       return a.min;
     } else {
       return 0;
@@ -120,7 +135,7 @@ class Heatmap implements Renderer {
 
   getMax(axis: "x" | "y"): number {
     const a = this.opts[axis];
-    if (isAxisObject(a)) {
+    if (isAxisObject(a) && a.hasOwnProperty("max")) {
       return a.max;
     } else {
       return 1;
@@ -139,24 +154,30 @@ class Heatmap implements Renderer {
     context.stroke();
 
     context.lineWidth = 0;
-    const gradient = context.createLinearGradient(10, 0, PADDING_AT_LEFT, 0);
+    const gradient = context.createLinearGradient(
+      10,
+      0,
+      PADDING_AT_LEFT - 10,
+      0
+    );
     gradient.addColorStop(0, "white");
     gradient.addColorStop(1, "black");
     context.fillStyle = gradient;
     context.fillRect(
       10,
-      height - PADDING_AT_BOTTOM + 10,
-      PADDING_AT_LEFT - 20,
+      height - PADDING_AT_BOTTOM + 20,
+      PADDING_AT_LEFT - 24,
       20
     );
 
     context.fillStyle = "black";
 
-    extractRoundNumbers({
-      min: this.getMin("x"),
-      max: this.getMax("x")
-    }).forEach(marker => {
-      if (this.x(marker) + 10 > width) return;
+    for (
+      let marker = this.getMin("x");
+      marker <= this.getMax("x");
+      marker += (this.getMax("x") - this.getMin("x")) / this.getBuckets("x")
+    ) {
+      if (this.x(marker) + 10 > width) continue;
       context.moveTo(this.x(marker), height - PADDING_AT_BOTTOM);
       context.lineTo(this.x(marker), height - PADDING_AT_BOTTOM + 10);
       context.stroke();
@@ -164,17 +185,18 @@ class Heatmap implements Renderer {
       context.font = `${12 * window.devicePixelRatio}px Helvetica`;
       context.textAlign = "center";
       context.fillText(
-        marker.toString(),
+        marker.toLocaleString(),
         this.x(marker),
         height - PADDING_AT_BOTTOM + 24
       );
-    });
+    }
 
-    extractRoundNumbers({
-      min: this.getMin("y"),
-      max: this.getMax("y")
-    }).forEach(marker => {
-      if (this.y(marker) - 10 < 0) return;
+    for (
+      let marker = this.getMin("y");
+      marker <= this.getMax("y");
+      marker += (this.getMax("y") - this.getMin("y")) / this.getBuckets("y")
+    ) {
+      if (this.y(marker) - 10 < 0) continue;
       context.moveTo(PADDING_AT_LEFT, this.y(marker));
       context.lineTo(PADDING_AT_LEFT - 10, this.y(marker));
       context.stroke();
@@ -182,8 +204,12 @@ class Heatmap implements Renderer {
       context.font = `${12 * window.devicePixelRatio}px Helvetica`;
       context.textAlign = "right";
       context.textBaseline = "middle";
-      context.fillText(marker.toString(), PADDING_AT_LEFT - 30, this.y(marker));
-    });
+      context.fillText(
+        marker.toLocaleString(),
+        PADDING_AT_LEFT - 14,
+        this.y(marker)
+      );
+    }
   }
 
   updateScale() {
@@ -202,14 +228,14 @@ class Heatmap implements Renderer {
     }
 
     if (!this.lastUpdatedScale || +new Date() - +this.lastUpdatedScale > 250) {
-      context.clearRect(0, height - 30, PADDING_AT_LEFT, 30);
+      context.clearRect(0, height - 20, PADDING_AT_LEFT, 20);
 
       context.fillStyle = "black";
       context.font = `${12 * window.devicePixelRatio}px Helvetica`;
       context.textAlign = "center";
       context.textBaseline = "bottom";
-      context.fillText("0", 10, height - 15);
-      context.fillText(max.toString(), PADDING_AT_LEFT - 10, height - 15);
+      context.fillText("0", 10, height - 5);
+      context.fillText(max.toString(), PADDING_AT_LEFT - 16, height - 5);
 
       this.lastUpdatedScale = new Date();
     }
@@ -238,8 +264,8 @@ class Heatmap implements Renderer {
       const x = w * (i % xBuckets);
       const y = h * ((i / xBuckets) | 0);
       context.fillRect(
-        this.x(x),
-        this.y(y) - h * ((height - PADDING_AT_BOTTOM) / height),
+        PADDING_AT_LEFT + (x * (width - PADDING_AT_LEFT)) / width,
+        (y * (height - PADDING_AT_BOTTOM)) / height,
         w * ((width - PADDING_AT_LEFT) / width),
         h * ((height - PADDING_AT_BOTTOM) / height)
       );
