@@ -91,7 +91,7 @@ class Heatmap implements Renderer {
 
   y(value: number): number {
     const { height } = this;
-    return remap(value, 0, height, 0, height - PADDING_AT_BOTTOM);
+    return remap(value, 0, height, height - PADDING_AT_BOTTOM, 0);
   }
 
   getKey(axis: "x" | "y"): string {
@@ -150,6 +150,8 @@ class Heatmap implements Renderer {
       20
     );
 
+    context.fillStyle = "black";
+
     extractRoundNumbers({
       min: this.getMin("x"),
       max: this.getMax("x")
@@ -158,6 +160,14 @@ class Heatmap implements Renderer {
       context.moveTo(this.x(marker), height - PADDING_AT_BOTTOM);
       context.lineTo(this.x(marker), height - PADDING_AT_BOTTOM + 10);
       context.stroke();
+
+      context.font = `${12 * window.devicePixelRatio}px Helvetica`;
+      context.textAlign = "center";
+      context.fillText(
+        marker.toString(),
+        this.x(marker),
+        height - PADDING_AT_BOTTOM + 24
+      );
     });
 
     extractRoundNumbers({
@@ -168,11 +178,16 @@ class Heatmap implements Renderer {
       context.moveTo(PADDING_AT_LEFT, this.y(marker));
       context.lineTo(PADDING_AT_LEFT - 10, this.y(marker));
       context.stroke();
+
+      context.font = `${12 * window.devicePixelRatio}px Helvetica`;
+      context.textAlign = "right";
+      context.textBaseline = "middle";
+      context.fillText(marker.toString(), PADDING_AT_LEFT - 30, this.y(marker));
     });
   }
 
   updateScale() {
-    const { canvas, environment, width, height } = this;
+    const { canvas, environment, height } = this;
     const { scale } = this.opts;
     const context = canvas.getContext("2d");
 
@@ -192,6 +207,7 @@ class Heatmap implements Renderer {
       context.fillStyle = "black";
       context.font = `${12 * window.devicePixelRatio}px Helvetica`;
       context.textAlign = "center";
+      context.textBaseline = "bottom";
       context.fillText("0", 10, height - 15);
       context.fillText(max.toString(), PADDING_AT_LEFT - 10, height - 15);
 
@@ -223,7 +239,7 @@ class Heatmap implements Renderer {
       const y = h * ((i / xBuckets) | 0);
       context.fillRect(
         this.x(x),
-        this.y(y),
+        this.y(y) - h * ((height - PADDING_AT_BOTTOM) / height),
         w * ((width - PADDING_AT_LEFT) / width),
         h * ((height - PADDING_AT_BOTTOM) / height)
       );
