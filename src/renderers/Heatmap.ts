@@ -2,6 +2,7 @@
 /// <reference path="../types/Point.d.ts" />
 /// <reference path="../types/NRange.d.ts" />
 import { Environment } from "../environments/Environment";
+import extractRoundNumbers from "../utils/extractRoundNumbers";
 import remap from "../utils/remap";
 
 const PADDING_AT_BOTTOM = 60;
@@ -24,6 +25,7 @@ const isAxisObject = (obj: any): obj is HeatmapAxis => {
 interface HeatmapOptions {
   x: string | HeatmapAxis;
   y: string | HeatmapAxis;
+  max?: number;
   height: number;
   width: number;
   scale: "relative" | "fixed";
@@ -34,7 +36,7 @@ const defaultHeatmapOptions: HeatmapOptions = {
   y: "y",
   height: 500,
   width: 500,
-  scale: "fixed"
+  scale: "relative"
 };
 
 class Heatmap implements Renderer {
@@ -42,7 +44,7 @@ class Heatmap implements Renderer {
   environment: Environment;
   /** @member HTMLCanvasElement */
   canvas: HTMLCanvasElement = document.createElement("canvas");
-  opts: HeatmapOptions;
+  opts: HeatmapOptions = defaultHeatmapOptions;
   width: number;
   height: number;
   buckets: number[];
@@ -147,11 +149,42 @@ class Heatmap implements Renderer {
       PADDING_AT_LEFT - 20,
       20
     );
+
+    extractRoundNumbers({
+      min: this.getMin("x"),
+      max: this.getMax("x")
+    }).forEach(marker => {
+      if (this.x(marker) + 10 > width) return;
+      context.moveTo(this.x(marker), height - PADDING_AT_BOTTOM);
+      context.lineTo(this.x(marker), height - PADDING_AT_BOTTOM + 10);
+      context.stroke();
+    });
+
+    extractRoundNumbers({
+      min: this.getMin("y"),
+      max: this.getMax("y")
+    }).forEach(marker => {
+      if (this.y(marker) - 10 < 0) return;
+      context.moveTo(PADDING_AT_LEFT, this.y(marker));
+      context.lineTo(PADDING_AT_LEFT - 10, this.y(marker));
+      context.stroke();
+    });
   }
 
   updateScale() {
-    const { canvas, width, height } = this;
+    const { canvas, environment, width, height } = this;
+    const { scale } = this.opts;
     const context = canvas.getContext("2d");
+
+    let max = scale === "relative" ? this.localMax : this.opts.max;
+    if (max === undefined) {
+      if (!this.lastUpdatedScale) {
+        console.warn(
+          "A Heatmap with the `scale` option set to 'fixed' should include a `max` option. Defaulting to the number of Agents currently in the Environment."
+        );
+      }
+      max = environment.getAgents().length;
+    }
 
     if (!this.lastUpdatedScale || +new Date() - +this.lastUpdatedScale > 250) {
       context.clearRect(0, height - 30, PADDING_AT_LEFT, 30);
@@ -160,21 +193,20 @@ class Heatmap implements Renderer {
       context.font = `${12 * window.devicePixelRatio}px Helvetica`;
       context.textAlign = "center";
       context.fillText("0", 10, height - 15);
-      context.fillText(
-        this.localMax.toString(),
-        PADDING_AT_LEFT - 10,
-        height - 15
-      );
+      context.fillText(max.toString(), PADDING_AT_LEFT - 10, height - 15);
 
       this.lastUpdatedScale = new Date();
     }
   }
 
   drawRectangles() {
-    const { canvas, width, height } = this;
+    const { canvas, environment, width, height } = this;
+    const { scale } = this.opts;
     const context = canvas.getContext("2d");
     const xBuckets = this.getBuckets("x");
     const yBuckets = this.getBuckets("y");
+    let max = scale === "relative" ? this.localMax : this.opts.max;
+    if (max === undefined) max = environment.getAgents().length;
 
     // clear background by drawing white rectangle
     context.fillStyle = "white";
@@ -182,7 +214,7 @@ class Heatmap implements Renderer {
 
     for (let i = 0; i < this.buckets.length; i++) {
       // alpha corresponds to the number of agents in the bucket
-      const a = remap(this.buckets[i], 0, this.localMax, 0, 1);
+      const a = remap(this.buckets[i], 0, max, 0, 1);
       // always a black rectangle, just at different opacities
       context.fillStyle = `rgba(0, 0, 0, ${a})`;
       const w = width / xBuckets;
