@@ -277,21 +277,27 @@ class Heatmap implements Renderer {
     context.fillStyle = from;
     context.fillRect(PADDING_AT_LEFT, 0, width, height - PADDING_AT_BOTTOM);
 
-    for (let i = 0; i < this.buckets.length; i++) {
-      // alpha corresponds to the number of agents in the bucket
-      const a = remap(this.buckets[i], 0, max, 0, 1);
-      context.fillStyle = to;
-      context.globalAlpha = a;
-      const w = width / xBuckets;
-      const h = height / yBuckets;
-      const x = w * (i % xBuckets);
-      const y = h * ((i / xBuckets) | 0);
-      context.fillRect(
-        PADDING_AT_LEFT + (x * (width - PADDING_AT_LEFT)) / width,
-        (y * (height - PADDING_AT_BOTTOM)) / height,
-        w * ((width - PADDING_AT_LEFT) / width),
-        h * ((height - PADDING_AT_BOTTOM) / height)
-      );
+    const w = width / xBuckets;
+    const h = height / yBuckets;
+
+    for (let row = 0; row < yBuckets; row++) {
+      for (let column = 0; column < xBuckets; column++) {
+        const index = row * xBuckets + column;
+        // alpha corresponds to the number of agents in the bucket
+        const a = remap(this.buckets[index], 0, max, 0, 1);
+        context.fillStyle = to;
+        context.globalAlpha = a;
+        context.fillRect(
+          this.x(
+            remap(column, 0, xBuckets, this.getMin("x"), this.getMax("x"))
+          ),
+          this.y(
+            remap(row, -1, yBuckets - 1, this.getMin("y"), this.getMax("y"))
+          ),
+          (w * (width - PADDING_AT_LEFT)) / width,
+          (h * (height - PADDING_AT_BOTTOM)) / height
+        );
+      }
     }
 
     context.globalAlpha = 1;

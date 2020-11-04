@@ -11,8 +11,8 @@
         environment.addAgent(new Agent({
             a: utils.uniform(),
             b: utils.uniform(),
-            c: utils.random(0, 100),
-            d: utils.random(0, 100)
+            c: utils.gaussian(50, 20),
+            d: utils.gaussian(75, 20)
         }));
     }
 
@@ -63,12 +63,12 @@
         width: 800,
         x: {
             key: 'c',
-            buckets: 2,
+            buckets: 8,
             max: 100
         },
         y: {
             key: 'd',
-            buckets: 4,
+            buckets: 8,
             min: 50,
             max: 150
         }
