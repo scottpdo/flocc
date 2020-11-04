@@ -19,6 +19,8 @@ const isAxisObject = (obj: any): obj is HeatmapAxis => {
 interface HeatmapOptions {
   x: string | HeatmapAxis;
   y: string | HeatmapAxis;
+  from: string;
+  to: string;
   max?: number;
   height: number;
   width: number;
@@ -26,6 +28,8 @@ interface HeatmapOptions {
 }
 
 const defaultHeatmapOptions: HeatmapOptions = {
+  from: "#fff",
+  to: "#000",
   x: "x",
   y: "y",
   height: 500,
@@ -144,6 +148,7 @@ class Heatmap implements Renderer {
 
   drawMarkers() {
     const { canvas, width, height } = this;
+    const { from, to } = this.opts;
     const context = canvas.getContext("2d");
 
     context.strokeStyle = "black";
@@ -160,8 +165,8 @@ class Heatmap implements Renderer {
       PADDING_AT_LEFT - 10,
       0
     );
-    gradient.addColorStop(0, "white");
-    gradient.addColorStop(1, "black");
+    gradient.addColorStop(0, from);
+    gradient.addColorStop(1, to);
     context.fillStyle = gradient;
     context.fillRect(
       10,
@@ -172,16 +177,21 @@ class Heatmap implements Renderer {
 
     context.fillStyle = "black";
 
+    let step = (this.getMax("x") - this.getMin("x")) / this.getBuckets("x");
+    let originalStep = step;
+    if (this.x(step) - this.x(0) < 35) step *= 2;
+
     for (
       let marker = this.getMin("x");
       marker <= this.getMax("x");
-      marker += (this.getMax("x") - this.getMin("x")) / this.getBuckets("x")
+      marker += originalStep
     ) {
       if (this.x(marker) + 10 > width) continue;
       context.moveTo(this.x(marker), height - PADDING_AT_BOTTOM);
       context.lineTo(this.x(marker), height - PADDING_AT_BOTTOM + 10);
       context.stroke();
 
+      // if (marker % originalStep < 0.001) {
       context.font = `${12 * window.devicePixelRatio}px Helvetica`;
       context.textAlign = "center";
       context.fillText(
@@ -189,12 +199,18 @@ class Heatmap implements Renderer {
         this.x(marker),
         height - PADDING_AT_BOTTOM + 24
       );
+      // }
+    }
+
+    step = (this.getMax("y") - this.getMin("y")) / this.getBuckets("y");
+    if (this.y(step) - this.y(0) < 35) {
+      step *= 2;
     }
 
     for (
       let marker = this.getMin("y");
       marker <= this.getMax("y");
-      marker += (this.getMax("y") - this.getMin("y")) / this.getBuckets("y")
+      marker += step
     ) {
       if (this.y(marker) - 10 < 0) continue;
       context.moveTo(PADDING_AT_LEFT, this.y(marker));
@@ -243,22 +259,22 @@ class Heatmap implements Renderer {
 
   drawRectangles() {
     const { canvas, environment, width, height } = this;
-    const { scale } = this.opts;
+    const { scale, from, to } = this.opts;
     const context = canvas.getContext("2d");
     const xBuckets = this.getBuckets("x");
     const yBuckets = this.getBuckets("y");
     let max = scale === "relative" ? this.localMax : this.opts.max;
     if (max === undefined) max = environment.getAgents().length;
 
-    // clear background by drawing white rectangle
-    context.fillStyle = "white";
+    // clear background by drawing background rectangle
+    context.fillStyle = from;
     context.fillRect(PADDING_AT_LEFT, 0, width, height - PADDING_AT_BOTTOM);
 
     for (let i = 0; i < this.buckets.length; i++) {
       // alpha corresponds to the number of agents in the bucket
       const a = remap(this.buckets[i], 0, max, 0, 1);
-      // always a black rectangle, just at different opacities
-      context.fillStyle = `rgba(0, 0, 0, ${a})`;
+      context.fillStyle = to;
+      context.globalAlpha = a;
       const w = width / xBuckets;
       const h = height / yBuckets;
       const x = w * (i % xBuckets);
@@ -270,6 +286,8 @@ class Heatmap implements Renderer {
         h * ((height - PADDING_AT_BOTTOM) / height)
       );
     }
+
+    context.globalAlpha = 1;
   }
 
   resetBuckets() {
