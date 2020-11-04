@@ -179,7 +179,7 @@ class Heatmap implements Renderer {
 
     let step = (this.getMax("x") - this.getMin("x")) / this.getBuckets("x");
     let originalStep = step;
-    if (this.x(step) - this.x(0) < 35) step *= 2;
+    while (Math.abs(this.x(step) - this.x(0)) < 35) step *= 2;
 
     for (
       let marker = this.getMin("x");
@@ -191,40 +191,47 @@ class Heatmap implements Renderer {
       context.lineTo(this.x(marker), height - PADDING_AT_BOTTOM + 10);
       context.stroke();
 
-      // if (marker % originalStep < 0.001) {
-      context.font = `${12 * window.devicePixelRatio}px Helvetica`;
-      context.textAlign = "center";
-      context.fillText(
-        marker.toLocaleString(),
-        this.x(marker),
-        height - PADDING_AT_BOTTOM + 24
-      );
-      // }
+      if (
+        Math.abs((marker / step) % 1) < 0.001 ||
+        Math.abs(((marker / step) % 1) - 1) < 0.001
+      ) {
+        context.font = `${12 * window.devicePixelRatio}px Helvetica`;
+        context.textAlign = "center";
+        context.fillText(
+          marker.toLocaleString(),
+          this.x(marker),
+          height - PADDING_AT_BOTTOM + 24
+        );
+      }
     }
 
     step = (this.getMax("y") - this.getMin("y")) / this.getBuckets("y");
-    if (this.y(step) - this.y(0) < 35) {
-      step *= 2;
-    }
+    originalStep = step;
+    while (Math.abs(this.y(step) - this.y(0)) < 20) step *= 2;
 
     for (
       let marker = this.getMin("y");
       marker <= this.getMax("y");
-      marker += step
+      marker += originalStep
     ) {
       if (this.y(marker) - 10 < 0) continue;
       context.moveTo(PADDING_AT_LEFT, this.y(marker));
       context.lineTo(PADDING_AT_LEFT - 10, this.y(marker));
       context.stroke();
 
-      context.font = `${12 * window.devicePixelRatio}px Helvetica`;
-      context.textAlign = "right";
-      context.textBaseline = "middle";
-      context.fillText(
-        marker.toLocaleString(),
-        PADDING_AT_LEFT - 14,
-        this.y(marker)
-      );
+      if (
+        Math.abs((marker / step) % 1) < 0.001 ||
+        Math.abs(((marker / step) % 1) - 1) < 0.001
+      ) {
+        context.font = `${12 * window.devicePixelRatio}px Helvetica`;
+        context.textAlign = "right";
+        context.textBaseline = "middle";
+        context.fillText(
+          marker.toLocaleString(),
+          PADDING_AT_LEFT - 14,
+          this.y(marker)
+        );
+      }
     }
   }
 
