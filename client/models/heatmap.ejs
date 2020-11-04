@@ -1,38 +1,80 @@
 <div id="hm1" style="display: inline-block;"></div>
 <div id="hm2" style="display: inline-block;"></div>
+<div id="hm3" style="display: inline-block;"></div>
+<div id="hm4" style="display: inline-block;"></div>
 
 <script>
     utils.seed(1);
     const environment = new Environment();
+
+    for (let i = 0; i < 200; i++) {
+        environment.addAgent(new Agent({
+            a: utils.uniform(),
+            b: utils.uniform(),
+            c: utils.random(0, 100),
+            d: utils.random(0, 100)
+        }));
+    }
+
     const heatmap1 = new Heatmap(environment, {
         x: 'a',
         y: 'b'
     });
 
-    for (let i = 0; i < 200; i++) {
-        environment.addAgent(new Agent({
-            a: utils.uniform(),
-            b: utils.uniform()
-        }));
-    }
-
     heatmap1.mount('#hm1');
 
     const heatmap2 = new Heatmap(environment, {
+        from: 'blue',
+        to: 'yellow',
         x: {
             key: 'a',
-            buckets: 5,
-            min: 0.5,
-            max: 1
+            buckets: 14,
+            min: -0.2,
+            max: 1.2,
         },
         y: {
             key: 'b',
-            max: 0.75,
-            buckets: 6
+            buckets: 14,
+            min: -0.2,
+            max: 1.2
         }
     });
 
     heatmap2.mount('#hm2');
+
+    const heatmap3 = new Heatmap(environment, {
+        from: 'green',
+        to: '#ffe',
+        height: 200,
+        width: 450,
+        x: {
+            key: 'c',
+            max: 100
+        },
+        y: {
+            key: 'd',
+            max: 100
+        }
+    });
+
+    heatmap3.mount('#hm3');
+
+    const heatmap4 = new Heatmap(environment, {
+        width: 800,
+        x: {
+            key: 'c',
+            buckets: 2,
+            max: 100
+        },
+        y: {
+            key: 'd',
+            buckets: 4,
+            min: 50,
+            max: 150
+        }
+    });
+
+    heatmap4.mount('#hm4');
 
     environment.tick();
 </script>
