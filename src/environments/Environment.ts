@@ -2,11 +2,11 @@
 /// <reference path="./EnvironmentHelper.d.ts" />
 /// <reference path="../types/Data.d.ts" />
 import { Agent } from "../agents/Agent";
-import { Network } from "../helpers/Network";
 import shuffle from "../utils/shuffle";
+import { Network } from "../helpers/Network";
 import { KDTree } from "../helpers/KDTree";
 import { Terrain } from "../helpers/Terrain";
-import { AbstractRenderer } from "../renderers/AbstractRenderer";
+import type { AbstractRenderer } from "../renderers/AbstractRenderer";
 
 interface Helpers {
   kdtree: KDTree;

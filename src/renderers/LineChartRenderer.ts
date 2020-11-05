@@ -1,10 +1,10 @@
 /// <reference path="../types/Point.d.ts" />
 /// <reference path="../types/NRange.d.ts" />
-import { Environment } from "../environments/Environment";
 import { NumArray } from "../helpers/NumArray";
 import mean from "../utils/mean";
 import extractRoundNumbers from "../utils/extractRoundNumbers";
 import { AbstractRenderer } from "./AbstractRenderer";
+import type { Environment } from "../environments/Environment";
 
 const PADDING_BOTTOM = 10;
 const lineDash = [10, 10];

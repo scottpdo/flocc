@@ -1,7 +1,7 @@
 /// <reference path="./CanvasRendererOptions.d.ts" />
-import { Environment } from "../environments/Environment";
-import { Agent } from "../agents/Agent";
 import { AbstractRenderer } from "./AbstractRenderer";
+import type { Environment } from "../environments/Environment";
+import type { Agent } from "../agents/Agent";
 
 const defaultOptions: CanvasRendererOptions = {
   autoPosition: false,

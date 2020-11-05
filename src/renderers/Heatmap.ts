@@ -1,8 +1,8 @@
 /// <reference path="../types/Point.d.ts" />
 /// <reference path="../types/NRange.d.ts" />
-import { Environment } from "../environments/Environment";
 import remap from "../utils/remap";
 import { AbstractRenderer } from "./AbstractRenderer";
+import type { Environment } from "../environments/Environment";
 
 const PADDING_AT_BOTTOM = 60;
 const PADDING_AT_LEFT = 60;

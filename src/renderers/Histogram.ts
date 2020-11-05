@@ -1,10 +1,10 @@
 /// <reference path="../types/Point.d.ts" />
 /// <reference path="../types/NRange.d.ts" />
-import { Environment } from "../environments/Environment";
 import remap from "../utils/remap";
 import { default as getMax } from "../utils/max";
 import extractRoundNumbers from "../utils/extractRoundNumbers";
 import { AbstractRenderer } from "./AbstractRenderer";
+import type { Environment } from "../environments/Environment";
 
 const LINE_DASH = [10, 10];
 const PADDING_AT_BOTTOM = 60;
