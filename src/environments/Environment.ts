@@ -1,4 +1,3 @@
-/// <reference path="../renderers/Renderer.d.ts" />
 /// <reference path="./EnvironmentOptions.d.ts" />
 /// <reference path="./EnvironmentHelper.d.ts" />
 /// <reference path="../types/Data.d.ts" />
@@ -7,6 +6,7 @@ import { Network } from "../helpers/Network";
 import shuffle from "../utils/shuffle";
 import { KDTree } from "../helpers/KDTree";
 import { Terrain } from "../helpers/Terrain";
+import { AbstractRenderer } from "../renderers/AbstractRenderer";
 
 interface Helpers {
   kdtree: KDTree;
@@ -51,8 +51,8 @@ class Environment extends Agent {
     network: null,
     terrain: null
   };
-  /** @member {Renderer[]} */
-  renderers: Renderer[] = [];
+  /** @member {AbstractRenderer[]} */
+  renderers: AbstractRenderer[] = [];
   opts: EnvironmentOptions;
   width: number;
   height: number;

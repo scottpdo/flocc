@@ -1,10 +1,10 @@
-/// <reference path="./Renderer.d.ts" />
 /// <reference path="../types/Point.d.ts" />
 /// <reference path="../types/NRange.d.ts" />
 import { Environment } from "../environments/Environment";
 import remap from "../utils/remap";
 import { default as getMax } from "../utils/max";
 import extractRoundNumbers from "../utils/extractRoundNumbers";
+import { AbstractRenderer } from "./AbstractRenderer";
 
 const LINE_DASH = [10, 10];
 const PADDING_AT_BOTTOM = 60;
@@ -37,20 +37,15 @@ const defaultHistogramOptions: HistogramOptions = {
   scale: "fixed"
 };
 
-class Histogram implements Renderer {
-  /** @member Environment` */
-  environment: Environment;
-  /** @member HTMLCanvasElement */
-  canvas: HTMLCanvasElement = document.createElement("canvas");
+class Histogram extends AbstractRenderer {
   background: HTMLCanvasElement = document.createElement("canvas");
   _metric: string | string[];
   opts: HistogramOptions = defaultHistogramOptions;
-  height: number;
   markerWidth: number = 0;
   maxValue: number;
-  width: number;
 
   constructor(environment: Environment, opts?: HistogramOptions) {
+    super();
     this.environment = environment;
     this.opts = Object.assign({}, this.opts, opts);
     const { width, height } = this.opts;
@@ -82,19 +77,6 @@ class Histogram implements Renderer {
       this._metric = [_metric].concat(otherMetrics);
     } else {
       this._metric = _metric;
-    }
-  }
-
-  /**
-   * Mount this renderer to a DOM element. Pass either a string representing a
-   * CSS selector matching the element (i.e. `"#element-id") or the element itself.
-   * @param {string | HTMLElement} el
-   */
-  mount(el: string | HTMLElement): void {
-    const container = typeof el === "string" ? document.querySelector(el) : el;
-    if (container) {
-      container.innerHTML = "";
-      container.appendChild(this.canvas);
     }
   }
 

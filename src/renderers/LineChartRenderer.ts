@@ -1,10 +1,10 @@
-/// <reference path="./Renderer.d.ts" />
 /// <reference path="../types/Point.d.ts" />
 /// <reference path="../types/NRange.d.ts" />
 import { Environment } from "../environments/Environment";
 import { NumArray } from "../helpers/NumArray";
 import mean from "../utils/mean";
 import extractRoundNumbers from "../utils/extractRoundNumbers";
+import { AbstractRenderer } from "./AbstractRenderer";
 
 const PADDING_BOTTOM = 10;
 const lineDash = [10, 10];
@@ -49,19 +49,14 @@ const defaultMetricOptions = {
   fn: mean
 };
 
-class LineChartRenderer implements Renderer {
-  /** @member Environment */
-  environment: Environment;
-  /** @member HTMLCanvasElement */
-  canvas: HTMLCanvasElement = document.createElement("canvas");
+class LineChartRenderer extends AbstractRenderer {
   background: HTMLCanvasElement = document.createElement("canvas");
   opts: LineChartRendererOptions;
   metrics: Metric[] = [];
-  height: number;
-  width: number;
   t: number = 0;
 
   constructor(environment: Environment, opts?: LineChartRendererOptions) {
+    super();
     this.environment = environment;
     this.opts = Object.assign({}, defaultRendererOptions, opts);
     this.opts.range = Object.assign({}, this.opts.range);
@@ -76,19 +71,6 @@ class LineChartRenderer implements Renderer {
     this.background.width = width * dpr;
     this.background.height = height * dpr;
     environment.renderers.push(this);
-  }
-
-  /**
-   * Mount this renderer to a DOM element. Pass either a string representing a
-   * CSS selector matching the element (i.e. `"#element-id") or the element itself.
-   * @param {string | HTMLElement} el
-   */
-  mount(el: string | HTMLElement): void {
-    const container = typeof el === "string" ? document.querySelector(el) : el;
-    if (container) {
-      container.innerHTML = "";
-      container.appendChild(this.canvas);
-    }
   }
 
   metric(key: string, opts?: MetricOptions) {
@@ -118,9 +100,8 @@ class LineChartRenderer implements Renderer {
   }
 
   drawBackground() {
-    const { canvas, width, height, opts, t } = this;
+    const { context, width, height, opts, t } = this;
     // draw background and lines
-    const context = canvas.getContext("2d");
     context.fillStyle = this.opts.background;
     context.fillRect(0, 0, width, height);
 
@@ -190,8 +171,7 @@ class LineChartRenderer implements Renderer {
   }
 
   render() {
-    const { canvas, environment, metrics, width, height, opts } = this;
-    const context = canvas.getContext("2d");
+    const { context, environment, metrics, width, height, opts } = this;
 
     // clear canvas and draw background
     context.clearRect(0, 0, width, height);

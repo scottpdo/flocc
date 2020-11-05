@@ -1,8 +1,8 @@
-/// <reference path="./Renderer.d.ts" />
 /// <reference path="../types/Point.d.ts" />
 /// <reference path="../types/NRange.d.ts" />
 import { Environment } from "../environments/Environment";
 import remap from "../utils/remap";
+import { AbstractRenderer } from "./AbstractRenderer";
 
 const PADDING_AT_BOTTOM = 60;
 const PADDING_AT_LEFT = 60;
@@ -37,11 +37,7 @@ const defaultHeatmapOptions: HeatmapOptions = {
   scale: "relative"
 };
 
-class Heatmap implements Renderer {
-  /** @member Environment` */
-  environment: Environment;
-  /** @member HTMLCanvasElement */
-  canvas: HTMLCanvasElement = document.createElement("canvas");
+class Heatmap extends AbstractRenderer {
   opts: HeatmapOptions = defaultHeatmapOptions;
   width: number;
   height: number;
@@ -50,6 +46,7 @@ class Heatmap implements Renderer {
   lastUpdatedScale: Date;
 
   constructor(environment: Environment, opts?: HeatmapOptions) {
+    super();
     this.environment = environment;
     this.opts = Object.assign({}, this.opts, opts);
     const { width, height } = this.opts;
@@ -66,21 +63,7 @@ class Heatmap implements Renderer {
       0
     );
 
-    console.log(this.opts);
     this.drawMarkers();
-  }
-
-  /**
-   * Mount this renderer to a DOM element. Pass either a string representing a
-   * CSS selector matching the element (i.e. `"#element-id") or the element itself.
-   * @param {string | HTMLElement} el
-   */
-  mount(el: string | HTMLElement): void {
-    const container = typeof el === "string" ? document.querySelector(el) : el;
-    if (container) {
-      container.innerHTML = "";
-      container.appendChild(this.canvas);
-    }
   }
 
   /**
@@ -147,9 +130,8 @@ class Heatmap implements Renderer {
   }
 
   drawMarkers() {
-    const { canvas, width, height } = this;
+    const { context, width, height } = this;
     const { from, to } = this.opts;
-    const context = canvas.getContext("2d");
 
     context.strokeStyle = "black";
     context.lineWidth = 1;
@@ -236,9 +218,8 @@ class Heatmap implements Renderer {
   }
 
   updateScale() {
-    const { canvas, environment, height } = this;
+    const { context, environment, height } = this;
     const { scale } = this.opts;
-    const context = canvas.getContext("2d");
 
     let max = scale === "relative" ? this.localMax : this.opts.max;
     if (max === undefined) {
