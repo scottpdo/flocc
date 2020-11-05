@@ -1,6 +1,6 @@
-/// <reference path="./Renderer.d.ts" />
-import { Environment } from "../environments/Environment";
-import { Agent } from "../agents/Agent";
+import { AbstractRenderer } from "./AbstractRenderer";
+import type { Environment } from "../environments/Environment";
+import type { Agent } from "../agents/Agent";
 
 type TableFilter = (agent: Agent) => boolean;
 
@@ -31,7 +31,7 @@ const precision = (n: number, d: number): number => {
 
 const escapeStringQuotes = (s: string): string => `"${s.replace(/"/g, '\\"')}"`;
 
-export class TableRenderer implements Renderer {
+export class TableRenderer extends AbstractRenderer {
   columns: string[];
   environment: Environment;
   lastRendered: number = +new Date();
@@ -39,6 +39,7 @@ export class TableRenderer implements Renderer {
   table: Element;
 
   constructor(environment: Environment, options: TableRendererOptions = {}) {
+    super();
     this.environment = environment;
     environment.renderers.push(this);
 
@@ -49,6 +50,7 @@ export class TableRenderer implements Renderer {
   /**
    * Mount this renderer to a DOM element. Pass either a string representing a
    * CSS selector matching the element (i.e. `"#element-id") or the element itself.
+   * @override
    * @param {string | HTMLElement} el
    */
   mount(el: string | HTMLElement): void {

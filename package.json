@@ -1,6 +1,6 @@
 {
   "name": "flocc",
-  "version": "0.5.7",
+  "version": "0.5.8",
   "description": "Agent-based modeling in JavaScript in the browser or server.",
   "main": "dist/flocc.js",
   "module": "dist/flocc.es.js",
@@ -17,7 +17,7 @@
   "devDependencies": {
     "@rollup/plugin-json": "^4.1.0",
     "@types/node": "^14.0.19",
-    "browser-sync": "2.26.7",
+    "browser-sync": "^2.26.13",
     "concurrently": "5.1.0",
     "ejs": "^3.0.2",
     "express": "^4.17.1",

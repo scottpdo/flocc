@@ -1,7 +1,7 @@
-/// <reference path="./Renderer.d.ts" />
 /// <reference path="./CanvasRendererOptions.d.ts" />
-import { Environment } from "../environments/Environment";
-import { Agent } from "../agents/Agent";
+import { AbstractRenderer } from "./AbstractRenderer";
+import type { Environment } from "../environments/Environment";
+import type { Agent } from "../agents/Agent";
 
 const defaultOptions: CanvasRendererOptions = {
   autoPosition: false,
@@ -16,19 +16,14 @@ const defaultOptions: CanvasRendererOptions = {
   trace: false
 };
 
-class CanvasRenderer implements Renderer {
-  /** @member Environment */
-  environment: Environment;
+class CanvasRenderer extends AbstractRenderer {
   opts: CanvasRendererOptions;
   buffer: HTMLCanvasElement;
-  /** @member HTMLCanvasElement */
-  canvas: HTMLCanvasElement;
-  context: CanvasRenderingContext2D;
   terrainBuffer: HTMLCanvasElement = document.createElement("canvas");
-  width: number;
-  height: number;
 
   constructor(environment: Environment, opts: CanvasRendererOptions) {
+    super();
+
     this.environment = environment;
     environment.renderers.push(this);
 
@@ -51,19 +46,6 @@ class CanvasRenderer implements Renderer {
 
     this.context.fillStyle = opts.background;
     this.context.fillRect(0, 0, width, height);
-  }
-
-  /**
-   * Mount this renderer to a DOM element. Pass either a string representing a
-   * CSS selector matching the element (i.e. `"#element-id") or the element itself.
-   * @param {string | HTMLElement} el
-   */
-  mount(el: string | HTMLElement): void {
-    const container = typeof el === "string" ? document.querySelector(el) : el;
-    if (container) {
-      container.innerHTML = "";
-      container.appendChild(this.canvas);
-    }
   }
 
   x(v: number): number {
