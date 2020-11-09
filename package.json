@@ -12,7 +12,7 @@
     "test": "node replace-version && jest",
     "perf": "node ./performance/agent.js"
   },
-  "author": "Scott Donaldson <sd@scottland.cc> (https://scottland.cc)",
+  "author": "Scott Donaldson <scott@openset.tech> (https://openset.tech)",
   "license": "ISC",
   "devDependencies": {
     "@rollup/plugin-json": "^4.1.0",
