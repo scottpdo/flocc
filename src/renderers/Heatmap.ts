@@ -174,8 +174,8 @@ class Heatmap extends AbstractRenderer {
       context.stroke();
 
       if (
-        Math.abs((marker / step) % 1) < 0.001 ||
-        Math.abs(((marker / step) % 1) - 1) < 0.001
+        Math.abs(((marker - this.getMin("x")) / step) % 1) < 0.001 ||
+        Math.abs((((marker - this.getMin("x")) / step) % 1) - 1) < 0.001
       ) {
         context.font = `${12 * window.devicePixelRatio}px Helvetica`;
         context.textAlign = "center";
@@ -202,8 +202,8 @@ class Heatmap extends AbstractRenderer {
       context.stroke();
 
       if (
-        Math.abs((marker / step) % 1) < 0.001 ||
-        Math.abs(((marker / step) % 1) - 1) < 0.001
+        Math.abs(((marker - this.getMin("y")) / step) % 1) < 0.001 ||
+        Math.abs((((marker - this.getMin("y")) / step) % 1) - 1) < 0.001
       ) {
         context.font = `${12 * window.devicePixelRatio}px Helvetica`;
         context.textAlign = "right";
@@ -308,8 +308,12 @@ class Heatmap extends AbstractRenderer {
     environment.getAgents().forEach(agent => {
       const xValue = agent.get(xKey);
       const yValue = agent.get(yKey);
-      const xBucket = remap(xValue, xMin, xMax, 0, xBuckets - 0.001) | 0;
-      const yBucket = remap(yValue, yMin, yMax, 0, yBuckets - 0.001) | 0;
+      const xBucket = Math.floor(
+        remap(xValue, xMin, xMax, 0, xBuckets - 0.001)
+      );
+      const yBucket = Math.floor(
+        remap(yValue, yMin, yMax, 0, yBuckets - 0.001)
+      );
       if (
         xBucket >= 0 &&
         xBucket < xBuckets &&
