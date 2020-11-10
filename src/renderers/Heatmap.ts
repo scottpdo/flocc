@@ -3,6 +3,7 @@
 import remap from "../utils/remap";
 import { AbstractRenderer } from "./AbstractRenderer";
 import type { Environment } from "../environments/Environment";
+import clamp from "../utils/clamp";
 
 const PADDING_AT_BOTTOM = 60;
 const PADDING_AT_LEFT = 60;
@@ -265,7 +266,7 @@ class Heatmap extends AbstractRenderer {
       for (let column = 0; column < xBuckets; column++) {
         const index = row * xBuckets + column;
         // alpha corresponds to the number of agents in the bucket
-        const a = remap(this.buckets[index], 0, max, 0, 1);
+        const a = clamp(remap(this.buckets[index], 0, max, 0, 1), 0, 1);
         context.fillStyle = to;
         context.globalAlpha = a;
         context.fillRect(
