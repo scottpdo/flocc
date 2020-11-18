@@ -1,0 +1,278 @@
+<div id="container"></div>
+<div id="completed"></div>
+<div id="free"></div>
+
+<script>
+utils.seed(1);
+
+const TXT = "ATATATCGCATGGGTATTGTGGAACAGTGTTGCACCAGTATTTGTTCTAGGTATCAGTAA";
+
+const [width, height] = [60, 60];
+const scale = 10;
+const SPEED = 0.3;
+
+const environment = new Environment({ width, height });
+environment.set("completed", 0);
+const renderer = new CanvasRenderer(environment, {
+	background: "black",
+	scale,
+	width: width * scale,
+	height: height * scale,
+});
+renderer.mount("#container");
+
+const completed = new LineChartRenderer(environment, {
+	autoScale: true,
+	width: 300,
+	height: 200,
+	range: {
+		min: 0,
+		max: 10,
+	},
+});
+completed.mount("#completed");
+completed.metric("completed", {
+	fn() {
+		return environment.get("completed");
+	},
+});
+
+const free = new LineChartRenderer(environment, {
+	autoScale: true,
+	width: 300,
+	height: 200,
+});
+free.mount("#free");
+free.metric("free", {
+	fn(arr) {
+		return environment.get("free");
+	},
+});
+free.metric("population", {
+	color: "red",
+	fn(arr) {
+		return environment.getAgents().length;
+	},
+});
+
+let tree;
+
+class Nucleotide extends Agent {}
+class Polymerase extends Agent {}
+class Inhibitor extends Agent {}
+
+function nucleotideTick(agent) {
+	const { belongsTo, x, y, vx, vy } = agent.getData();
+	if (!belongsTo) {
+		return {
+			x: x + vx,
+			y: y + vy,
+		};
+	}
+}
+
+function polymeraseTick(agent) {
+	const { x, y, vx, vy } = agent.getData();
+
+	if (agent.get("attached")) {
+		makeRNA(agent);
+	} else {
+		lookForTAC(agent);
+	}
+
+	if (agent.get("attached")) {
+		return {
+			x: agent.get("x"),
+			y: agent.get("y"),
+		};
+	} else {
+		return {
+			x: x + vx,
+			y: y + vy,
+		};
+	}
+}
+
+const color = (agent) => {
+	const lookup = {
+		A: "red",
+		G: "green",
+		T: "blue",
+		C: "yellow",
+		U: "gray",
+	};
+	return lookup[agent.get("type")];
+};
+
+function makeRNA(agent) {
+	const { attached, RNA } = agent.getData();
+
+	const { type } = attached.getData();
+	let lookingFor = null;
+	if (type === "A") lookingFor = "U";
+	if (type === "C") lookingFor = "G";
+	if (type === "G") lookingFor = "C";
+	if (type === "T") lookingFor = "A";
+
+	const neighbors = tree
+		.agentsWithinDistance(agent, 3)
+		.filter((n) => !n.get("belongsTo") && n.get("type") === lookingFor);
+	if (neighbors.length === 0) return;
+	const neighbor = utils.sample(neighbors);
+
+	if (attached.get("next") === null) {
+		// free it
+		agent.set("attached", null);
+		RNA.forEach((a) => {
+			a.set("belongsTo", null);
+			a.enqueue(() => {
+				environment.removeAgent(a, false);
+			});
+		});
+		agent.set("RNA", []);
+		environment.increment("completed");
+	} else {
+		agent.increment("x");
+		agent.set("attached", attached.get("next"));
+		environment.decrement("free");
+
+		// add the new one to the list
+		RNA.unshift(neighbor);
+		neighbor.set("belongsTo", agent);
+		neighbor.set("x", agent.get("x"));
+		neighbor.set("y", agent.get("y"));
+
+		// update RNA list
+		RNA.forEach((a, i) => {
+			a.set({
+				x: agent.get("x"),
+				y: agent.get("y") + i,
+			});
+		});
+	}
+}
+
+function lookForTAC(agent) {
+	const neighbors = tree.agentsWithinDistance(agent, 3);
+	let found = false;
+	let T = null;
+	for (let i = 0; i < neighbors.length; i++) {
+		const neighbor = neighbors[i];
+		if (!(neighbor instanceof Nucleotide)) continue;
+		if (neighbor.get("belongsTo") !== "template_strand") continue;
+		let { next, type } = neighbor.getData();
+		if (type === "T") {
+			T = neighbor;
+			if (next && next.get("type") === "A") {
+				next = next.get("next");
+				if (next && next.get("type") === "C") {
+					found = true;
+					break;
+				}
+			}
+		}
+	}
+
+	if (found) {
+		agent.set("attached", T);
+		agent.set("x", T.get("x"));
+		agent.set("y", T.get("y"));
+	}
+}
+
+function makeDNAStrings() {
+	// coding strand
+	TXT.split("").forEach((c, i) => {
+		const agent = new Nucleotide({
+			belongsTo: "coding_strand",
+			color,
+			size: scale / 2,
+			x: i + 0.5,
+			y: 0.5,
+			type: c,
+		});
+		environment.addAgent(agent);
+	});
+	// template strand -- create a linked list
+	const templateNucleotides = TXT.split("").map((c, i) => {
+		const template_type = {
+			A: "T",
+			T: "A",
+			C: "G",
+			G: "C",
+		};
+		const nucleotide = new Nucleotide({
+			belongsTo: "template_strand",
+			color,
+			i,
+			size: scale / 2,
+			x: i + 0.5,
+			y: 2.5,
+			vx: 0,
+			vy: 0,
+			type: template_type[c],
+		});
+		nucleotide.addRule(nucleotideTick);
+		return nucleotide;
+	});
+	templateNucleotides.forEach((nucleotide, i) => {
+		if (i < templateNucleotides.length - 1) {
+			nucleotide.set("next", templateNucleotides[i + 1]);
+		} else {
+			nucleotide.set("next", null);
+		}
+		environment.addAgent(nucleotide);
+	});
+}
+
+function setup() {
+	makeDNAStrings();
+
+	for (let i = 0; i < 1000; i++) {
+		const v = new Vector(utils.random(-1, 1, true), utils.random(-1, 1, true));
+		v.normalize().multiplyScalar(SPEED);
+		const nucleotide = new Nucleotide({
+			belongsTo: null,
+			color,
+			size: scale / 2,
+			x: utils.random(0, width, true) + 0.5,
+			y: utils.random(0, height, true) + 0.5,
+			vx: v.x,
+			vy: v.y,
+			type: utils.sample(["A", "G", "C", "T", "U"]),
+		});
+		nucleotide.addRule(nucleotideTick);
+		environment.addAgent(nucleotide);
+	}
+	environment.set("free", 1000);
+
+	for (let i = 0; i < 10; i++) {
+		const v = new Vector(utils.random(-1, 1, true), utils.random(-1, 1, true));
+		v.normalize().multiplyScalar(SPEED);
+		const polymerase = new Polymerase({
+			size: 18,
+			color: "rgba(192, 192, 192, 0.5)",
+			x: utils.random(0, width, true) + 0.5,
+			y: utils.random(0, height, true) + 0.5,
+			vx: v.x,
+			vy: v.y,
+			RNA: [],
+		});
+		polymerase.addRule(polymeraseTick);
+		environment.addAgent(polymerase);
+	}
+
+	tree = new KDTree(environment.getAgents());
+	environment.use(tree);
+}
+
+function run() {
+	environment.tick({ randomizeOrder: true });
+	tree.rebalance();
+	window.requestAnimationFrame(run);
+}
+
+setup();
+run();
+
+</script>

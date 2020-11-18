@@ -70,8 +70,9 @@ class Environment extends Agent {
    * Add an agent to the environment. Automatically sets the
    * agent's environment to be this environment.
    * @param {Agent} agent
+   * @param {boolean} rebalance - Whether to rebalance if there is a KDTree (defaults to true)
    */
-  addAgent(agent: Agent): void {
+  addAgent(agent: Agent, rebalance: boolean = true): void {
     if (!(agent instanceof Agent)) return;
     agent.environment = this;
     this.agents.push(agent);
@@ -80,22 +81,23 @@ class Environment extends Agent {
     if (this.helpers.kdtree) {
       this.helpers.kdtree.agents.push(agent);
       this.helpers.kdtree.needsUpdating = true;
-      this.helpers.kdtree.rebalance();
+      if (rebalance) this.helpers.kdtree.rebalance();
     }
   }
 
   /**
    * Remove an agent from the environment.
    * @param {Agent} agent
+   * @param {boolean} rebalance - Whether to rebalance if there is a KDTree (defaults to true)
    */
-  removeAgent(agent: Agent): void {
+  removeAgent(agent: Agent, rebalance: boolean = true): void {
     agent.environment = null;
     const index = this.agents.indexOf(agent);
     this.agents.splice(index, 1);
     this.agentsById.delete(agent.id);
 
     if (this.helpers.kdtree) {
-      this.helpers.kdtree.removeAgent(agent);
+      this.helpers.kdtree.removeAgent(agent, rebalance);
     }
   }
 
