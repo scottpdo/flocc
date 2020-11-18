@@ -254,6 +254,14 @@ class KDTree {
 
     this.needsUpdating = false;
 
+    // if somehow either left or right has 0 agents in it, we might enter an
+    // infinite loop, so in that case set the agents
+    // to belong to this subtree and shortcut out
+    if (left.agents.length === 0 || right.agents.length === 0) {
+      agents.forEach(a => (a.__subtree = this));
+      return;
+    }
+
     if (left.agents.length > 0) {
       this.left = left;
       const leftBBox = this.bbox.clone();
