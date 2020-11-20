@@ -57,9 +57,31 @@ free.metric("population", {
 
 let tree;
 
-class Nucleotide extends Agent {}
+class Nucleotide extends Agent {
+	constructor(data) {
+		super(data);
+		this.set({
+			color: 'gray',
+			shape: 'rect',
+			height: scale - 1,
+			width: scale - 1,
+			text(a) { return a.get('type') },
+			textSize: scale,
+			textColor: 'white'
+		});
+	}
+}
 class Polymerase extends Agent {}
-class Inhibitor extends Agent {}
+class Inhibitor extends Agent {
+	constructor(data) {
+		super(data);
+		this.set({
+			color: "rgba(192, 192, 192, 0.5)",
+			shape: 'triangle',
+			size: scale * 3
+		});
+	}
+}
 
 function nucleotideTick(agent) {
 	const { belongsTo, x, y, vx, vy } = agent.getData();
@@ -92,17 +114,6 @@ function polymeraseTick(agent) {
 		};
 	}
 }
-
-const color = (agent) => {
-	const lookup = {
-		A: "red",
-		G: "green",
-		T: "blue",
-		C: "yellow",
-		U: "gray",
-	};
-	return lookup[agent.get("type")];
-};
 
 function makeRNA(agent) {
 	const { attached, RNA } = agent.getData();
@@ -185,11 +196,9 @@ function makeDNAStrings() {
 	TXT.split("").forEach((c, i) => {
 		const agent = new Nucleotide({
 			belongsTo: "coding_strand",
-			color,
-			size: scale / 2,
 			x: i + 0.5,
 			y: 0.5,
-			type: c,
+			type: c
 		});
 		environment.addAgent(agent);
 	});
@@ -203,14 +212,11 @@ function makeDNAStrings() {
 		};
 		const nucleotide = new Nucleotide({
 			belongsTo: "template_strand",
-			color,
-			i,
-			size: scale / 2,
 			x: i + 0.5,
 			y: 2.5,
 			vx: 0,
 			vy: 0,
-			type: template_type[c],
+			type: template_type[c]
 		});
 		nucleotide.addRule(nucleotideTick);
 		return nucleotide;
@@ -233,13 +239,11 @@ function setup() {
 		v.normalize().multiplyScalar(SPEED);
 		const nucleotide = new Nucleotide({
 			belongsTo: null,
-			color,
-			size: scale / 2,
 			x: utils.random(0, width, true) + 0.5,
 			y: utils.random(0, height, true) + 0.5,
 			vx: v.x,
 			vy: v.y,
-			type: utils.sample(["A", "G", "C", "T", "U"]),
+			type: utils.sample(["A", "G", "C", "T", "U"])
 		});
 		nucleotide.addRule(nucleotideTick);
 		environment.addAgent(nucleotide);
@@ -262,13 +266,24 @@ function setup() {
 		environment.addAgent(polymerase);
 	}
 
+	for (let i = 0; i < 10; i++) {
+		const v = new Vector(utils.random(-1, 1, true), utils.random(-1, 1, true));
+		v.normalize().multiplyScalar(SPEED);
+		const inhibitor = new Inhibitor({
+			x: utils.random(0, width, true) + 0.5,
+			y: utils.random(0, height, true) + 0.5,
+			vx: v.x,
+			vy: v.y
+		});
+		environment.addAgent(inhibitor);
+	}
+
 	tree = new KDTree(environment.getAgents());
 	environment.use(tree);
 }
 
 function run() {
 	environment.tick({ randomizeOrder: true });
-	tree.rebalance();
 	window.requestAnimationFrame(run);
 }
 

@@ -133,7 +133,20 @@ class CanvasRenderer extends AbstractRenderer {
     const connectionsDrawn = new Map<Agent, Agent[]>();
 
     environment.getAgents().forEach(agent => {
-      const { x, y, vx, vy, color, shape, size = 1 } = agent.getData();
+      const {
+        x,
+        y,
+        vx,
+        vy,
+        color,
+        text,
+        textAlign = "center",
+        textBaseline = "middle",
+        textColor,
+        textSize = 12,
+        shape,
+        size = 1
+      } = agent.getData();
 
       context.beginPath();
       context.moveTo(this.x(x), this.y(y));
@@ -188,17 +201,41 @@ class CanvasRenderer extends AbstractRenderer {
         bufferContext.lineTo(-_vy / 2, _vx / 2);
         bufferContext.restore();
       } else if (shape === "rect") {
+        const { width = 1, height = 1 } = agent.getData();
         bufferContext.fillRect(
-          this.x(x),
-          this.y(y),
-          (agent.get("width") || 1) * dpr,
-          (agent.get("height") || 1) * dpr
+          this.x(x) - (width * dpr) / 2,
+          this.y(y) - (height * dpr) / 2,
+          width * dpr,
+          height * dpr
         );
-      } else {
+      } else if (shape === "triangle") {
+        bufferContext.beginPath();
+
+        bufferContext.save();
+        bufferContext.translate(this.x(x), this.y(y));
+        bufferContext.moveTo(0, -size / 2);
+        bufferContext.lineTo(size / 2, size / 2);
+        bufferContext.lineTo(-size / 2, size / 2);
+        bufferContext.restore();
+      } else if (shape === "circle" || shape === undefined) {
         bufferContext.arc(this.x(x), this.y(y), size * dpr, 0, 2 * Math.PI);
       }
 
       bufferContext.fill();
+
+      if (text) {
+        bufferContext.save();
+        bufferContext.fillStyle = textColor
+          ? textColor
+          : color
+          ? color
+          : "black";
+        bufferContext.font = `${textSize}px sans-serif`;
+        bufferContext.textAlign = textAlign;
+        bufferContext.textBaseline = textBaseline;
+        bufferContext.fillText(text, this.x(x), this.y(y));
+        bufferContext.restore();
+      }
     });
 
     context.drawImage(buffer, 0, 0);
