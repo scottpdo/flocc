@@ -1,4 +1,4 @@
-const { Agent, Environment } = require("../dist/flocc");
+const { Agent, Environment, Rule } = require("../dist/flocc");
 
 const agent = new Agent();
 agent.set("x", 12);
@@ -114,4 +114,75 @@ it("Sets new data based on return value of rules asynchronously.", () => {
   e.tick();
   expect(a.get("x")).toBe(125);
   expect(b.get("x")).toBe(175);
+});
+
+it("Executes function rules when adding a `tick` value.", () => {
+  const e = new Environment();
+  const a = new Agent({
+    x: 1,
+    tick(a) {
+      a.increment("x");
+    }
+  });
+  e.addAgent(a);
+  e.tick();
+  expect(a.get("x")).toBe(2);
+});
+
+it("Executes class rules when adding a `tick` value.", () => {
+  const e = new Environment();
+  const a = new Agent({
+    x: 1,
+    tick: new Rule(e, ["set", "x", ["add", ["get", "x"], 1]])
+  });
+  e.addAgent(a);
+  e.tick();
+  expect(a.get("x")).toBe(2);
+});
+
+it("Still executes rules added via `addRule` when there is a `tick` value.", () => {
+  const e = new Environment();
+  const a = new Agent({
+    x: 1,
+    tick(a) {
+      a.increment("x"); // 2
+    }
+  });
+  a.addRule(function(a) {
+    a.set("x", a.get("x") * 10); // 20
+  });
+  a.addRule(function(a) {
+    a.decrement("x", 5); // 15
+  });
+  e.addAgent(a);
+  e.tick();
+  expect(a.get("x")).toBe(15);
+});
+
+it("Executes enqueued function rules when adding a `queue` value.", () => {
+  const e = new Environment();
+  const a = new Agent({
+    x: 1,
+    tick(a) {
+      a.increment("x"); // 2
+      a.set("queue", a => a.increment("x")); // 3
+    }
+  });
+  e.addAgent(a);
+  e.tick();
+  expect(a.get("x")).toBe(3);
+});
+
+it("Executes enqueued class rules when adding a `queue` value.", () => {
+  const e = new Environment();
+  const a = new Agent({
+    x: 1,
+    tick(a) {
+      a.increment("x"); // 2
+      a.set("queue", new Rule(e, ["set", "x", ["multiply", ["get", "x"], 3]])); // 6
+    }
+  });
+  e.addAgent(a);
+  e.tick();
+  expect(a.get("x")).toBe(6);
 });
