@@ -186,3 +186,16 @@ it("Executes enqueued class rules when adding a `queue` value.", () => {
   e.tick();
   expect(a.get("x")).toBe(6);
 });
+
+it("Returns null if attempting to access `tick` or `queue` values.", () => {
+  const tick = () => {};
+  const queue = () => {};
+  const a = new Agent({
+    tick,
+    queue
+  });
+  expect(a.get("tick")).not.toBe(tick);
+  expect(a.get("tick")).toBeNull();
+  expect(a.get("queue")).not.toBe(queue);
+  expect(a.get("queue")).toBeNull();
+});
