@@ -43,13 +43,22 @@ class Agent implements DataObj {
     this.set(data);
   }
 
-  // Given a data object, a name, and a function value,
-  // force the object to call the function whenever data[name] is referenced
-  _setFunctionValue(data: Data, name: string, fn: Function): void {
-    Object.defineProperty(data, name, {
-      get: () => fn(this),
-      configurable: true
-    });
+  /**
+   * Set a function value. `tick` and `queue` are not automatically called,
+   * but any other named value will automatically be called when referenced.
+   * @param {string} name 
+   * @param {Function} fn 
+   */
+  _setFunctionValue(name: string, fn: Function): void {
+    if (disallowed.includes(name)) {
+      this.data[name] = fn;
+    } else {
+      const { data } = this;
+      Object.defineProperty(data, name, {
+        get: () => fn(this),
+        configurable: true
+      });
+    }
   }
 
   /**
@@ -112,7 +121,7 @@ class Agent implements DataObj {
    */
   _setKeyValue(key: string, value: any) {
     if (typeof value === "function") {
-      this._setFunctionValue(this.data, key, value);
+      this._setFunctionValue(key, value);
     } else {
       this.data[key] = value;
       // automatically handle wrapping for toroidal environments
@@ -169,10 +178,10 @@ class Agent implements DataObj {
    * Add a rule to be executed during the agent's
    * environment's tick cycle. When executed, the
    * @param {Function | Rule} rule
-   * @deprecated since version 0.5.13
+   * @deprecated since version 0.5.14
    */
   addRule(rule: Function | Rule, ...args: Array<any>): void {
-    console.warn("As of Flocc v0.5.13, Agent.addRule is **DEPRECATED**. It will be **REMOVED** in v0.7.0. Instead, add the Agent's update rule by calling `Agent.set('tick', ...);`");
+    console.warn("As of Flocc v0.5.14, Agent.addRule is **DEPRECATED**. It will be **REMOVED** in v0.7.0. Instead, add the Agent's update rule by calling `Agent.set('tick', ...);`");
 
     this.rules.push({
       args,
@@ -191,10 +200,10 @@ class Agent implements DataObj {
    * The `queue` array is cleared at the very end of
    * the environment's tick cycle.
    * @param {Function} enqueuedRule
-   * @deprecated since version 0.5.13
+   * @deprecated since version 0.5.14
    */
   enqueue(rule: Function, ...args: Array<any>): void {
-    console.warn("As of Flocc v0.5.13, Agent.enqueue is **DEPRECATED**. It will be **REMOVED** in v0.7.0. Instead, add a rule to be executed at the end of this tick by calling `Agent.set('queue', ...);`");
+    console.warn("As of Flocc v0.5.14, Agent.enqueue is **DEPRECATED**. It will be **REMOVED** in v0.7.0. Instead, add a rule to be executed at the end of this tick by calling `Agent.set('queue', ...);`");
 
     this.queue.push({
       args,
