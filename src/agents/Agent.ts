@@ -43,13 +43,22 @@ class Agent implements DataObj {
     this.set(data);
   }
 
-  // Given a data object, a name, and a function value,
-  // force the object to call the function whenever data[name] is referenced
-  _setFunctionValue(data: Data, name: string, fn: Function): void {
-    Object.defineProperty(data, name, {
-      get: () => fn(this),
-      configurable: true
-    });
+  /**
+   * Set a function value. `tick` and `queue` are not automatically called,
+   * but any other named value will automatically be called when referenced.
+   * @param {string} name 
+   * @param {Function} fn 
+   */
+  _setFunctionValue(name: string, fn: Function): void {
+    if (disallowed.includes(name)) {
+      this.data[name] = fn;
+    } else {
+      const { data } = this;
+      Object.defineProperty(data, name, {
+        get: () => fn(this),
+        configurable: true
+      });
+    }
   }
 
   /**
@@ -112,7 +121,7 @@ class Agent implements DataObj {
    */
   _setKeyValue(key: string, value: any) {
     if (typeof value === "function") {
-      this._setFunctionValue(this.data, key, value);
+      this._setFunctionValue(key, value);
     } else {
       this.data[key] = value;
       // automatically handle wrapping for toroidal environments

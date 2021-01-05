@@ -129,6 +129,19 @@ it("Executes function rules when adding a `tick` value.", () => {
   expect(a.get("x")).toBe(2);
 });
 
+it("Executes function rules when adding a `tick` value that returns a value.", () => {
+  const e = new Environment();
+  const a = new Agent({
+    x: 1,
+    tick(a) {
+      return { x: a.get("x") + 1 };
+    }
+  });
+  e.addAgent(a);
+  e.tick();
+  expect(a.get("x")).toBe(2);
+});
+
 it("Executes class rules when adding a `tick` value.", () => {
   const e = new Environment();
   const a = new Agent({
