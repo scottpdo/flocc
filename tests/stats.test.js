@@ -28,3 +28,12 @@ it("Correctly finds max, min, and median values.", () => {
   expect(median(arr1)).toBe(4);
   expect(median(arr2)).toBe(2.5);
 });
+
+it("Returns predictable values for empty arrays.", () => {
+  expect(sum([])).toBe(0);
+  expect(max([])).toBeNull();
+  expect(min([])).toBeNull();
+  expect(median([])).toBeNull();
+  expect(mean([])).toBeNull();
+  expect(stdDev([])).toBeNull();
+});
