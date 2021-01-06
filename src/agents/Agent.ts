@@ -12,6 +12,12 @@ declare interface RuleObj {
 
 const disallowed: string[] = ["tick", "queue"];
 
+const dataHandler = {
+  get(target: Data, key: string) {
+    return target.hasOwnProperty(key) ? target[key] : null;
+  }
+}
+
 class Agent implements DataObj {
   /**
    * @member {Environment|null} environment
@@ -89,7 +95,7 @@ class Agent implements DataObj {
    * (useful for destructuring properties).
    */
   getData(): Data {
-    return this.data;
+    return new Proxy(this.data, dataHandler);
   }
 
   /**

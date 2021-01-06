@@ -57,9 +57,19 @@ it("Correctly adds agents.", () => {
   // does nothing if attempting to add non-agent
   environment.addAgent(null);
   expect(environment.getAgents()).toHaveLength(1);
+  environment.addAgent({ x: 0, y: 1 });
+  expect(environment.getAgents()).toHaveLength(1);
 
   for (let i = 0; i < 5; i++) environment.addAgent(new Agent());
   expect(environment.getAgents()).toHaveLength(6);
+});
+
+it("Does nothing when trying to add an agent that has already been added.", () => {
+  const a = new Agent();
+  environment.addAgent(a);
+  expect(environment.getAgents()).toHaveLength(1);
+  environment.addAgent(a);
+  expect(environment.getAgents()).toHaveLength(1);
 });
 
 it("Correctly removes agents.", () => {
@@ -103,10 +113,7 @@ it("Correctly loops over agents in random order.", () => {
     order.push(agent.get("i"));
   }
   for (let i = 0; i < 10; i++) {
-    const agent = new Agent();
-    agent.set("i", i);
-    agent.addRule(tick);
-    environment.addAgent(agent);
+    environment.addAgent(new Agent({ i, tick }));
   }
   environment.tick({ randomizeOrder: true });
 

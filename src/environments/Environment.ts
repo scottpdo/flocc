@@ -46,6 +46,7 @@ class Environment extends Agent {
   agents: Array<Agent> = [];
   agentsById: Map<string, Agent> = new Map();
   cache: Map<string, MemoValue> = new Map();
+  dimension: number = 0;
   helpers: Helpers = {
     kdtree: null,
     network: null,
@@ -73,10 +74,20 @@ class Environment extends Agent {
    * @param {boolean} rebalance - Whether to rebalance if there is a KDTree (defaults to true)
    */
   addAgent(agent: Agent, rebalance: boolean = true): void {
+    // shortcut if passed something other than an agent
     if (!(agent instanceof Agent)) return;
+    
+    // shortcut if the agent is already in this environment
+    if (this.agentsById.has(agent.id)) return;
+
     agent.environment = this;
     this.agents.push(agent);
     this.agentsById.set(agent.id, agent);
+
+    const { x, y, z } = agent.getData();
+    if (x !== null && this.dimension < 1) this.dimension = 1;
+    if (y !== null && this.dimension < 2) this.dimension = 2;
+    if (z !== null && this.dimension < 3) this.dimension = 3;
 
     if (this.helpers.kdtree) {
       this.helpers.kdtree.agents.push(agent);
