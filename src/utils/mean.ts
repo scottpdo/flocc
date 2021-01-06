@@ -1,4 +1,4 @@
-import sum from './sum';
+import sum from "./sum";
 
 /**
  * Find the mean value of an Array of numbers.
@@ -6,6 +6,7 @@ import sum from './sum';
  * @returns {number}
  */
 function mean(arr: Array<number>): number {
+  if (arr.length === 0) return null;
   return sum(arr) / arr.length;
 }
 
