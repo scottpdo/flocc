@@ -34,7 +34,7 @@ const escapeStringQuotes = (s: string): string => `"${s.replace(/"/g, '\\"')}"`;
 export class TableRenderer extends AbstractRenderer {
   columns: string[];
   environment: Environment;
-  lastRendered: number = +new Date();
+  lastRendered: number = null;
   opts: TableRendererOptions = Object.assign({}, defaultTableRendererOptions);
   table: Element;
 
