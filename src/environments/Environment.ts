@@ -84,6 +84,7 @@ class Environment extends Agent {
     this.agents.push(agent);
     this.agentsById.set(agent.id, agent);
 
+    // update dimension, if necessary
     const { x, y, z } = agent.getData();
     if (x !== null && this.dimension < 1) this.dimension = 1;
     if (y !== null && this.dimension < 2) this.dimension = 2;

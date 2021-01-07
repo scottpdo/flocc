@@ -131,11 +131,21 @@ class Agent implements DataObj {
       this._setFunctionValue(key, value);
     } else {
       this.data[key] = value;
+
       // automatically handle wrapping for toroidal environments
       if (this.environment && this.environment.opts.torus) {
         const { width, height } = this.environment;
         if (key === "x") this.data[key] = torusNormalize(value, width);
         if (key === "y") this.data[key] = torusNormalize(value, height);
+      }
+
+      // update environment dimension, if necessary
+      if (this.environment) {
+        const { environment } = this;
+        const { dimension } = environment;
+        if (key === 'x' && dimension < 1) environment.dimension = 1;
+        if (key === 'y' && dimension < 2) environment.dimension = 2;
+        if (key === 'z' && dimension < 3) environment.dimension = 3;
       }
 
       if (this.environment && this.environment.helpers.kdtree) {
