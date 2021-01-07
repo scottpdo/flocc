@@ -4,6 +4,7 @@ import { Environment } from "../environments/Environment";
 import type { KDTree } from "../helpers/KDTree";
 import uuid from "../utils/uuid";
 import { Rule } from "../helpers/Rule";
+import torusNormalize from '../utils/internal/torusNormalize'
 
 declare interface RuleObj {
   rule: Function | Rule;
@@ -133,10 +134,8 @@ class Agent implements DataObj {
       // automatically handle wrapping for toroidal environments
       if (this.environment && this.environment.opts.torus) {
         const { width, height } = this.environment;
-        if (key === "x" && value > width) this.data[key] -= width;
-        if (key === "x" && value < 0) this.data[key] += width;
-        if (key === "y" && value > height) this.data[key] -= height;
-        if (key === "y" && value < 0) this.data[key] += height;
+        if (key === "x") this.data[key] = torusNormalize(value, width);
+        if (key === "y") this.data[key] = torusNormalize(value, height);
       }
 
       if (this.environment && this.environment.helpers.kdtree) {
