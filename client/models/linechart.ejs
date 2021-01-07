@@ -19,12 +19,6 @@
     color: "blue"
   });
 
-  const table = new TableRenderer(environment, {
-    limit: 10
-  });
-  table.mount("#table");
-  table.columns = ["x", "y"];
-
   function tick(agent) {
     return {
       x: agent.get("x") + 1.025 * width * Math.sin(environment.time / 100),

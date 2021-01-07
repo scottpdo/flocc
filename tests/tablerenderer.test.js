@@ -5,7 +5,7 @@ it("Instantiates an empty TableRenderer", () => {
   const renderer = new TableRenderer(environment);
   expect(renderer.environment).toBe(environment);
   expect(renderer.columns).toHaveLength(0);
-  expect(renderer.lastRendered).toBeGreaterThan(0);
+  expect(renderer.lastRendered).toBeNull();
 });
 
 it("Can add columns to a TableRenderer", () => {
