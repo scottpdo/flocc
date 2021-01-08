@@ -188,3 +188,46 @@ it("Returns array of agent stats", () => {
   expect(environment.stat("i")[0]).toBe(9999);
   expect(utils.mean(environment.stat("i"))).toBe(149);
 });
+
+it("Has zero dimension on instantiation.", () => {
+  expect(environment.dimension).toBe(0);
+});
+
+it("Automatically handles agent x/y values when toroidal", () => {
+  environment.width = 200;
+  environment.height = 100;
+
+  const a = new Agent({ x: 201, y: -1 });
+  environment.addAgent(a);
+  expect(a.get("x")).toBe(1);
+  expect(a.get("y")).toBe(99);
+});
+
+it("Automatically updates dimension when new Agents are added.", () => {
+  environment.addAgent(new Agent({ x: 0 }));
+  expect(environment.dimension).toBe(1);
+  environment.addAgent(new Agent({ x: 0, y: 0 }));
+  expect(environment.dimension).toBe(2);
+  environment.addAgent(new Agent({ z: 0 }));
+  expect(environment.dimension).toBe(3);
+
+  // does not revert to lower dimension
+  environment.addAgent(new Agent({ x: 0 }));
+  expect(environment.dimension).toBe(3);
+});
+
+it("Automatically updates dimension when Agents call `set` with x, y, or z.", () => {
+  const a = new Agent();
+  environment.addAgent(a);
+  expect(environment.dimension).toBe(0);
+
+  a.set("y", 100);
+  expect(environment.dimension).toBe(2);
+
+  a.set("z", 1000);
+  expect(environment.dimension).toBe(3);
+
+  // does not revert to lower dimension
+  a.set("x", 1);
+  expect(environment.dimension).toBe(3);
+});

@@ -131,38 +131,8 @@ class Agent implements DataObj {
       this._setFunctionValue(key, value);
     } else {
       this.data[key] = value;
-
-      // automatically handle wrapping for toroidal environments
-      if (this.environment && this.environment.opts.torus) {
-        const { width, height } = this.environment;
-        if (key === "x") this.data[key] = torusNormalize(value, width);
-        if (key === "y") this.data[key] = torusNormalize(value, height);
-      }
-
-      // update environment dimension, if necessary
-      if (this.environment) {
-        const { environment } = this;
-        const { dimension } = environment;
-        if (key === 'x' && dimension < 1) environment.dimension = 1;
-        if (key === 'y' && dimension < 2) environment.dimension = 2;
-        if (key === 'z' && dimension < 3) environment.dimension = 3;
-      }
-
-      if (this.environment && this.environment.helpers.kdtree) {
-        let subtree = this.__subtree;
-        let bbox = subtree.bbox;
-        // if the agent is no longer contained within its
-        // subtree's bounding box, then
-        // traverse the tree and mark the highest level
-        // tree that will need to rebalance, starting with the parent
-        // of the agent's current subtree
-        while (!bbox.contains(this)) {
-          if (subtree === this.environment.helpers.kdtree) break;
-          subtree = subtree.parent;
-          bbox = subtree.bbox;
-        }
-        subtree.needsUpdating = true;
-      }
+      // after updating data, sync the Agent with its Environment
+      this._syncWithEnvironment();
     }
   }
 
@@ -283,6 +253,43 @@ class Agent implements DataObj {
       const ruleObj = this.queue.shift();
       const data = this.executeRule(ruleObj);
       if (data) this.set(data);
+    }
+  }
+
+  /**
+   * Sync the Agent with its Environment.
+   */
+  _syncWithEnvironment() {
+    if (!this.environment) return;
+    const { environment } = this;
+    const { dimension,opts, width, height } = environment;
+    const { torus } = opts;
+    const { x, y, z } = this.getData();
+
+    if (x !== null && dimension < 1) environment.dimension = 1;
+    if (y !== null && dimension < 2) environment.dimension = 2;
+    if (z !== null && dimension < 3) environment.dimension = 3;
+
+    if (torus) {
+      // don't call this.set or we infinitely regress
+      if (x !== null) this.data.x = torusNormalize(x, width);
+      if (y !== null) this.data.y = torusNormalize(y, height);
+    }
+
+    if (environment.helpers.kdtree) {
+      let subtree = this.__subtree;
+      let bbox = subtree.bbox;
+      // if the agent is no longer contained within its
+      // subtree's bounding box, then
+      // traverse the tree and mark the highest level
+      // tree that will need to rebalance, starting with the parent
+      // of the agent's current subtree
+      while (!bbox.contains(this)) {
+        if (subtree === this.environment.helpers.kdtree) break;
+        subtree = subtree.parent;
+        bbox = subtree.bbox;
+      }
+      subtree.needsUpdating = true;
     }
   }
 }

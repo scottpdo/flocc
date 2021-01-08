@@ -83,18 +83,7 @@ class Environment extends Agent {
     agent.environment = this;
     this.agents.push(agent);
     this.agentsById.set(agent.id, agent);
-
-    // update dimension, if necessary
-    const { x, y, z } = agent.getData();
-    if (x !== null && this.dimension < 1) this.dimension = 1;
-    if (y !== null && this.dimension < 2) this.dimension = 2;
-    if (z !== null && this.dimension < 3) this.dimension = 3;
-
-    if (this.helpers.kdtree) {
-      this.helpers.kdtree.agents.push(agent);
-      this.helpers.kdtree.needsUpdating = true;
-      if (rebalance) this.helpers.kdtree.rebalance();
-    }
+    agent._syncWithEnvironment();
   }
 
   /**
