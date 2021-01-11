@@ -29,7 +29,7 @@ it("Correctly removes an agent from the network.", () => {
   expect(success).toBe(false);
 });
 
-it("Correctly detects whether agents are in the network or not..", () => {
+it("Correctly detects whether agents are in the network or not.", () => {
   network.addAgent(a0);
   expect(network.isInNetwork(a0)).toBe(true);
   expect(network.isInNetwork(a1)).toBe(false);
@@ -108,4 +108,37 @@ it("Correctly adds agents from an environment.", () => {
   expect(network.agents).toHaveLength(2);
   expect(network.agents).toContain(a0);
   expect(network.agents).toContain(a1);
+});
+
+it("Correctly computes clustering coefficients for agents.", () => {
+  const n = new Network();
+
+  const dne = new Agent();
+  expect(n.clusteringCoefficient(dne)).toBeNull();
+
+  const a = new Agent();
+  const b = new Agent();
+  const c = new Agent();
+  const d = new Agent();
+  [a, b, c, d].forEach(agent => n.addAgent(agent));
+
+  n.connect(a, b);
+  n.connect(a, c);
+  n.connect(a, d);
+  n.connect(b, c);
+  n.connect(b, d);
+  n.connect(c, d);
+  [a, b, c, d].forEach(agent => {
+    expect(n.clusteringCoefficient(agent)).toBe(1);
+  });
+
+  n.disconnect(b, c);
+  n.disconnect(b, d);
+  expect(n.clusteringCoefficient(a)).toBe(1 / 3);
+
+  const e = new Agent();
+  n.addAgent(e);
+  n.connect(a, e);
+  n.connect(b, e);
+  expect(n.clusteringCoefficient(a)).toBe(1 / 3);
 });
