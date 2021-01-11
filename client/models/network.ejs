@@ -12,6 +12,7 @@
   /* ----- SETUP ----- */
   const environment = new Environment();
   const network = new Network();
+  console.log(network);
   environment.use(network);
 
   const renderer = new CanvasRenderer(environment, {

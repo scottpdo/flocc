@@ -2,6 +2,7 @@
 import { Agent } from "../agents/Agent";
 import { Environment } from "../environments/Environment";
 import shuffle from "../utils/shuffle";
+import { NumArray } from "./NumArray";
 
 interface AgentCallback {
   (agent: Agent, index: number): any;
@@ -9,6 +10,7 @@ interface AgentCallback {
 
 class Network implements EnvironmentHelper {
   adjacencyList: Map<Agent, Agent[]> = new Map();
+  adjacencyMatrix: NumArray = new NumArray();
 
   /**
    * list (JS array) of all the agents
@@ -26,6 +28,7 @@ class Network implements EnvironmentHelper {
     if (!this.isInNetwork(agent)) {
       this.adjacencyList.set(agent, []);
       this.agents.push(agent);
+      this._resetAdjacencyMatrix();
       return true;
     }
     return false;
@@ -58,6 +61,8 @@ class Network implements EnvironmentHelper {
     const idx = this.indexOf(agent);
     if (idx >= 0) this.agents.splice(idx, 1);
 
+    this._resetAdjacencyMatrix();
+
     return true;
   }
 
@@ -85,6 +90,11 @@ class Network implements EnvironmentHelper {
     if (!this.areConnected(a1, a2)) {
       this.adjacencyList.get(a1).push(a2);
       this.adjacencyList.get(a2).push(a1);
+
+      const i1 = this.indexOf(a1);
+      const i2 = this.indexOf(a2);
+      this.adjacencyMatrix.set(i1 * this.size() + i2, 1);
+      this.adjacencyMatrix.set(i2 * this.size() + i1, 1);
       return true;
     }
 
@@ -98,9 +108,11 @@ class Network implements EnvironmentHelper {
    */
   areConnected(a1: Agent, a2: Agent): boolean {
     if (!this.isInNetwork(a1) || !this.isInNetwork(a2)) return false;
+    const i1 = this.indexOf(a1);
+    const i2 = this.indexOf(a2);
     return (
-      this.adjacencyList.get(a1).indexOf(a2) >= 0 &&
-      this.adjacencyList.get(a2).indexOf(a1) >= 0
+      this.adjacencyMatrix.get(i1 * this.size() + i2) === 1 &&
+      this.adjacencyMatrix.get(i2 * this.size() + i1) === 1
     );
   }
 
@@ -119,6 +131,11 @@ class Network implements EnvironmentHelper {
     if (this.areConnected(a1, a2)) {
       a1neighbors.splice(a1neighbors.indexOf(a2), 1);
       a2neighbors.splice(a2neighbors.indexOf(a1), 1);
+
+      const i1 = this.indexOf(a1);
+      const i2 = this.indexOf(a2);
+      this.adjacencyMatrix.set(i1 * this.size() + i2, 0);
+      this.adjacencyMatrix.set(i2 * this.size() + i1, 0);
       return true;
     }
 
@@ -192,6 +209,16 @@ class Network implements EnvironmentHelper {
     for (let i = 0; i < this.agents.length; i++) {
       for (let j = i + 1; j < this.agents.length; j++) {
         this.connect(this.get(i), this.get(j));
+      }
+    }
+  }
+
+  _resetAdjacencyMatrix(): void {
+    this.adjacencyMatrix = new NumArray();
+    for (let i = 0; i < this.size(); i++) {
+      for (let j = 0; j < this.size(); j++) {
+        const connected = this.areConnected(this.get(i), this.get(j));
+        this.adjacencyMatrix.push(connected ? 1 : 0);
       }
     }
   }
