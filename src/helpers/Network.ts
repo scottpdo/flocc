@@ -3,31 +3,18 @@ import { Agent } from "../agents/Agent";
 import { Environment } from "../environments/Environment";
 import shuffle from "../utils/shuffle";
 
-interface AdjacencyList {
-  [id: string]: Agent[];
-}
-
 interface AgentCallback {
   (agent: Agent, index: number): any;
 }
 
 class Network implements EnvironmentHelper {
-  /**
-   * keys = IDs of agents in the network,
-   * values = array of neighboring agents
-   */
-  data: AdjacencyList;
+  adjacencyList: Map<Agent, Agent[]> = new Map();
 
   /**
    * list (JS array) of all the agents
    * in the order they were added to the graph
    */
-  agents: Agent[];
-
-  constructor() {
-    this.data = {};
-    this.agents = [];
-  }
+  agents: Agent[] = [];
 
   /**
    * Add an agent to the network.
@@ -37,7 +24,7 @@ class Network implements EnvironmentHelper {
    */
   addAgent(agent: Agent): boolean {
     if (!this.isInNetwork(agent)) {
-      this.data[agent.id] = [];
+      this.adjacencyList.set(agent, []);
       this.agents.push(agent);
       return true;
     }
@@ -66,7 +53,7 @@ class Network implements EnvironmentHelper {
         this.disconnect(agent, neighbor);
       });
     }
-    delete this.data[agent.id];
+    this.adjacencyList.delete(agent);
 
     const idx = this.indexOf(agent);
     if (idx >= 0) this.agents.splice(idx, 1);
@@ -95,12 +82,9 @@ class Network implements EnvironmentHelper {
     if (a1 === a2) return false;
     if (!this.isInNetwork(a1) || !this.isInNetwork(a2)) return false;
 
-    const id1 = a1.id;
-    const id2 = a2.id;
-
     if (!this.areConnected(a1, a2)) {
-      this.data[id1].push(a2);
-      this.data[id2].push(a1);
+      this.adjacencyList.get(a1).push(a2);
+      this.adjacencyList.get(a2).push(a1);
       return true;
     }
 
@@ -113,10 +97,11 @@ class Network implements EnvironmentHelper {
    * @param {Agent} a2
    */
   areConnected(a1: Agent, a2: Agent): boolean {
-    const id1 = a1.id;
-    const id2 = a2.id;
     if (!this.isInNetwork(a1) || !this.isInNetwork(a2)) return false;
-    return this.data[id1].indexOf(a2) >= 0 && this.data[id2].indexOf(a1) >= 0;
+    return (
+      this.adjacencyList.get(a1).indexOf(a2) >= 0 &&
+      this.adjacencyList.get(a2).indexOf(a1) >= 0
+    );
   }
 
   /**
@@ -128,12 +113,12 @@ class Network implements EnvironmentHelper {
   disconnect(a1: Agent, a2: Agent): boolean {
     if (a1 === a2) return false;
 
-    const id1 = a1.id;
-    const id2 = a2.id;
+    const a1neighbors = this.adjacencyList.get(a1);
+    const a2neighbors = this.adjacencyList.get(a2);
 
     if (this.areConnected(a1, a2)) {
-      this.data[id1].splice(this.data[id1].indexOf(a2), 1);
-      this.data[id2].splice(this.data[id2].indexOf(a1), 1);
+      a1neighbors.splice(a1neighbors.indexOf(a2), 1);
+      a2neighbors.splice(a2neighbors.indexOf(a1), 1);
       return true;
     }
 
@@ -169,7 +154,7 @@ class Network implements EnvironmentHelper {
    * @param {Agent} agent
    */
   isInNetwork(agent: Agent): boolean {
-    return this.agents.indexOf(agent) > -1;
+    return this.adjacencyList.has(agent);
   }
 
   /**
@@ -197,7 +182,7 @@ class Network implements EnvironmentHelper {
    */
   neighbors(agent: Agent): Agent[] | null {
     if (!this.isInNetwork(agent)) return null;
-    return this.data[agent.id];
+    return this.adjacencyList.get(agent);
   }
 
   /**
@@ -209,6 +194,31 @@ class Network implements EnvironmentHelper {
         this.connect(this.get(i), this.get(j));
       }
     }
+  }
+
+  _globalClusteringCoefficient(): number {
+    return 0;
+  }
+
+  clusteringCoefficient(agent?: Agent): number {
+    if (!agent) return this._globalClusteringCoefficient();
+
+    if (agent && !this.isInNetwork(agent)) return null;
+
+    const neighbors = this.neighbors(agent);
+    if (neighbors.length === 0) return null;
+    const k = neighbors.length;
+
+    let clusterConnections = 0;
+    for (let i = 0; i < k - 1; i++) {
+      const a = neighbors[i];
+      for (let j = i + 1; j < k; j++) {
+        const b = neighbors[j];
+        if (this.areConnected(a, b)) clusterConnections++;
+      }
+    }
+
+    return (2 * clusterConnections) / (k * (k - 1));
   }
 }
 
