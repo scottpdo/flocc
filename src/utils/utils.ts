@@ -7,6 +7,7 @@ export { default as lerp } from "./lerp";
 export { default as remap } from "./remap";
 export { default as random } from "./random";
 export { default as sample } from "./sample";
+export { sampler } from "./sample";
 export { default as seed } from "./seed";
 export { default as series } from "./series";
 export { default as shuffle } from "./shuffle";
