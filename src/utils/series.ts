@@ -12,8 +12,11 @@ function primeFactorization(n: number): number[] {
   return factors.concat(n);
 }
 
-// Per the Hull–Dobell Theorem, this should iterate pseudo-randomly over
-// the range [0...m) with period = m
+/**
+ * Per the Hull–Dobell Theorem, this should iterate pseudo-randomly over
+ * the range [0...m) with period = m
+ * @since 0.4.8
+ */
 export default function* series(m: number): IterableIterator<number> {
   // 1. m and c are relatively prime
   let c: number;

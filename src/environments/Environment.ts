@@ -40,6 +40,7 @@ interface MemoValue {
  * An environment provides the space and time in which agents interact.
  * Environments, like agents, can store data in key-value pairs
  * that can be updated over time.
+ * @since 0.0.5
  */
 class Environment extends Agent {
   /** @member {Agent[]} */
@@ -56,6 +57,7 @@ class Environment extends Agent {
   opts: EnvironmentOptions;
   width: number;
   height: number;
+  /** @since 0.1.4 */
   time: number = 0;
 
   constructor(opts: EnvironmentOptions = defaultEnvironmentOptions) {
@@ -71,6 +73,7 @@ class Environment extends Agent {
    * agent's environment to be this environment.
    * @param {Agent} agent
    * @param {boolean} rebalance - Whether to rebalance if there is a KDTree (defaults to true)
+   * @since 0.0.5
    */
   addAgent(agent: Agent, rebalance: boolean = true): void {
     if (!(agent instanceof Agent)) return;
@@ -88,7 +91,8 @@ class Environment extends Agent {
   /**
    * Remove an agent from the environment.
    * @param {Agent} agent
-   * @param {boolean} rebalance - Whether to rebalance if there is a KDTree (defaults to true)
+   * @param {boolean} [rebalance] - Whether to rebalance if there is a KDTree (defaults to true)
+   * @since 0.0.8
    */
   removeAgent(agent: Agent, rebalance: boolean = true): void {
     agent.environment = null;
@@ -104,6 +108,7 @@ class Environment extends Agent {
   /**
    * Remove an agent from the environment by its ID.
    * @param {string} id
+   * @since 0.1.3
    */
   removeAgentById(id: string): void {
     const agent = this.getAgentById(id);
@@ -114,6 +119,7 @@ class Environment extends Agent {
   /**
    * Get an array of all the agents in the environment.
    * @return {Agent[]}
+   * @since 0.0.5
    */
   getAgents(): Array<Agent> {
     return this.agents;
@@ -123,6 +129,7 @@ class Environment extends Agent {
    * Get an agent in the environment by its ID.
    * @param {string} id
    * @returns {Agent|null}
+   * @since 0.1.3
    */
   getAgentById(id: string): Agent | null {
     return this.agentsById.get(id) || null;
@@ -130,6 +137,7 @@ class Environment extends Agent {
 
   /**
    * Removes all agents from the environment.
+   * @since 0.1.3
    */
   clear(): void {
     while (this.getAgents().length > 0) {
@@ -187,6 +195,7 @@ class Environment extends Agent {
    * Can take either a number or a configuration object as a parameter.
    * If a number, the environment will tick forward that many times.
    * @param {number | TickOptions} opts
+   * @since 0.0.5
    */
   tick(opts?: number | TickOptions): void {
     const { count, randomizeOrder } = this._getTickOptions(opts);
@@ -213,6 +222,7 @@ class Environment extends Agent {
   /**
    * Use a helper with this environment.
    * @param {EnvironmentHelper} e
+   * @since 0.1.3
    */
   use(e: EnvironmentHelper) {
     if (e instanceof KDTree) this.helpers.kdtree = e;
@@ -228,6 +238,7 @@ class Environment extends Agent {
    * @param {string} key - The key for which to retrieve data.
    * @param {boolean} useCache - Whether or not to cache the result (defaults to true).
    * @return {any[]} Array of data associated with `agent.get(key)` across all agents.
+   * @since 0.3.14
    */
   stat(key: string, useCache: boolean = true): any[] {
     const mapAndFilter = () => {
@@ -246,6 +257,7 @@ class Environment extends Agent {
    * Pass a function to cache and use the return value within the same environment tick.
    * @param {Function} fn - The function to memoize.
    * @return {any} The return value of the function that was passed.
+   * @since 0.3.14
    */
   memo(fn: Function, key?: string): any {
     const serialized = (key ? key + "-" : "") + fn.toString();

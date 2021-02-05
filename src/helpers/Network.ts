@@ -9,6 +9,9 @@ interface AgentCallback {
   (agent: Agent, index: number): any;
 }
 
+/**
+ * @since 0.1.3
+ */
 class Network implements EnvironmentHelper {
   adjacencyList: Map<Agent, Agent[]> = new Map();
   // instantiated and updated in _resetAdjacencyMatrix
@@ -25,6 +28,7 @@ class Network implements EnvironmentHelper {
    * Returns `true` if the agent was successfully added.
    * Returns `false` if the agent was already in the network.
    * @param {Agent} agent
+   * @since 0.1.3
    */
   addAgent(agent: Agent): boolean {
     if (!this.isInNetwork(agent)) {
@@ -39,6 +43,7 @@ class Network implements EnvironmentHelper {
   /**
    * Add all agents in an environment to this network.
    * @param {Environment} environment
+   * @since 0.2.1
    */
   addFromEnvironment(environment: Environment): void {
     environment.getAgents().forEach(agent => this.addAgent(agent));
@@ -49,6 +54,7 @@ class Network implements EnvironmentHelper {
    * Returns `true` if the agent was successfully removed.
    * Returns `false` if the agent was not in the network to begin with.
    * @param {Agent} agent
+   * @since 0.1.3
    */
   removeAgent(agent: Agent): boolean {
     if (!this.isInNetwork(agent)) return false;
@@ -70,6 +76,7 @@ class Network implements EnvironmentHelper {
 
   /**
    * Removes all agents from the network.
+   * @since 0.2.1
    */
   clear(): void {
     while (this.agents.length > 0) {
@@ -84,6 +91,7 @@ class Network implements EnvironmentHelper {
    * or if the connection already exists).
    * @param {*} a1
    * @param {*} a2
+   * @since 0.1.3
    */
   connect(a1: Agent, a2: Agent): boolean {
     if (a1 === a2) return false;
@@ -107,6 +115,7 @@ class Network implements EnvironmentHelper {
    * Returns `true` if the given agents are connected in the network.
    * @param {Agent} a1
    * @param {Agent} a2
+   * @since 0.1.3
    */
   areConnected(a1: Agent, a2: Agent): boolean {
     if (!this.isInNetwork(a1) || !this.isInNetwork(a2)) return false;
@@ -123,6 +132,7 @@ class Network implements EnvironmentHelper {
    * removed, false if otherwise (if edge did not exist in the first place).
    * @param {agent} a1
    * @param {agent} a2
+   * @since 0.1.3
    */
   disconnect(a1: Agent, a2: Agent): boolean {
     if (a1 === a2) return false;
@@ -145,6 +155,7 @@ class Network implements EnvironmentHelper {
 
   /**
    * Number of agents in the network.
+   * @since 0.1.3
    */
   size(): number {
     return this.agents.length;
@@ -154,6 +165,7 @@ class Network implements EnvironmentHelper {
    * Given a callback function, loop over all the agents in the network
    * and invoke the callback, passing the agent + its index as parameters.
    * @param {Function} cb
+   * @since 0.1.3
    */
   forEach(cb: AgentCallback) {
     this.agents.forEach(cb);
@@ -162,6 +174,7 @@ class Network implements EnvironmentHelper {
   /**
    * Same as forEach, but in random order.
    * @param {Function} cb
+   * @since 0.1.3
    */
   forEachRand(cb: AgentCallback) {
     shuffle(this.agents).forEach(cb);
@@ -170,6 +183,7 @@ class Network implements EnvironmentHelper {
   /**
    * Returns true if the agent is in the network, false if it is not.
    * @param {Agent} agent
+   * @since 0.1.3
    */
   isInNetwork(agent: Agent): boolean {
     return this.adjacencyList.has(agent);
@@ -178,6 +192,7 @@ class Network implements EnvironmentHelper {
   /**
    * Get the agent at index i.
    * @param {number} i
+   * @since 0.1.3
    */
   get(i: number): Agent {
     while (i < 0) i += this.size();
@@ -188,6 +203,7 @@ class Network implements EnvironmentHelper {
   /**
    * Get the index of a given agent.
    * @param {Agent} agent
+   * @since 0.1.3
    */
   indexOf(agent: Agent): number {
     return this.agents.indexOf(agent);
@@ -197,6 +213,7 @@ class Network implements EnvironmentHelper {
    * Return the agents that are neighbors of a given agent
    * (in a JS array). If the agent is not in the network, returns `null`.
    * @param {Agent} agent
+   * @since 0.1.3
    */
   neighbors(agent: Agent): Agent[] | null {
     if (!this.isInNetwork(agent)) return null;
@@ -205,6 +222,7 @@ class Network implements EnvironmentHelper {
 
   /**
    * Connect every agent in the network to every other agent.
+   * @since 0.1.3
    */
   complete(): void {
     for (let i = 0; i < this.agents.length; i++) {

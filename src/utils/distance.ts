@@ -9,6 +9,7 @@ import { Agent } from "../agents/Agent";
  * @param {Point|Agent} p1
  * @param {Point|Agent} p2
  * @return {number} The distance between p1 and p2.
+ * @since 0.0.10
  */
 export default function distance(p1: Point | Agent, p2: Point | Agent): number {
   let x1: number = (p1 instanceof Agent ? p1.get("x") : p1.x) || 0;

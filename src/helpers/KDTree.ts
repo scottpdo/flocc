@@ -19,6 +19,9 @@ const arrayOfTreesToAgents = (trees: KDTree[]): Agent[] => {
     .reduce((acc, agents) => acc.concat(agents));
 };
 
+/**
+ * @since 0.3.5
+ */
 class KDTree {
   agents: Agent[] = null;
   bbox: BBox;
@@ -148,6 +151,7 @@ class KDTree {
    * of the given Point or Agent `pt`.
    * @param {Point | Agent} pt
    * @param {number} d
+   * @since 0.3.5
    */
   agentsWithinDistance(pt: Point | Agent, d: number): Agent[] {
     const trees = this.subtreesWithinDistance(pt, d);
@@ -160,6 +164,7 @@ class KDTree {
    * Returns the Agent in this KDTree that is closest spatially to the
    * given Point or Agent `pt`.
    * @param {Point | Agent} pt
+   * @since 0.3.5
    */
   nearestNeighbor(pt: Agent | Point): Agent {
     // locate the subtree this point is in
@@ -199,6 +204,7 @@ class KDTree {
    * Optionally pass the agents that belong to this tree (relevant for trees
    * of higher depth than the top level).
    * @param {Agent[]} agents
+   * @since 0.3.5
    */
   rebalance(agents: Agent[] = this.agents): void {
     // only rebalance if the tree has been marked as needing updating.

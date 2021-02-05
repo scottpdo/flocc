@@ -16,6 +16,9 @@ const defaultOptions: CanvasRendererOptions = {
   trace: false
 };
 
+/**
+ * @since 0.0.11
+ */
 class CanvasRenderer extends AbstractRenderer {
   opts: CanvasRendererOptions;
   buffer: HTMLCanvasElement;

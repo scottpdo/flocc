@@ -8,6 +8,7 @@ import random from "./random";
  *
  * @param {Array} array The array to shuffle.
  * @returns {Array} Returns the new shuffled array.
+ * @since 0.0.7
  */
 export default function shuffle<T>(array: T[]): T[] {
   const length = array ? array.length : 0;

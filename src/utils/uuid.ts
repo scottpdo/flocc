@@ -1,5 +1,8 @@
 import uniform from "./uniform";
 
+/**
+ * @since 0.1.3
+ */
 function uuid(): Function {
   // http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/21963136#21963136
 

@@ -6,6 +6,7 @@ import PRNG from "./internal/PRNG";
  * @param min
  * @param max
  * @param {boolean} float - If true, returns a float. If false or empty, returns an int.
+ * @since 0.1.4
  */
 function random(
   min: number = 0,

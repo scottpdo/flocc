@@ -3,6 +3,9 @@ import sum from "../utils/sum";
 import lerp from "../utils/lerp";
 import copyArray from "../utils/internal/copyArray";
 
+/**
+ * @since 0.1.0
+ */
 class Vector implements Point {
   data: Array<number>;
   dimension: number;
@@ -12,6 +15,9 @@ class Vector implements Point {
     this.dimension = data ? data.length : 0;
   }
 
+  /**
+   * @since 0.1.0
+   */
   index(n: number): number {
     if (this.dimension > n) {
       return this.data[n];
@@ -25,6 +31,7 @@ class Vector implements Point {
    * the dimension will be increased to the dimensionality implied by the index.
    * @param i {number | string} - The numerical index (0-based) or lowercase string value ('x') to set.
    * @param value {number} - The value to set at this index/position.
+   * @since 0.1.0
    */
   set(i: number | string, value: number): this {
     let index: number;
@@ -124,6 +131,9 @@ class Vector implements Point {
     this.set(3, n);
   }
 
+  /**
+   * @since 0.1.0
+   */
   add(v: Vector): this {
     const dimension = Math.max(this.dimension, v.dimension);
     for (let i = 0; i < dimension; i++) {
@@ -136,11 +146,17 @@ class Vector implements Point {
     return this;
   }
 
+  /**
+   * @since 0.1.0
+   */
   multiplyScalar(n: number): this {
     this.data = this.data.map(x => x * n);
     return this;
   }
 
+  /**
+   * @since 0.1.0
+   */
   addScalar(n: number): this {
     this.data = this.data.map(x => x + n);
     return this;
@@ -148,6 +164,7 @@ class Vector implements Point {
 
   /**
    * Computes the Euclidean length (straight-line length) from the origin to this vector.
+   * @since 0.1.0
    */
   length(): number {
     return Math.sqrt(sum(this.data.map(x => x ** 2)));
@@ -156,6 +173,7 @@ class Vector implements Point {
   /**
    * Normalize the vector (turn it into a vector with length = 1).
    * Has no effect on the 0 vector.
+   * @since 0.1.0
    */
   normalize(): this {
     const l = this.length();
@@ -165,6 +183,9 @@ class Vector implements Point {
     return this;
   }
 
+  /**
+   * @since 0.1.0
+   */
   clone(): Vector {
     const data = copyArray(this.data);
     return new Vector(...data);
@@ -173,6 +194,7 @@ class Vector implements Point {
   /**
    * Rotate a vector about the Z axis.
    * @param angle {number} - The angle by which to rotate the vector, in radians
+   * @since 0.2.2
    */
   rotateZ(angle: number): this {
     const sin = Math.sin(angle);

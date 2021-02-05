@@ -15,7 +15,9 @@ let sample: SampleFunc;
 /**
  * Gets a random element from `array`.
  * @param {Array} array
+ * @param {number[]} [weights] - An array of numbers that determines how often one value of the array will be picked relative to others. Should be the same length as the given array.
  * @returns {*} Returns the random element.
+ * @since 0.0.7
  */
 sample = function<T>(array: T[], weights?: number[]): T {
   const length = array ? array.length : 0;
@@ -80,6 +82,11 @@ function destructivelySample<T>(array: T[], weights?: number[]): T {
   return null;
 }
 
+/**
+ * This is a factory function that returns a function that acts like `utils.sample`, except it can sample multiple values as an array. Like `utils.sample`, the returned function can also sample by weighted values.
+ * @param {number} n - How many values the returned sample function should retrieve, when it is called.
+ * @since 0.5.16
+ */
 export function sampler(n: number): SampleFunc | MultipleSampleFunc {
   // return a function that always returns null
   if (n < 1) return () => null;

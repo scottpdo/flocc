@@ -15,6 +15,9 @@ const unhash = (str: string): Point => {
   };
 };
 
+/**
+ * @since 0.0.5
+ */
 class GridEnvironment extends Environment {
   cells: Map<string, Cell>;
   _cellHashes: Array<string>;
@@ -49,6 +52,7 @@ class GridEnvironment extends Environment {
   /**
    * Fill every cell of the grid with an agent
    * and set that agent's position to its x/y coordinate.
+   * @since 0.0.5
    */
   fill(): void {
     for (let y = 0; y < this.height; y++) {
@@ -58,6 +62,9 @@ class GridEnvironment extends Environment {
     }
   }
 
+  /**
+   * @since 0.1.0
+   */
   normalize(x: number, y: number): Point {
     while (x < 0) x += this.width;
     while (x >= this.width) x -= this.width;
@@ -72,6 +79,7 @@ class GridEnvironment extends Environment {
    * @param {number} x_
    * @param {number} y_
    * @returns {Agent} The agent that was added at the specified coordinate.
+   * @since 0.1.0
    */
   addAgentAt(
     x_: number = 0,
@@ -105,6 +113,7 @@ class GridEnvironment extends Environment {
    * and removes the Agent (if there is one) at that cell coordinate.
    * @param {number} x_
    * @param {number} y_
+   * @since 0.1.0
    */
   removeAgentAt(x_: number = 0, y_: number = 0): void {
     const { x, y } = this.normalize(x_, y_);
@@ -130,6 +139,7 @@ class GridEnvironment extends Environment {
    * @param {number} x_
    * @param {number} y_
    * @return {Cell}
+   * @since 0.1.0
    */
   getCell(x_: number, y_: number): Cell | null {
     const { x, y } = this.normalize(x_, y_);
@@ -140,6 +150,7 @@ class GridEnvironment extends Environment {
   /**
    * Get all cells of the environment, in a flat array.
    * @return {Cell[]}
+   * @since 0.1.0
    */
   getCells(): Array<Cell> {
     return Array.from(this.cells.values());
@@ -150,6 +161,7 @@ class GridEnvironment extends Environment {
    * @param {number} x_
    * @param {number} y_
    * @return {null | Agent}
+   * @since 0.1.0
    */
   getAgentAt(x_: number, y_: number): Agent | null {
     const { x, y } = this.normalize(x_, y_);
@@ -166,8 +178,9 @@ class GridEnvironment extends Environment {
    * The callback is invoked with arguments `x`, `y`, and `agent`
    * (if there is one at that cell coordinate).
    * @param {Function} callback
+   * @since 0.0.5
    */
-  loop(callback: Function = function () {}): void {
+  loop(callback: Function = function() {}): void {
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
         const agent = this.getAgentAt(x, y);
@@ -184,6 +197,7 @@ class GridEnvironment extends Environment {
    * @param {number} y1_
    * @param {number} x2_
    * @param {number} y2_
+   * @since 0.0.7
    */
   swap(x1_: number, y1_: number, x2_: number, y2_: number): void {
     const a = this.normalize(x1_, y1_);
@@ -219,6 +233,7 @@ class GridEnvironment extends Environment {
   /**
    * Find a random open cell in the GridEnvironment.
    * @returns {Cell | null} The coordinate of the open cell.
+   * @since 0.0.7
    */
   getRandomOpenCell(): Cell | null {
     // randomize order of cell hashes
@@ -245,6 +260,7 @@ class GridEnvironment extends Environment {
    * @param {Agent} agent - the agent whose neighbors to retrieve
    * @param {number} radius - how far to look for neighbors
    * @param {boolean} moore - whether to use the Moore neighborhood or von Neumann (defaults to von Neumann)
+   * @since 0.1.4
    */
   neighbors(agent: Agent, radius: number = 1, moore: boolean = false): Agent[] {
     const { x, y } = agent.getData();

@@ -1,3 +1,6 @@
+/**
+ * @since 0.3.11
+ */
 class NumArray {
   data: Float32Array = new Float32Array(1);
   _index: number = 0;

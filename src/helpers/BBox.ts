@@ -2,6 +2,9 @@
 import { Agent } from "../agents/Agent";
 import { Vector } from "./Vector";
 
+/**
+ * @since 0.3.5
+ */
 class BBox {
   min: Vector;
   max: Vector;
@@ -11,6 +14,9 @@ class BBox {
     this.max = max;
   }
 
+  /**
+   * @since 0.3.5
+   */
   clone() {
     return new BBox(this.min.clone(), this.max.clone());
   }

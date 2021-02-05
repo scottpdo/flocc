@@ -10,6 +10,7 @@ import PRNG from "./internal/PRNG";
  * Predictable randomness can be turned off by calling `seed(null)`, or reset
  * by calling `seed(value)` again with the initial value you used.
  * @param value
+ * @since 0.5.0
  */
 const seed = (value: any): void => PRNG.seed(value);
 

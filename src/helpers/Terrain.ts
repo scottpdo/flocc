@@ -21,6 +21,9 @@ interface Pixel {
 
 type TerrainRule = (x: number, y: number) => Pixel | number | void;
 
+/**
+ * @since 0.4.0
+ */
 export const Colors: { [name: string]: Pixel } = {
   BLACK: { r: 0, g: 0, b: 0, a: 255 },
   WHITE: { r: 255, g: 255, b: 255, a: 255 },
@@ -36,6 +39,9 @@ export const Colors: { [name: string]: Pixel } = {
   PURPLE: { r: 127, g: 0, b: 127, a: 255 }
 };
 
+/**
+ * @since 0.4.0
+ */
 class Terrain implements EnvironmentHelper {
   data: Uint8ClampedArray;
   nextData: Uint8ClampedArray;
@@ -76,6 +82,7 @@ class Terrain implements EnvironmentHelper {
    * Initialize (or overwrite) the terrain data by passing a function with parameters (x, y)
    * and returning a pixel value.
    * @param {Function} rule - The rule to follow to instantiate pixel values
+   * @since 0.4.0
    */
   init(rule: TerrainRule): void {
     for (let y = 0; y < this.height; y++) {
@@ -101,6 +108,7 @@ class Terrain implements EnvironmentHelper {
    * passed as the rule should be called with the parameters (x, y), and should return
    * a pixel-like object { r: number, g: number, b: number, a: number } or number.
    * @param {Function} rule - The update rule to be called on environment.tick()
+   * @since 0.4.0
    */
   addRule(rule: TerrainRule): void {
     this.rule = rule;
@@ -113,6 +121,7 @@ class Terrain implements EnvironmentHelper {
    * A 2nd callback parameter fires once the image has been successfully loaded.
    * @param {string} path - The path or URL to the image
    * @param {Function} cb - The function to call once the image loads
+   * @since 0.4.0
    */
   load(path: string, cb?: Function): void {
     const img = document.createElement("img");
@@ -145,6 +154,7 @@ class Terrain implements EnvironmentHelper {
    * g: number, b: number, a: number } representing the value of that coordinate.
    * @param {number} x - The x coordinate
    * @param {number} y - The y coordinate
+   * @since 0.4.0
    */
   sample(x: number, y: number): Pixel | number {
     const { data, width, height, opts } = this;
@@ -182,6 +192,7 @@ class Terrain implements EnvironmentHelper {
    * @param {number} radius - how far to look for neighbors
    * @param {boolean} moore - whether to use the Moore neighborhood or von Neumann (defaults to von Neumann)
    * @returns {Pixel[] | number[]} - An array of numbers (grayscale only) or pixel-like objects
+   * @since 0.4.0
    */
   neighbors(
     x: number,
@@ -259,6 +270,7 @@ class Terrain implements EnvironmentHelper {
    * @param {number=} g - The green value 0-255
    * @param {number=} b - The blue value 0-255
    * @param {number=} a - The alpha/transparency value 0-255
+   * @since 0.4.0
    */
   set(
     x: number,

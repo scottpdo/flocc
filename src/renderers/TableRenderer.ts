@@ -31,6 +31,9 @@ const precision = (n: number, d: number): number => {
 
 const escapeStringQuotes = (s: string): string => `"${s.replace(/"/g, '\\"')}"`;
 
+/**
+ * @since 0.5.0
+ */
 export class TableRenderer extends AbstractRenderer {
   columns: string[];
   environment: Environment;
@@ -155,6 +158,9 @@ export class TableRenderer extends AbstractRenderer {
     return `<table>${thead}${tbody}</table>`;
   }
 
+  /**
+   * @since 0.5.0
+   */
   output(): string {
     const { type } = this.opts;
     if (type === "csv") {

@@ -12,6 +12,9 @@ declare interface RuleObj {
 
 const disallowed: string[] = ["tick", "queue"];
 
+/**
+ * @since 0.0.5
+ */
 class Agent implements DataObj {
   /**
    * @member {Environment|null} environment
@@ -65,6 +68,7 @@ class Agent implements DataObj {
    * Retrieve an arbitrary piece of data associated
    * with this agent by name.
    * @param {string} name
+   * @since 0.0.5
    */
   get(name: string): any {
     // return null if it doesn't exist or if is disallowed
@@ -87,6 +91,7 @@ class Agent implements DataObj {
   /**
    * Retrieve all the data associated with this agent
    * (useful for destructuring properties).
+   * @since 0.1.0
    */
   getData(): Data {
     return this.data;
@@ -100,6 +105,7 @@ class Agent implements DataObj {
    * Ex. agent.set('x', 5); agent.set('color', 'red');
    * @param {string|Data} name
    * @param {*} value
+   * @since 0.0.5
    */
   set(name: string | Data, value?: any): void {
     // if just receiving a single key-value pair, simply set it
@@ -157,6 +163,7 @@ class Agent implements DataObj {
    * `n`. If the value has not yet been set, initializes it to 1.
    * @param {string} name
    * @param {number} n
+   * @since 0.0.8
    */
   increment(name: string, n: number = 1): void {
     if (!this.get(name)) this.set(name, 0);
@@ -169,6 +176,7 @@ class Agent implements DataObj {
    * `n`. If the value has not yet been set,
    * initializes it to -1.
    * @param {string} name
+   * @since 0.0.8
    */
   decrement(name: string, n: number = 1): void {
     this.increment(name, -n);
@@ -179,6 +187,7 @@ class Agent implements DataObj {
    * environment's tick cycle. When executed, the
    * @param {Function | Rule} rule
    * @deprecated since version 0.5.14
+   * @since 0.0.5
    */
   addRule(rule: Function | Rule, ...args: Array<any>): void {
     console.warn("As of Flocc v0.5.14, Agent.addRule is **DEPRECATED**. It will be **REMOVED** in v0.7.0. Instead, add the Agent's update rule by calling `Agent.set('tick', ...);`");
@@ -201,6 +210,7 @@ class Agent implements DataObj {
    * the environment's tick cycle.
    * @param {Function} enqueuedRule
    * @deprecated since version 0.5.14
+   * @since 0.0.5
    */
   enqueue(rule: Function, ...args: Array<any>): void {
     console.warn("As of Flocc v0.5.14, Agent.enqueue is **DEPRECATED**. It will be **REMOVED** in v0.7.0. Instead, add a rule to be executed at the end of this tick by calling `Agent.set('queue', ...);`");

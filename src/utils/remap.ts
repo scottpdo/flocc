@@ -8,7 +8,14 @@
  * @param {number} bMin
  * @param {number} bMax
  * @returns {number} The remapped value.
+ * @since 0.0.5
  */
-export default function remap(x: number, aMin: number, aMax: number, bMin: number, bMax: number): number {
-  return bMin + (bMax - bMin) * (x - aMin) / (aMax - aMin);
-};
+export default function remap(
+  x: number,
+  aMin: number,
+  aMax: number,
+  bMin: number,
+  bMax: number
+): number {
+  return bMin + ((bMax - bMin) * (x - aMin)) / (aMax - aMin);
+}

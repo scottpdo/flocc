@@ -49,6 +49,9 @@ const defaultMetricOptions = {
   fn: mean
 };
 
+/**
+ * @since 0.2.0
+ */
 class LineChartRenderer extends AbstractRenderer {
   background: HTMLCanvasElement = document.createElement("canvas");
   opts: LineChartRendererOptions;
@@ -73,6 +76,9 @@ class LineChartRenderer extends AbstractRenderer {
     environment.renderers.push(this);
   }
 
+  /**
+   * @since 0.2.0
+   */
   metric(key: string, opts?: MetricOptions) {
     const buffer = new NumArray();
     const metric: Metric = { key, buffer, ...defaultMetricOptions };

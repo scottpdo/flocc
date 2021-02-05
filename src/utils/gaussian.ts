@@ -6,6 +6,7 @@ import uniform from "./uniform";
  * @param {number} mean
  * @param {number} sd
  * @returns {number}
+ * @since 0.0.8
  */
 export default function gaussian(mean: number = 0, sd: number = 1): number {
   let y: number, x1: number, x2: number, w: number;

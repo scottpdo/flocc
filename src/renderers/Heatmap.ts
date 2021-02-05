@@ -38,6 +38,9 @@ const defaultHeatmapOptions: HeatmapOptions = {
   scale: "relative"
 };
 
+/**
+ * @since 0.5.8
+ */
 class Heatmap extends AbstractRenderer {
   opts: HeatmapOptions = defaultHeatmapOptions;
   width: number;

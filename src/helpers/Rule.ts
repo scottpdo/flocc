@@ -58,6 +58,9 @@ const method = (
   return obj[name](...args);
 };
 
+/**
+ * @since 0.3.0
+ */
 class Rule {
   environment: Environment;
   steps: Step[] = [];
@@ -68,7 +71,10 @@ class Rule {
     this.steps = steps;
   }
 
-  // interpret single array step
+  /**
+   * interpret single array step
+   * @since 0.3.0
+   */
   evaluate = (agent: Agent, step: any[]): any => {
     const first = step && step.length > 0 ? step[0] : null;
     if (first === undefined || first === null) return null;
@@ -190,6 +196,9 @@ class Rule {
     return first;
   };
 
+  /**
+   * @since 0.3.0
+   */
   call(agent: Agent): any {
     return this.evaluate(agent, this.steps);
   }

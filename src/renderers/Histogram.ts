@@ -37,6 +37,9 @@ const defaultHistogramOptions: HistogramOptions = {
   scale: "fixed"
 };
 
+/**
+ * @since 0.3.0
+ */
 class Histogram extends AbstractRenderer {
   background: HTMLCanvasElement = document.createElement("canvas");
   _metric: string | string[];
@@ -69,6 +72,7 @@ class Histogram extends AbstractRenderer {
    * - `histogram.metric(["one", "two", "three"]);`
    * @param {string | string[]}_metric
    * @param {string[]} otherMetrics
+   * @since 0.3.0
    */
   metric(_metric: string | string[], ...otherMetrics: string[]): void {
     if (Array.isArray(_metric)) {

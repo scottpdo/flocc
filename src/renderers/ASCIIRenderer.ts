@@ -2,6 +2,9 @@ import { GridEnvironment } from "../environments/GridEnvironment";
 import { Agent } from "../agents/Agent";
 import { AbstractRenderer } from "./AbstractRenderer";
 
+/**
+ * @since 0.0.10
+ */
 class ASCIIRenderer extends AbstractRenderer {
   /** @member GridEnvironment */
   environment: GridEnvironment;
@@ -21,6 +24,9 @@ class ASCIIRenderer extends AbstractRenderer {
     this.pre = document.createElement("pre");
   }
 
+  /**
+   * @since 0.0.10
+   */
   render() {
     this.pre.innerHTML = "";
     this.environment.loop((x: number, y: number, agent: Agent | null) => {

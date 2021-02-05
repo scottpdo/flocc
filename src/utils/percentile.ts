@@ -9,6 +9,7 @@ import lerp from "./lerp";
  * (https://en.wikipedia.org/wiki/Percentile#The_linear_interpolation_between_closest_ranks_method)
  * @param {number[]} arr - Array of numbers
  * @param {number} n - Percentile value (between 0 and 1 inclusive)
+ * @since 0.3.14
  */
 export default function percentile(arr: number[], n: number): number {
   if (arr.length === 0) return null;
