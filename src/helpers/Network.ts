@@ -2,7 +2,7 @@
 import { Agent } from "../agents/Agent";
 import { Environment } from "../environments/Environment";
 import shuffle from "../utils/shuffle";
-import { NumArray } from "./NumArray";
+import { Array2D } from "./Array2D";
 
 interface AgentCallback {
   (agent: Agent, index: number): any;
@@ -10,7 +10,7 @@ interface AgentCallback {
 
 class Network implements EnvironmentHelper {
   adjacencyList: Map<Agent, Agent[]> = new Map();
-  adjacencyMatrix: NumArray = new NumArray();
+  adjacencyMatrix: Array2D;
 
   /**
    * list (JS array) of all the agents
@@ -27,8 +27,8 @@ class Network implements EnvironmentHelper {
   addAgent(agent: Agent): boolean {
     if (!this.isInNetwork(agent)) {
       this.adjacencyList.set(agent, []);
-      this.agents.push(agent);
       this._resetAdjacencyMatrix();
+      this.agents.push(agent);
       return true;
     }
     return false;
@@ -58,10 +58,10 @@ class Network implements EnvironmentHelper {
     }
     this.adjacencyList.delete(agent);
 
+    this._resetAdjacencyMatrix();
+
     const idx = this.indexOf(agent);
     if (idx >= 0) this.agents.splice(idx, 1);
-
-    this._resetAdjacencyMatrix();
 
     return true;
   }
@@ -93,8 +93,8 @@ class Network implements EnvironmentHelper {
 
       const i1 = this.indexOf(a1);
       const i2 = this.indexOf(a2);
-      this.adjacencyMatrix.set(i1 * this.size() + i2, 1);
-      this.adjacencyMatrix.set(i2 * this.size() + i1, 1);
+      this.adjacencyMatrix.set(i1, +i2, 1);
+      this.adjacencyMatrix.set(i2, +i1, 1);
       return true;
     }
 
@@ -111,8 +111,8 @@ class Network implements EnvironmentHelper {
     const i1 = this.indexOf(a1);
     const i2 = this.indexOf(a2);
     return (
-      this.adjacencyMatrix.get(i1 * this.size() + i2) === 1 &&
-      this.adjacencyMatrix.get(i2 * this.size() + i1) === 1
+      this.adjacencyMatrix.get(i1, i2) === 1 &&
+      this.adjacencyMatrix.get(i2, i1) === 1
     );
   }
 
@@ -125,17 +125,16 @@ class Network implements EnvironmentHelper {
   disconnect(a1: Agent, a2: Agent): boolean {
     if (a1 === a2) return false;
 
-    const a1neighbors = this.adjacencyList.get(a1);
-    const a2neighbors = this.adjacencyList.get(a2);
-
     if (this.areConnected(a1, a2)) {
+      const a1neighbors = this.adjacencyList.get(a1);
+      const a2neighbors = this.adjacencyList.get(a2);
       a1neighbors.splice(a1neighbors.indexOf(a2), 1);
       a2neighbors.splice(a2neighbors.indexOf(a1), 1);
 
       const i1 = this.indexOf(a1);
       const i2 = this.indexOf(a2);
-      this.adjacencyMatrix.set(i1 * this.size() + i2, 0);
-      this.adjacencyMatrix.set(i2 * this.size() + i1, 0);
+      this.adjacencyMatrix.set(i1, i2, 0);
+      this.adjacencyMatrix.set(i2, i1, 0);
       return true;
     }
 
@@ -214,15 +213,18 @@ class Network implements EnvironmentHelper {
   }
 
   _resetAdjacencyMatrix(): void {
-    this.adjacencyMatrix = new NumArray();
-    for (let i = 0; i < this.size(); i++) {
-      for (let j = 0; j < this.size(); j++) {
-        const connected = this.areConnected(this.get(i), this.get(j));
-        this.adjacencyMatrix.push(connected ? 1 : 0);
+    const size = this.size();
+    const newMatrix = new Array2D(size, size);
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const connected = this.areConnected(this.get(x), this.get(y));
+        newMatrix.set(x, y, connected ? 1 : 0);
       }
     }
+    this.adjacencyMatrix = newMatrix;
   }
 
+  // TODO
   _globalClusteringCoefficient(): number {
     return 0;
   }

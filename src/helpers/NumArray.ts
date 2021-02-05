@@ -10,7 +10,7 @@ class NumArray {
     if (i < 0) throw new Error("Can't set negative index of array!");
     while (i >= this.data.length) this.resize();
     this.data[i] = n;
-    this._index = i + 1;
+    if (i > this._index) this._index = i + 1;
   }
 
   get(i: number): number | null {
