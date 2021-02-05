@@ -1,33 +1,24 @@
 /// <reference path="../environments/EnvironmentHelper.d.ts" />
 import { Agent } from "../agents/Agent";
 import { Environment } from "../environments/Environment";
+import mean from "../utils/mean";
 import shuffle from "../utils/shuffle";
-
-interface AdjacencyList {
-  [id: string]: Agent[];
-}
+import { Array2D } from "./Array2D";
 
 interface AgentCallback {
   (agent: Agent, index: number): any;
 }
 
 class Network implements EnvironmentHelper {
-  /**
-   * keys = IDs of agents in the network,
-   * values = array of neighboring agents
-   */
-  data: AdjacencyList;
+  adjacencyList: Map<Agent, Agent[]> = new Map();
+  // instantiated and updated in _resetAdjacencyMatrix
+  adjacencyMatrix: Array2D = null;
 
   /**
    * list (JS array) of all the agents
    * in the order they were added to the graph
    */
-  agents: Agent[];
-
-  constructor() {
-    this.data = {};
-    this.agents = [];
-  }
+  agents: Agent[] = [];
 
   /**
    * Add an agent to the network.
@@ -37,8 +28,9 @@ class Network implements EnvironmentHelper {
    */
   addAgent(agent: Agent): boolean {
     if (!this.isInNetwork(agent)) {
-      this.data[agent.id] = [];
+      this.adjacencyList.set(agent, []);
       this.agents.push(agent);
+      this._resetAdjacencyMatrix();
       return true;
     }
     return false;
@@ -66,10 +58,12 @@ class Network implements EnvironmentHelper {
         this.disconnect(agent, neighbor);
       });
     }
-    delete this.data[agent.id];
+    this.adjacencyList.delete(agent);
 
     const idx = this.indexOf(agent);
     if (idx >= 0) this.agents.splice(idx, 1);
+
+    this._resetAdjacencyMatrix();
 
     return true;
   }
@@ -95,12 +89,14 @@ class Network implements EnvironmentHelper {
     if (a1 === a2) return false;
     if (!this.isInNetwork(a1) || !this.isInNetwork(a2)) return false;
 
-    const id1 = a1.id;
-    const id2 = a2.id;
-
     if (!this.areConnected(a1, a2)) {
-      this.data[id1].push(a2);
-      this.data[id2].push(a1);
+      this.adjacencyList.get(a1).push(a2);
+      this.adjacencyList.get(a2).push(a1);
+
+      const i1 = this.indexOf(a1);
+      const i2 = this.indexOf(a2);
+      this.adjacencyMatrix.set(i1, i2, 1);
+      this.adjacencyMatrix.set(i2, i1, 1);
       return true;
     }
 
@@ -113,10 +109,13 @@ class Network implements EnvironmentHelper {
    * @param {Agent} a2
    */
   areConnected(a1: Agent, a2: Agent): boolean {
-    const id1 = a1.id;
-    const id2 = a2.id;
     if (!this.isInNetwork(a1) || !this.isInNetwork(a2)) return false;
-    return this.data[id1].indexOf(a2) >= 0 && this.data[id2].indexOf(a1) >= 0;
+    const i1 = this.indexOf(a1);
+    const i2 = this.indexOf(a2);
+    return (
+      this.adjacencyMatrix.get(i1, i2) === 1 &&
+      this.adjacencyMatrix.get(i2, i1) === 1
+    );
   }
 
   /**
@@ -128,12 +127,16 @@ class Network implements EnvironmentHelper {
   disconnect(a1: Agent, a2: Agent): boolean {
     if (a1 === a2) return false;
 
-    const id1 = a1.id;
-    const id2 = a2.id;
-
     if (this.areConnected(a1, a2)) {
-      this.data[id1].splice(this.data[id1].indexOf(a2), 1);
-      this.data[id2].splice(this.data[id2].indexOf(a1), 1);
+      const a1neighbors = this.adjacencyList.get(a1);
+      const a2neighbors = this.adjacencyList.get(a2);
+      a1neighbors.splice(a1neighbors.indexOf(a2), 1);
+      a2neighbors.splice(a2neighbors.indexOf(a1), 1);
+
+      const i1 = this.indexOf(a1);
+      const i2 = this.indexOf(a2);
+      this.adjacencyMatrix.set(i1, i2, 0);
+      this.adjacencyMatrix.set(i2, i1, 0);
       return true;
     }
 
@@ -169,7 +172,7 @@ class Network implements EnvironmentHelper {
    * @param {Agent} agent
    */
   isInNetwork(agent: Agent): boolean {
-    return this.agents.indexOf(agent) > -1;
+    return this.adjacencyList.has(agent);
   }
 
   /**
@@ -197,7 +200,7 @@ class Network implements EnvironmentHelper {
    */
   neighbors(agent: Agent): Agent[] | null {
     if (!this.isInNetwork(agent)) return null;
-    return this.data[agent.id];
+    return this.adjacencyList.get(agent);
   }
 
   /**
@@ -209,6 +212,124 @@ class Network implements EnvironmentHelper {
         this.connect(this.get(i), this.get(j));
       }
     }
+  }
+
+  /**
+   * Internal helper function to reset the adjacencyMatrix.
+   * This gets called when agents are added to or removed from the network.
+   */
+  _resetAdjacencyMatrix(): void {
+    const size = this.size();
+    const newMatrix = new Array2D(size, size);
+    // only copy values if there is already an adjacencyMatrix
+    if (this.adjacencyMatrix !== null) {
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          const connected = this.areConnected(this.get(x), this.get(y));
+          newMatrix.set(x, y, connected ? 1 : 0);
+        }
+      }
+    }
+    this.adjacencyMatrix = newMatrix;
+  }
+
+  /**
+   * Returns `true` if a, b, and c are a 'triplet' of agents --
+   * if (at least) one of the three is connected to the other two.
+   * @param {Agent} a
+   * @param {Agent} b
+   * @param {Agent} c
+   * @since 0.5.17
+   */
+  isTriplet(a: Agent, b: Agent, c: Agent): boolean {
+    if (a === b || a === c || b === c) return false;
+    const connections = [
+      this.areConnected(a, b),
+      this.areConnected(a, c),
+      this.areConnected(b, c)
+    ].filter(v => v).length;
+    return connections >= 2;
+  }
+
+  /**
+   * Returns `true` if a, b, and c are a 'closed triplet' of agents --
+   * each connected to the other two.
+   * @param {Agent} a
+   * @param {Agent} b
+   * @param {Agent} c
+   * @since 0.5.17
+   */
+  isClosedTriplet(a: Agent, b: Agent, c: Agent): boolean {
+    if (a === b || a === c || b === c) return false;
+    const connections = [
+      this.areConnected(a, b),
+      this.areConnected(a, c),
+      this.areConnected(b, c)
+    ].filter(v => v).length;
+    return connections === 3;
+  }
+
+  _globalClusteringCoefficient(): number {
+    let triplets = 0;
+    let closedTriplets = 0;
+    this.forEach((agent, i) => {
+      const neighbors = this.neighbors(agent);
+      if (neighbors.length < 2) return;
+      for (let j = 0; j < neighbors.length - 1; j++) {
+        for (let k = 1; k < neighbors.length; k++) {
+          const [b, c] = [neighbors[j], neighbors[k]];
+          if (this.isTriplet(agent, b, c)) triplets++;
+          if (this.isClosedTriplet(agent, b, c)) closedTriplets++;
+        }
+      }
+    });
+    return closedTriplets / triplets;
+  }
+
+  /**
+   * If an agent is passed as the single parameter, returns the local
+   * clustering coefficient for that agent (a measure of how connected that
+   * agent's neighbors are to each other).
+   * If no parameter is passed, returns the global clustering coefficient
+   * of the network (an aggregate measure of how connected are the agents).
+   * @param {Agent} [agent]
+   * @since 0.5.17
+   */
+  clusteringCoefficient(agent?: Agent): number {
+    if (!agent) return this._globalClusteringCoefficient();
+
+    if (agent && !this.isInNetwork(agent)) return null;
+
+    const neighbors = this.neighbors(agent);
+    if (neighbors.length < 2) return null;
+
+    const k = neighbors.length;
+
+    let clusterConnections = 0;
+    for (let i = 0; i < k - 1; i++) {
+      const a = neighbors[i];
+      for (let j = i + 1; j < k; j++) {
+        const b = neighbors[j];
+        if (this.areConnected(a, b)) clusterConnections++;
+      }
+    }
+
+    return (2 * clusterConnections) / (k * (k - 1));
+  }
+
+  /**
+   * Returns the average clustering coefficient for the network (the average
+   * of the local clustering coefficient across all agents). Note that
+   * this is a different measurement from the _global_ clustering coefficient.
+   * @since 0.5.17
+   */
+  averageClusteringCoefficient(): number {
+    // get clusteringCoefficients for all agents,
+    // removing null values (those with too few neighbors)
+    const coefficients = this.agents
+      .map(a => this.clusteringCoefficient(a))
+      .filter(v => v !== null);
+    return mean(coefficients);
   }
 }
 
