@@ -214,6 +214,10 @@ class Network implements EnvironmentHelper {
     }
   }
 
+  /**
+   * Internal helper function to reset the adjacencyMatrix.
+   * This gets called when agents are added to or removed from the network.
+   */
   _resetAdjacencyMatrix(): void {
     const size = this.size();
     const newMatrix = new Array2D(size, size);
@@ -229,6 +233,14 @@ class Network implements EnvironmentHelper {
     this.adjacencyMatrix = newMatrix;
   }
 
+  /**
+   * Returns `true` if a, b, and c are a 'triplet' of agents --
+   * if (at least) one of the three is connected to the other two.
+   * @param {Agent} a
+   * @param {Agent} b
+   * @param {Agent} c
+   * @since 0.5.17
+   */
   isTriplet(a: Agent, b: Agent, c: Agent): boolean {
     if (a === b || a === c || b === c) return false;
     const connections = [
@@ -239,6 +251,14 @@ class Network implements EnvironmentHelper {
     return connections >= 2;
   }
 
+  /**
+   * Returns `true` if a, b, and c are a 'closed triplet' of agents --
+   * each connected to the other two.
+   * @param {Agent} a
+   * @param {Agent} b
+   * @param {Agent} c
+   * @since 0.5.17
+   */
   isClosedTriplet(a: Agent, b: Agent, c: Agent): boolean {
     if (a === b || a === c || b === c) return false;
     const connections = [
@@ -266,6 +286,15 @@ class Network implements EnvironmentHelper {
     return closedTriplets / triplets;
   }
 
+  /**
+   * If an agent is passed as the single parameter, returns the local
+   * clustering coefficient for that agent (a measure of how connected that
+   * agent's neighbors are to each other).
+   * If no parameter is passed, returns the global clustering coefficient
+   * of the network (an aggregate measure of how connected are the agents).
+   * @param {Agent} [agent]
+   * @since 0.5.17
+   */
   clusteringCoefficient(agent?: Agent): number {
     if (!agent) return this._globalClusteringCoefficient();
 
@@ -288,6 +317,12 @@ class Network implements EnvironmentHelper {
     return (2 * clusterConnections) / (k * (k - 1));
   }
 
+  /**
+   * Returns the average clustering coefficient for the network (the average
+   * of the local clustering coefficient across all agents). Note that
+   * this is a different measurement from the _global_ clustering coefficient.
+   * @since 0.5.17
+   */
   averageClusteringCoefficient(): number {
     // get clusteringCoefficients for all agents,
     // removing null values (those with too few neighbors)
