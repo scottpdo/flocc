@@ -81,12 +81,12 @@ function destructivelySample<T>(array: T[], weights?: number[]): T {
 }
 
 export function sampler(n: number): SampleFunc | MultipleSampleFunc {
-  // null for invalid value
-  if (n < 1) return null;
+  // return a function that always returns null
+  if (n < 1) return () => null;
   // if n = 1, it's just a standard sample
   if (n === 1) return sample;
   return function<T>(array: T[], weights?: number[]): T[] {
-    let output: T[];
+    const output: T[] = [];
     const clonedArray = copyArray(array);
     const clonedWeights = weights ? copyArray(weights) : null;
     do {
