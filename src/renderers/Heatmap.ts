@@ -4,6 +4,7 @@ import remap from "../utils/remap";
 import { AbstractRenderer } from "./AbstractRenderer";
 import type { Environment } from "../environments/Environment";
 import clamp from "../utils/clamp";
+import once from "../utils/once";
 
 const PADDING_AT_BOTTOM = 60;
 const PADDING_AT_LEFT = 60;
@@ -37,6 +38,8 @@ const defaultHeatmapOptions: HeatmapOptions = {
   width: 500,
   scale: "relative"
 };
+
+const warnOnce = once(console.warn.bind(console));
 
 /**
  * @since 0.5.8
@@ -228,7 +231,7 @@ class Heatmap extends AbstractRenderer {
     let max = scale === "relative" ? this.localMax : this.opts.max;
     if (max === undefined) {
       if (!this.lastUpdatedScale) {
-        console.warn(
+        warnOnce(
           "A Heatmap with the `scale` option set to 'fixed' should include a `max` option. Defaulting to the number of Agents currently in the Environment."
         );
       }

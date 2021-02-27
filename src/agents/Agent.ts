@@ -4,6 +4,7 @@ import { Environment } from "../environments/Environment";
 import type { KDTree } from "../helpers/KDTree";
 import uuid from "../utils/uuid";
 import { Rule } from "../helpers/Rule";
+import once from "../utils/once";
 
 declare interface RuleObj {
   rule: Function | Rule;
@@ -11,6 +12,9 @@ declare interface RuleObj {
 }
 
 const disallowed: string[] = ["tick", "queue"];
+
+const warnOnce1 = once(console.warn.bind(console));
+const warnOnce2 = once(console.warn.bind(console));
 
 /**
  * @since 0.0.5
@@ -191,7 +195,7 @@ class Agent implements DataObj {
    * @since 0.0.5
    */
   addRule(rule: Function | Rule, ...args: Array<any>): void {
-    console.warn(
+    warnOnce1(
       "As of Flocc v0.5.14, Agent.addRule is **DEPRECATED**. It will be **REMOVED** in v0.7.0. Instead, add the Agent's update rule by calling `Agent.set('tick', ...);`"
     );
 
@@ -216,7 +220,7 @@ class Agent implements DataObj {
    * @since 0.0.5
    */
   enqueue(rule: Function, ...args: Array<any>): void {
-    console.warn(
+    warnOnce2(
       "As of Flocc v0.5.14, Agent.enqueue is **DEPRECATED**. It will be **REMOVED** in v0.7.0. Instead, add a rule to be executed at the end of this tick by calling `Agent.set('queue', ...);`"
     );
 

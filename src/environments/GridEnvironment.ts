@@ -5,6 +5,7 @@ import { Cell } from "../agents/Cell";
 import { Environment, TickOptions, defaultTickOptions } from "./Environment";
 
 import shuffle from "../utils/shuffle";
+import once from "../utils/once";
 
 const hash = (x: number, y: number): string =>
   x.toString() + "," + y.toString();
@@ -14,6 +15,8 @@ const unhash = (str: string): Point => {
     y: +str.split(",")[1]
   };
 };
+
+const warnOnce = once(console.warn.bind(console));
 
 /**
  * @since 0.0.5
@@ -25,7 +28,7 @@ class GridEnvironment extends Environment {
   constructor(width: number = 2, height: number = 2) {
     super();
 
-    console.warn(
+    warnOnce(
       "As of Flocc v0.5.0, GridEnvironment is **DEPRECATED**. It will be **REMOVED** in v0.6.0. The Terrain helper should be used for 2-dimensional grid-like data. Read more about Terrains here: https://flocc.network/docs/terrain"
     );
 
@@ -180,7 +183,7 @@ class GridEnvironment extends Environment {
    * @param {Function} callback
    * @since 0.0.5
    */
-  loop(callback: Function = function () {}): void {
+  loop(callback: Function = function() {}): void {
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
         const agent = this.getAgentAt(x, y);

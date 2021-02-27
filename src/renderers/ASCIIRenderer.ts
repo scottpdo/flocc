@@ -1,6 +1,9 @@
 import { GridEnvironment } from "../environments/GridEnvironment";
 import { Agent } from "../agents/Agent";
 import { AbstractRenderer } from "./AbstractRenderer";
+import once from "../utils/once";
+
+const warnOnce = once(console.warn.bind(console));
 
 /**
  * @since 0.0.10
@@ -14,7 +17,7 @@ class ASCIIRenderer extends AbstractRenderer {
   constructor(environment: GridEnvironment, opts: Object = {}) {
     super();
 
-    console.warn(
+    warnOnce(
       "As of Flocc v0.5.0, ASCIIEnvironment is **DEPRECATED**. It will be **REMOVED** in v0.6.0. The Terrain helper should be used for 2-dimensional grid-like data, with CanvasRenderer to visualize. Read more about Terrains here: https://flocc.network/docs/terrain"
     );
 
