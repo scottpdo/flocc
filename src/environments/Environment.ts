@@ -7,6 +7,7 @@ import { Network } from "../helpers/Network";
 import { KDTree } from "../helpers/KDTree";
 import { Terrain } from "../helpers/Terrain";
 import type { AbstractRenderer } from "../renderers/AbstractRenderer";
+import once from "../utils/once";
 
 interface Helpers {
   kdtree: KDTree;
@@ -15,11 +16,13 @@ interface Helpers {
 }
 
 export interface TickOptions {
+  activation?: "uniform" | "random";
   count?: number;
   randomizeOrder?: boolean;
 }
 
 export const defaultTickOptions: TickOptions = {
+  activation: "uniform",
   count: 1,
   randomizeOrder: false
 };
@@ -35,6 +38,8 @@ interface MemoValue {
   value: any;
   time: number;
 }
+
+const warnOnce = once(console.warn.bind(console));
 
 /**
  * An environment provides the space and time in which agents interact.
@@ -151,19 +156,28 @@ class Environment extends Agent {
    * @param {number | TickOptions} opts
    */
   _getTickOptions(opts?: number | TickOptions): TickOptions {
-    let count: number = 1;
+    let { count, randomizeOrder } = defaultTickOptions;
+
     if (typeof opts === "number") {
       count = opts;
     } else if (!!opts) {
       count = opts.count || 1;
     }
-    let randomizeOrder: boolean = false;
+
     if (
       opts &&
       typeof opts !== "number" &&
       opts.hasOwnProperty("randomizeOrder")
-    )
+    ) {
       randomizeOrder = opts.randomizeOrder;
+    } else if (
+      opts === undefined ||
+      (typeof opts !== "number" && !opts.hasOwnProperty("randomizeOrder"))
+    ) {
+      warnOnce(
+        "You called `environment.tick` without specifying a `randomizeOrder` option. Currently this defaults to `false` (i.e. each agent ticks in the order it was added to the environment). However, in **Flocc 0.6.0 this will default to `true`** — agent activation order will default to being randomized."
+      );
+    }
 
     return { count, randomizeOrder };
   }
