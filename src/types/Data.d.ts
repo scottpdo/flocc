@@ -1,3 +1,3 @@
 declare interface Data {
-  [key:string]: any;
+  [key: string]: any;
 }

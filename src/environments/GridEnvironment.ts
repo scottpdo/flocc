@@ -180,7 +180,7 @@ class GridEnvironment extends Environment {
    * @param {Function} callback
    * @since 0.0.5
    */
-  loop(callback: Function = function() {}): void {
+  loop(callback: Function = function () {}): void {
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
         const agent = this.getAgentAt(x, y);

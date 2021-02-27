@@ -49,8 +49,8 @@ class Agent implements DataObj {
   /**
    * Set a function value. `tick` and `queue` are not automatically called,
    * but any other named value will automatically be called when referenced.
-   * @param {string} name 
-   * @param {Function} fn 
+   * @param {string} name
+   * @param {Function} fn
    */
   _setFunctionValue(name: string, fn: Function): void {
     if (disallowed.includes(name)) {
@@ -72,7 +72,8 @@ class Agent implements DataObj {
    */
   get(name: string): any {
     // return null if it doesn't exist or if is disallowed
-    if (!this.data.hasOwnProperty(name) || disallowed.includes(name)) return null;
+    if (!this.data.hasOwnProperty(name) || disallowed.includes(name))
+      return null;
 
     // avoid infinite loops and give the user a hint if one is encountered
     if (this.__retrievingData === name) {
@@ -121,7 +122,7 @@ class Agent implements DataObj {
     }
   }
 
-  /** 
+  /**
    * Helper function to set key-value pair depending on whether value
    * is a function (callable) or not
    */
@@ -190,7 +191,9 @@ class Agent implements DataObj {
    * @since 0.0.5
    */
   addRule(rule: Function | Rule, ...args: Array<any>): void {
-    console.warn("As of Flocc v0.5.14, Agent.addRule is **DEPRECATED**. It will be **REMOVED** in v0.7.0. Instead, add the Agent's update rule by calling `Agent.set('tick', ...);`");
+    console.warn(
+      "As of Flocc v0.5.14, Agent.addRule is **DEPRECATED**. It will be **REMOVED** in v0.7.0. Instead, add the Agent's update rule by calling `Agent.set('tick', ...);`"
+    );
 
     this.rules.push({
       args,
@@ -213,7 +216,9 @@ class Agent implements DataObj {
    * @since 0.0.5
    */
   enqueue(rule: Function, ...args: Array<any>): void {
-    console.warn("As of Flocc v0.5.14, Agent.enqueue is **DEPRECATED**. It will be **REMOVED** in v0.7.0. Instead, add a rule to be executed at the end of this tick by calling `Agent.set('queue', ...);`");
+    console.warn(
+      "As of Flocc v0.5.14, Agent.enqueue is **DEPRECATED**. It will be **REMOVED** in v0.7.0. Instead, add a rule to be executed at the end of this tick by calling `Agent.set('queue', ...);`"
+    );
 
     this.queue.push({
       args,
@@ -241,13 +246,16 @@ class Agent implements DataObj {
    */
   executeRules() {
     const { tick } = this.data;
-    if (tick && (typeof tick === 'function' || tick instanceof Rule)) {
-      Object.assign(this.__newData, this.executeRule({
-        rule: tick,
-        args: []
-      }));
+    if (tick && (typeof tick === "function" || tick instanceof Rule)) {
+      Object.assign(
+        this.__newData,
+        this.executeRule({
+          rule: tick,
+          args: []
+        })
+      );
     }
-    
+
     this.rules.forEach(ruleObj => {
       Object.assign(this.__newData, this.executeRule(ruleObj));
     });
@@ -263,7 +271,7 @@ class Agent implements DataObj {
     this.__newData = {};
 
     const { queue } = this.data;
-    if (queue && (typeof queue === 'function' || queue instanceof Rule)) {
+    if (queue && (typeof queue === "function" || queue instanceof Rule)) {
       const data = this.executeRule({
         rule: queue,
         args: []
@@ -272,7 +280,7 @@ class Agent implements DataObj {
       // remove once done
       delete this.data.queue;
     }
-    
+
     // run through the queue and remove once done
     while (this.queue.length > 0) {
       const ruleObj = this.queue.shift();
