@@ -1,6 +1,6 @@
 {
   "name": "flocc",
-  "version": "0.5.17",
+  "version": "0.5.18",
   "description": "Agent-based modeling in JavaScript in the browser or server.",
   "main": "dist/flocc.js",
   "module": "dist/flocc.es.js",
@@ -9,6 +9,7 @@
     "build": "rollup -c && node replace-version",
     "watch": "rollup -cw",
     "dev": "concurrently 'npm run watch' 'node client/app.js' 'browser-sync start --watch dist/flocc.js'",
+    "format": "prettier --write src",
     "test": "node replace-version && jest",
     "perf": "node ./performance/agent.js"
   },
@@ -25,6 +26,7 @@
     "jest-canvas-mock": "^2.2.0",
     "minimist": "^1.2.5",
     "pixelmatch": "^5.1.0",
+    "prettier": "^2.2.1",
     "puppeteer": "^2.1.1",
     "rollup": "2.1.0",
     "rollup-plugin-typescript2": "0.26.0",
@@ -38,9 +40,14 @@
     "abm",
     "agent-based modeling",
     "agent-based simulation",
-    "multiagent",
     "cellular automata",
-    "simulation"
+    "complex systems",
+    "complexity",
+    "modeling",
+    "multiagent",
+    "network",
+    "simulation",
+    "vizualization"
   ],
   "jest": {
     "setupFiles": [
