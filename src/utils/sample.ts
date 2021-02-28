@@ -10,6 +10,14 @@ interface MultipleSampleFunc {
   <T>(array: T[], weights?: number[]): T[];
 }
 
+export function isSampleFunc(f: Function): f is SampleFunc {
+  return f([1]) === 1;
+}
+
+export function isMultipleSampleFunc(f: Function): f is MultipleSampleFunc {
+  return f([1]).length > 0;
+}
+
 let sample: SampleFunc;
 
 /**

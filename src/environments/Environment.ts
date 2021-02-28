@@ -8,6 +8,8 @@ import { KDTree } from "../helpers/KDTree";
 import { Terrain } from "../helpers/Terrain";
 import type { AbstractRenderer } from "../renderers/AbstractRenderer";
 import once from "../utils/once";
+import { random, series } from "../utils/utils";
+import sample, { sampler, isMultipleSampleFunc } from "../utils/sample";
 
 interface Helpers {
   kdtree: KDTree;
@@ -17,12 +19,14 @@ interface Helpers {
 
 export interface TickOptions {
   activation?: "uniform" | "random";
+  activationCount?: number;
   count?: number;
   randomizeOrder?: boolean;
 }
 
 export const defaultTickOptions: TickOptions = {
   activation: "uniform",
+  activationCount: 1,
   count: 1,
   randomizeOrder: false
 };
@@ -156,21 +160,15 @@ class Environment extends Agent {
    * @param {number | TickOptions} opts
    */
   _getTickOptions(opts?: number | TickOptions): TickOptions {
-    let { count, randomizeOrder } = defaultTickOptions;
+    const baseOpts = Object.assign({}, defaultTickOptions);
 
     if (typeof opts === "number") {
-      count = opts;
+      baseOpts.count = opts;
     } else if (!!opts) {
-      count = opts.count || 1;
+      Object.assign(baseOpts, opts);
     }
 
     if (
-      opts &&
-      typeof opts !== "number" &&
-      opts.hasOwnProperty("randomizeOrder")
-    ) {
-      randomizeOrder = opts.randomizeOrder;
-    } else if (
       opts === undefined ||
       (typeof opts !== "number" && !opts.hasOwnProperty("randomizeOrder"))
     ) {
@@ -179,27 +177,21 @@ class Environment extends Agent {
       );
     }
 
-    return { count, randomizeOrder };
+    return baseOpts;
   }
 
   /**
-   * Execute all agent rules.
-   * @param { boolean } randomizeOrder
+   * For all agents passed, execute agent rules
    */
-  _executeAgentRules(randomizeOrder: boolean): void {
-    (randomizeOrder ? shuffle(this.agents) : this.agents).forEach(agent =>
-      agent.executeRules()
-    );
+  _executeAgentRules(agents: Agent[]): void {
+    agents.forEach(agent => agent?.executeRules());
   }
 
   /**
-   * Execute all enqueued agent rules.
-   * @param { boolean } randomizeOrder
+   * For all agents passed, execute enqueued agent rules
    */
-  _executeEnqueuedAgentRules(randomizeOrder: boolean): void {
-    (randomizeOrder ? shuffle(this.agents) : this.agents).forEach(agent =>
-      agent.executeEnqueuedRules()
-    );
+  _executeEnqueuedAgentRules(agents: Agent[]): void {
+    agents.forEach(agent => agent?.executeEnqueuedRules());
   }
 
   /**
@@ -212,16 +204,72 @@ class Environment extends Agent {
    * @since 0.0.5
    */
   tick(opts?: number | TickOptions): void {
-    const { count, randomizeOrder } = this._getTickOptions(opts);
+    const {
+      activation,
+      activationCount,
+      count,
+      randomizeOrder
+    } = this._getTickOptions(opts);
 
-    this._executeAgentRules(randomizeOrder);
-
-    this._executeEnqueuedAgentRules(randomizeOrder);
+    // for uniform activation, every agent is always activated
+    if (activation === "uniform") {
+      const agentsInOrder = randomizeOrder ? shuffle(this.agents) : this.agents;
+      this._executeAgentRules(agentsInOrder);
+      this._executeEnqueuedAgentRules(agentsInOrder);
+    }
+    // for random activation, the number of agents activated
+    // per tick is determined by the `activationCount` option
+    else if (activation === "random") {
+      if (activationCount === 1) {
+        const agent = sample(this.agents);
+        if (agent !== null) {
+          agent.executeRules();
+          agent.executeEnqueuedRules();
+        }
+      } else if (activationCount > 1) {
+        const sampleCount = sampler(activationCount);
+        // this safety check should always return `true`
+        if (isMultipleSampleFunc(sampleCount)) {
+          const agents = sampleCount(this.getAgents());
+          this._executeAgentRules(agents);
+          this._executeEnqueuedAgentRules(agents);
+        }
+      } else {
+        warnOnce(
+          "You passed a zero or negative `activationCount` to the Environment's tick options. No agents will be activated."
+        );
+      }
+    }
 
     if (this.helpers.kdtree) this.helpers.kdtree.rebalance();
 
     const { terrain } = this.helpers;
-    if (terrain && terrain.rule) terrain._loop({ randomizeOrder });
+    if (terrain && terrain.rule) {
+      if (activation === "uniform") {
+        terrain._loop({ randomizeOrder });
+      } else if (activation === "random") {
+        if (activationCount === 1) {
+          const x = random(0, terrain.width);
+          const y = random(0, terrain.height);
+          terrain._execute(x, y);
+        } else if (activationCount > 1) {
+          const generator = series(terrain.width * terrain.height);
+          const indices: number[] = [];
+          while (indices.length < activationCount) {
+            const index = generator.next().value;
+            const x = index % terrain.width;
+            const y = (index / terrain.width) | 0;
+            terrain._execute(x, y);
+            indices.push(index);
+          }
+        }
+
+        // in synchronous mode, write the buffer to the data
+        if (!terrain.opts.async) {
+          terrain.data = new Uint8ClampedArray(terrain.nextData);
+        }
+      }
+    }
 
     this.time++;
 

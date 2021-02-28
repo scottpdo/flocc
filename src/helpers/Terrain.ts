@@ -101,6 +101,8 @@ class Terrain implements EnvironmentHelper {
         }
       }
     }
+
+    this.nextData = new Uint8ClampedArray(this.data);
   }
 
   /**
