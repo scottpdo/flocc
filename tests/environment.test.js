@@ -117,6 +117,79 @@ it("Correctly loops over agents in random order.", () => {
   expect(order).not.toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
 });
 
+it("Activates only a single random agent with activation = `random`", () => {
+  const activated = [];
+  const tick = agent => activated.push(agent.get("i"));
+  for (let i = 0; i < 11; i++) {
+    environment.addAgent(
+      new Agent({
+        i,
+        tick
+      })
+    );
+  }
+  environment.tick({ activation: "random" });
+  expect(activated).toHaveLength(1);
+
+  for (let i = 0; i < 1000; i++) {
+    environment.tick({ activation: "random" });
+  }
+  expect(activated).toHaveLength(1001);
+  expect(utils.median(activated)).toBe(5); // 5 = median of 0, 1, 2, ... 11
+  expect(utils.mean(activated)).toBeGreaterThan(4);
+  expect(utils.mean(activated)).toBeLessThan(6);
+});
+
+it("Only loops over `n` agents when calling `tick` with an `activationCount`", () => {
+  let count = 0;
+  const tick = () => count++;
+  for (let i = 0; i < 10; i++) {
+    environment.addAgent(
+      new Agent({
+        i,
+        tick
+      })
+    );
+  }
+  environment.tick({ activation: "random", activationCount: 5 });
+  expect(count).toBe(5);
+
+  // reset
+  count = 0;
+
+  // when passing zero or a negative number for activationCount,
+  // no agents should activate
+  environment.tick({ activation: "random", activationCount: 0 });
+  expect(count).toBe(0);
+  environment.tick({ activation: "random", activationCount: -5 });
+  expect(count).toBe(0);
+
+  // when passing more than the total # of agents, should activate
+  // exactly as many as there are in the environment
+  const environment2 = new Environment();
+  const activated = [];
+  const tick2 = agent => {
+    activated.push(agent.get("i"));
+    count++;
+  };
+  for (let i = 0; i < 10; i++) {
+    environment2.addAgent(
+      new Agent({
+        i,
+        tick: tick2
+      })
+    );
+  }
+  environment2.tick({ activation: "random", activationCount: 9999 });
+  expect(count).toBe(10);
+  expect(activated).toHaveLength(10);
+  /**
+   * NOTE: Since this tests for randomness, there is a 1 / (10 factorial)
+   * ~ 1 in a million chance that this might not pass.
+   */
+  expect(activated).not.toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+});
+
 it("Correctly retrieves agents by ID.", () => {
   const a0 = new Agent();
   const { id } = a0;
