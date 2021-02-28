@@ -46,9 +46,9 @@ interface MemoValue {
 const warnOnce = once(console.warn.bind(console));
 
 /**
- * An environment provides the space and time in which agents interact.
- * Environments, like agents, can store data in key-value pairs
- * that can be updated over time.
+ * An environment provides the space and time in which Agents interact.
+ * Environments are themselves Agents, and can store data in key-value
+ * pairs that can be manipulated just like Agent data.
  * @since 0.0.5
  */
 class Environment extends Agent {
@@ -66,7 +66,10 @@ class Environment extends Agent {
   opts: EnvironmentOptions;
   width: number;
   height: number;
-  /** @since 0.1.4 */
+  /**
+   * @member {number} time - The number of `ticks` that have occurred in this Environment's lifetime.
+   * @since 0.1.4
+   * */
   time: number = 0;
 
   constructor(opts: EnvironmentOptions = defaultEnvironmentOptions) {
@@ -198,9 +201,11 @@ class Environment extends Agent {
    * Moves the environment forward in time,
    * executing all agent's rules sequentially, followed by
    * any enqueued rules (which are removed with every tick).
-   * Can take either a number or a configuration object as a parameter.
-   * If a number, the environment will tick forward that many times.
-   * @param {number | TickOptions} opts
+   * `opts` can be either a number (# of ticks) or config object.
+   * @param {number | TickOptions} opts - Either the # of ticks or a config object
+   * @param {"uniform" | "random"} opts.activation - The activation regime (defaults to "uniform")
+   * @param {number} opts.count - The # of ticks
+   * @param {boolean} randomizeOrder - For uniform activation, whether to randomize the order. Currently defaults to `false` but will default to `true` in v0.6.0.
    * @since 0.0.5
    */
   tick(opts?: number | TickOptions): void {
