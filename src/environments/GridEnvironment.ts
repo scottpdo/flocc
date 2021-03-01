@@ -183,7 +183,7 @@ class GridEnvironment extends Environment {
    * @param {Function} callback
    * @since 0.0.5
    */
-  loop(callback: Function = function() {}): void {
+  loop(callback: Function = function () {}): void {
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
         const agent = this.getAgentAt(x, y);
@@ -343,13 +343,17 @@ class GridEnvironment extends Environment {
     this._executeCellRules(randomizeOrder);
 
     // execute all agent rules
-    this._executeAgentRules(randomizeOrder);
+    this._executeAgentRules(
+      randomizeOrder ? shuffle(this.agents) : this.agents
+    );
 
     // execute all enqueued cell rules
     this._executeEnqueuedCellRules(randomizeOrder);
 
     // execute all enqueued agent rules
-    this._executeEnqueuedAgentRules(randomizeOrder);
+    this._executeEnqueuedAgentRules(
+      randomizeOrder ? shuffle(this.agents) : this.agents
+    );
 
     this.time++;
 

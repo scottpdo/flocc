@@ -10,12 +10,15 @@
     Vector,
     Rule
   } = flocc;
+  const { Panel, Button, Slider } = window.floccUI;
 
   utils.seed(1);
 
   const PERCENT_FULL = 0.59;
   const [width, height] = [600, 600];
   const environment = new Environment({ width, height });
+  environment.set("random", true);
+  environment.set("count", 10000);
   const renderer = new CanvasRenderer(environment, {
     width,
     height
@@ -58,10 +61,33 @@
     terrain.init((x, y) => {
       if (isNotEmpty(x, y) && x === 0) return onFire;
     });
+
+    new Panel(environment, [
+      new Slider({
+        name: "count",
+        min: 1000,
+        max: (width * height) / 2,
+        step: 1
+      }),
+      new Button({
+        label() {
+          return (
+            "Current Regime: " +
+            (environment.get("random") ? "Random" : "Uniform")
+          );
+        },
+        onClick() {
+          environment.set("random", !environment.get("random"));
+        }
+      })
+    ]);
   }
 
   function run() {
-    environment.tick();
+    const tickOptions = environment.get("random")
+      ? { activation: "random", activationCount: environment.get("count") }
+      : {};
+    environment.tick(tickOptions);
     window.requestAnimationFrame(run);
   }
 

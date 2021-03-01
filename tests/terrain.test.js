@@ -132,3 +132,15 @@ it("Works when scaling up.", () => {
 
   expect(terrain.data).toMatchSnapshot();
 });
+
+it("Works with an `activationCount` when activation is random", () => {
+  const update = () => ({ r: 255, g: 0, b: 0, a: 0 });
+  terrain.init(() => ({ r: 0, g: 0, b: 0, a: 0 }));
+  terrain.addRule(update);
+  environment.tick({ activation: "random", activationCount: 10 });
+  let count255 = 0;
+  for (let i = 0; i < terrain.data.length; i++) {
+    if (terrain.data[i] === 255) count255++;
+  }
+  expect(count255).toBe(10);
+});
