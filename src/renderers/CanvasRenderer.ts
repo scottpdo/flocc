@@ -320,7 +320,7 @@ class CanvasRenderer extends AbstractRenderer {
         this.drawPath(points);
         if (environment.opts.torus) this.drawPathWrap(points);
       } else if (shape === "circle" || shape === undefined) {
-        this.drawCircle(this.x(x), this.y(y), size * dpr);
+        this.drawCircle(x, y, size * dpr);
         if (environment.opts.torus) this.drawCircleWrap(x, y, size);
       }
 
