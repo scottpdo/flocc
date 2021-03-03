@@ -10,7 +10,6 @@ const pixelmatch = require("pixelmatch");
 const puppeteer = require("puppeteer");
 let browser, page;
 
-const color = "#ff0000";
 const width = 200;
 const height = 400;
 
