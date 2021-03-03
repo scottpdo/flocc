@@ -70,6 +70,105 @@ class CanvasRenderer extends AbstractRenderer {
     return canvas;
   }
 
+  drawPath(points: [number, number][], dx: number = 0, dy: number = 0): void {
+    const bufferContext = this.buffer.getContext("2d");
+    points.forEach(([px, py], i) => {
+      if (i === 0) {
+        bufferContext.moveTo(px + dx, py + dy);
+      } else {
+        bufferContext.lineTo(px + dx, py + dy);
+      }
+    });
+  }
+
+  drawPathWrap(points: [number, number][]): void {
+    const { width, height } = this;
+
+    let right = false;
+    let left = false;
+    let lower = false;
+    let upper = false;
+
+    points.forEach(([px, py]) => {
+      if (this.x(px) >= width) right = true;
+      if (this.x(px) < 0) left = true;
+      if (this.y(py) >= height) lower = true;
+      if (this.y(py) < 0) upper = true;
+    });
+
+    if (right) this.drawPath(points, -width, 0);
+    if (left) this.drawPath(points, width, 0);
+    if (lower && right) this.drawPath(points, -width, -height);
+    if (upper && right) this.drawPath(points, -width, height);
+    if (lower && left) this.drawPath(points, width, -height);
+    if (upper && left) this.drawPath(points, width, height);
+    if (lower) this.drawPath(points, 0, -height);
+    if (upper) this.drawPath(points, 0, height);
+  }
+
+  drawCircle(x: number, y: number, r: number): void {
+    const bufferContext = this.buffer.getContext("2d");
+    bufferContext.moveTo(this.x(x), this.y(y));
+    bufferContext.arc(this.x(x), this.y(y), r, 0, 2 * Math.PI);
+  }
+
+  drawCircleWrap(x: number, y: number, size: number): void {
+    const { width, height } = this;
+    if (this.x(x + size) >= width) {
+      this.drawCircle(x - width, y, size);
+      if (this.y(y + size) >= height)
+        this.drawCircle(x - width, y - height, size);
+      if (this.y(y - size) < 0) this.drawCircle(x - width, y + height, size);
+    }
+    if (this.x(x - size) < 0) {
+      this.drawCircle(x + width, y, size);
+      if (this.y(y + size) >= height)
+        this.drawCircle(x + width, y - height, size);
+      if (this.y(y - size) < 0) this.drawCircle(x + width, y + height, size);
+    }
+    if (this.y(y + size) > height) this.drawCircle(x, y - height, size);
+    if (this.y(y - size) < 0) this.drawCircle(x, y + height, size);
+  }
+
+  /**
+   * Draw a rectangle centered at (x, y). Automatically calculates the offset
+   * for both width and height.
+   * @param x
+   * @param y
+   * @param width
+   * @param height
+   */
+  drawRect(x: number, y: number, width: number, height: number): void {
+    const bufferContext = this.buffer.getContext("2d");
+    const dpr = window.devicePixelRatio;
+    bufferContext.fillRect(
+      this.x(x) - (width * dpr) / 2,
+      this.y(y) - (height * dpr) / 2,
+      width * dpr,
+      height * dpr
+    );
+  }
+
+  drawRectWrap(x: number, y: number, w: number, h: number): void {
+    const { width, height } = this.opts;
+    if (this.x(x + w / 2) >= width) {
+      this.drawRect(x - width, y, w, h);
+      if (this.y(y + h / 2) >= height)
+        this.drawRect(x - width, y - height, w, h);
+      if (this.y(y - height / 2) < 0)
+        this.drawRect(x - width, y + height, w, h);
+    }
+    if (this.x(x - w / 2) < 0) {
+      this.drawRect(x + width, y, w, h);
+      if (this.y(y + h / 2) >= height)
+        this.drawRect(x + width, y - height, w, h);
+      if (this.y(y - height / 2) < 0)
+        this.drawRect(x + width, y + height, w, h);
+    }
+    if (this.y(y + h / 2) > height) this.drawRect(x, y - height, w, h);
+    if (this.y(y - height / 2) < 0) this.drawRect(x, y + height, w, h);
+  }
+
   render(): void {
     const {
       buffer,
@@ -197,31 +296,32 @@ class CanvasRenderer extends AbstractRenderer {
 
         bufferContext.beginPath();
 
-        bufferContext.save();
-        bufferContext.translate(this.x(x), this.y(y));
-        bufferContext.moveTo(1.5 * _vx, 1.5 * _vy);
-        bufferContext.lineTo(_vy / 2, -_vx / 2);
-        bufferContext.lineTo(-_vy / 2, _vx / 2);
-        bufferContext.restore();
+        const points: [number, number][] = [
+          [this.x(x) + 1.5 * _vx, this.y(y) + 1.5 * _vy],
+          [this.x(x) + _vy / 2, this.y(y) - _vx / 2],
+          [this.x(x) - _vy / 2, this.y(y) + _vx / 2]
+        ];
+
+        this.drawPath(points);
+        if (environment.opts.torus) this.drawPathWrap(points);
       } else if (shape === "rect") {
         const { width = 1, height = 1 } = agent.getData();
-        bufferContext.fillRect(
-          this.x(x) - (width * dpr) / 2,
-          this.y(y) - (height * dpr) / 2,
-          width * dpr,
-          height * dpr
-        );
+        this.drawRect(x, y, width, height);
+        if (environment.opts.torus) this.drawRectWrap(x, y, width, height);
       } else if (shape === "triangle") {
         bufferContext.beginPath();
 
-        bufferContext.save();
-        bufferContext.translate(this.x(x), this.y(y));
-        bufferContext.moveTo(0, -size / 2);
-        bufferContext.lineTo(size / 2, size / 2);
-        bufferContext.lineTo(-size / 2, size / 2);
-        bufferContext.restore();
+        const points: [number, number][] = [
+          [this.x(x), this.y(y) - size / 2],
+          [this.x(x) + size / 2, this.y(y) + size / 2],
+          [this.x(x) - size / 2, this.y(y) + size / 2]
+        ];
+
+        this.drawPath(points);
+        if (environment.opts.torus) this.drawPathWrap(points);
       } else if (shape === "circle" || shape === undefined) {
-        bufferContext.arc(this.x(x), this.y(y), size * dpr, 0, 2 * Math.PI);
+        this.drawCircle(this.x(x), this.y(y), size * dpr);
+        if (environment.opts.torus) this.drawCircleWrap(x, y, size);
       }
 
       bufferContext.fill();

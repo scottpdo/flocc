@@ -1,0 +1,76 @@
+<style>
+  canvas {
+    margin: 0;
+  }
+</style>
+
+<div style="display: flex">
+  <div id="upper-left"></div>
+  <div id="upper-right"></div>
+  <div id="lower-left"></div>
+  <div id="lower-right"></div>
+</div>
+
+<script>
+  const [width, height] = [200, 200];
+
+  const agents = [
+    // large yellow circle
+    new Agent({
+      color: "yellow",
+      size: 80
+    }),
+    // medium-large black arrow
+    new Agent({
+      shape: "arrow",
+      vx: -1,
+      vy: -1,
+      size: 25
+    }),
+    // medium green triangle
+    new Agent({
+      color: "green",
+      shape: "triangle",
+      size: 80
+    }),
+    // small purple rectangle
+    new Agent({
+      color: "purple",
+      shape: "rect",
+      width: 20,
+      height: 40
+    })
+  ];
+
+  const coords = [
+    {
+      x: 0,
+      y: 0
+    },
+    {
+      x: width,
+      y: 0
+    },
+    {
+      x: 0,
+      y: height
+    },
+    {
+      x: height,
+      y: height
+    }
+  ];
+
+  ["upper-left", "upper-right", "lower-left", "lower-right"].forEach(
+    (id, i) => {
+      const environment = new Environment({ width, height });
+      const renderer = new CanvasRenderer(environment, { width, height });
+      renderer.mount("#" + id);
+      agents.forEach(agent => {
+        agent.set(coords[i]);
+        environment.addAgent(agent);
+      });
+      environment.tick();
+    }
+  );
+</script>
