@@ -1,209 +1,198 @@
 <div id="compass"></div>
 <div id="vote-count"></div>
 <script>
-    const {
-        Agent,
-        Environment,
-        GridEnvironment,
-        ASCIIRenderer,
-        CanvasRenderer,
-        Network,
-        utils,
-        Vector,
-        Rule
-    } = flocc;
+  utils.seed(1);
 
-    const VOTERS = 300;
-    const CANDIDATES = 8;
+  const VOTERS = 300;
+  const CANDIDATES = 8;
 
-    const colors = [
-        "#28262b",
-        "#91cf67",
-        "#3d4aa8",
-        "#d28148",
-        "#7ac6d2",
-        "#83193a",
-        "#33562c",
-        "#e8a5d2"
-    ];
+  const colors = [
+    "#28262b",
+    "#91cf67",
+    "#3d4aa8",
+    "#d28148",
+    "#7ac6d2",
+    "#83193a",
+    "#33562c",
+    "#e8a5d2"
+  ];
 
-    const width = Math.min(window.innerWidth, window.innerHeight);
-    const height = Math.min(window.innerWidth, window.innerHeight);
+  const width = Math.min(window.innerWidth, window.innerHeight);
+  const height = Math.min(window.innerWidth, window.innerHeight);
 
-    const xy = () => {
-        const a = utils.gaussian(Math.PI, Math.PI / 4);
-        const r = utils.gaussian(0.2, 0.08, true);
-        const x = r * Math.cos(a);
-        const y = r * Math.sin(a);
-        return { x, y };
-    };
+  const xy = () => {
+    const a = utils.gaussian(Math.PI, Math.PI / 4);
+    const r = utils.gaussian(0.2, 0.08, true);
+    const x = r * Math.cos(a);
+    const y = r * Math.sin(a);
+    return { x, y };
+  };
 
-    const environment = new Environment();
-    const network = new Network();
-    environment.use(network);
+  const environment = new Environment();
+  const network = new Network();
+  environment.use(network);
 
-    const compass = new CanvasRenderer(environment, {
-        width,
-        height,
-        scale: width,
-        origin: {
-            x: -0.5,
-            y: -0.5
-        },
-        connectionColor: "#bbb"
+  const compass = new CanvasRenderer(environment, {
+    background: "#fff",
+    width,
+    height,
+    scale: width,
+    origin: {
+      x: -0.5,
+      y: -0.5
+    },
+    connectionColor: "#bbb"
+  });
+  compass.mount("#compass");
+
+  function getVoters() {
+    return environment.getAgents().filter(a => a.get("type") === "voter");
+  }
+
+  function getCandidates() {
+    return environment.getAgents().filter(a => a.get("type") === "candidate");
+  }
+
+  function tickVoter(agent) {
+    const candidates = environment.memo(getCandidates);
+    let candidate = agent.get("candidate");
+
+    if (environment.time === 0) {
+      return;
+    }
+
+    // voting for the first time
+    if (!candidate) {
+      candidates.sort((a, b) => {
+        return utils.distance(a, agent) - utils.distance(b, agent);
+      });
+      candidate = candidates[0];
+    } else if (candidate && candidate.get("valid") === false) {
+      const neighborCandidates = network
+        .neighbors(agent)
+        .map(a => a.get("candidate"));
+      candidate = utils.sample(neighborCandidates);
+      if (!candidate) return;
+    }
+
+    candidate.increment("votes");
+    agent.set("candidate", candidate);
+    agent.set("color", candidate.get("color"));
+  }
+
+  function setup() {
+    for (let i = 0; i < VOTERS; i++) {
+      const { x, y } = xy();
+      const voter = new Agent({
+        shape: "circle",
+        x,
+        y,
+        color: "gray",
+        size: 3,
+        type: "voter"
+      });
+      voter.addRule(tickVoter);
+      environment.addAgent(voter);
+      network.addAgent(voter);
+    }
+    for (let i = 0; i < CANDIDATES; i++) {
+      const { x, y } = xy();
+      const candidate = new Agent({
+        x,
+        y,
+        color: colors[i],
+        size: 6,
+        type: "candidate",
+        votes: 0
+      });
+      environment.addAgent(candidate);
+      network.addAgent(candidate);
+    }
+    const voters = getVoters();
+    voters.forEach(voter => {
+      const neighbors = Array.from(voters);
+      neighbors.sort(
+        (a, b) => utils.distance(voter, a) - utils.distance(voter, b)
+      );
+      for (let i = 0; i < 7; i++) {
+        network.connect(voter, neighbors[i]);
+      }
     });
-    compass.mount("#compass");
-
-    function getVoters() {
-        return environment.getAgents().filter(a => a.get("type") === "voter");
-    }
-
-    function getCandidates() {
-        return environment
-            .getAgents()
-            .filter(a => a.get("type") === "candidate");
-    }
-
-    function tickVoter(agent) {
-        const candidates = environment.memo(getCandidates);
-        let candidate = agent.get("candidate");
-
-        if (environment.time === 0) {
-            return;
+    // randomly rewire
+    voters.forEach(voter => {
+      const connections = network.neighbors(voter);
+      connections.forEach(connect => {
+        if (Math.random() < 0.03) {
+          network.disconnect(voter, connect);
+          network.connect(voter, utils.sample(voters));
         }
+      });
+    });
+  }
 
-        // voting for the first time
-        if (!candidate) {
-            candidates.sort((a, b) => {
-                return utils.distance(a, agent) - utils.distance(b, agent);
-            });
-            candidate = candidates[0];
-        } else if (candidate && candidate.get("valid") === false) {
-            const neighborCandidates = network
-                .neighbors(agent)
-                .map(a => a.get("candidate"));
-            candidate = utils.sample(neighborCandidates);
-            if (!candidate) return;
-        }
+  function drawAxes() {
+    const dpr = window.devicePixelRatio;
+    const { context } = compass;
+    context.save();
+    context.beginPath();
+    context.globalAlpha = 0.5;
+    context.moveTo(dpr * 0, (dpr * height) / 2);
+    context.lineTo(dpr * width, (dpr * height) / 2);
+    context.moveTo((dpr * width) / 2, dpr * 0);
+    context.lineTo((dpr * width) / 2, dpr * height);
+    context.stroke();
+    context.restore();
+  }
 
-        candidate.increment("votes");
-        agent.set("candidate", candidate);
-        agent.set("color", candidate.get("color"));
+  function log(showWinner) {
+    const voteCount = document.getElementById("vote-count");
+    const candidates = environment.memo(getCandidates);
+    const winner = showWinner ? "All remaining candidates over 15%" : "";
+    voteCount.innerHTML = `<h3>Round ${environment.time - 1}: ${winner}</h3>`;
+    let bars = '<div class="bars">';
+    candidates.forEach(candidate => {
+      const { color, votes } = candidate.getData();
+      const valid = votes / VOTERS > 0.15;
+      let html = `<div class="count" style="flex-basis: ${100 / 7}%;">`;
+      html += `<div class="bar ${
+        !valid && "not-valid"
+      }" style="background-color: ${color};"></div>`;
+      // html += votes + "<br>";
+      html += `<small>${Math.round((1000 * votes) / VOTERS) / 10}%</small>`;
+      html += `</div>`;
+      bars += html;
+    });
+    voteCount.innerHTML += bars;
+  }
+
+  function draw() {
+    environment.tick();
+    drawAxes();
+
+    const candidates = environment.memo(getCandidates);
+    const voters = environment.memo(getVoters);
+
+    const serializedVotes = candidates.map(c => c.get("votes")).join(",");
+    if (serializedVotes === environment.get("serializedVotes")) {
+      return log(true);
+    } else {
+      environment.set("serializedVotes", serializedVotes);
     }
 
-    function setup() {
-        for (let i = 0; i < VOTERS; i++) {
-            const { x, y } = xy();
-            const voter = new Agent({
-                x,
-                y,
-                color: "gray",
-                size: 3,
-                type: "voter"
-            });
-            voter.addRule(tickVoter);
-            environment.addAgent(voter);
-            network.addAgent(voter);
-        }
-        for (let i = 0; i < CANDIDATES; i++) {
-            const { x, y } = xy();
-            const candidate = new Agent({
-                x,
-                y,
-                color: colors[i],
-                size: 6,
-                type: "candidate",
-                votes: 0
-            });
-            environment.addAgent(candidate);
-            network.addAgent(candidate);
-        }
-        const voters = getVoters();
-        voters.forEach(voter => {
-            const neighbors = Array.from(voters);
-            neighbors.sort(
-                (a, b) => utils.distance(voter, a) - utils.distance(voter, b)
-            );
-            for (let i = 0; i < 7; i++) {
-                network.connect(voter, neighbors[i]);
-            }
-        });
-        // randomly rewire
-        voters.forEach(voter => {
-            const connections = network.neighbors(voter);
-            connections.forEach(connect => {
-                if (Math.random() < 0.03) {
-                    network.disconnect(voter, connect);
-                    network.connect(voter, utils.sample(voters));
-                }
-            });
-        });
-    }
+    log();
 
-    function drawAxes() {
-        const dpr = window.devicePixelRatio;
-        const { context } = compass;
-        context.save();
-        context.beginPath();
-        context.globalAlpha = 0.5;
-        context.moveTo(dpr * 0, (dpr * height) / 2);
-        context.lineTo(dpr * width, (dpr * height) / 2);
-        context.moveTo((dpr * width) / 2, dpr * 0);
-        context.lineTo((dpr * width) / 2, dpr * height);
-        context.stroke();
-        context.restore();
-    }
+    candidates.forEach(c => {
+      const { votes } = c.getData();
+      const valid = votes / voters.length >= 0.15;
+      c.set("valid", valid);
+      // reset votes
+      c.set("lastVotes", votes);
+      c.set("votes", 0);
+    });
 
-    function log(showWinner) {
-        const voteCount = document.getElementById("vote-count");
-        const candidates = environment.memo(getCandidates);
-        const winner = showWinner ? "All remaining candidates over 15%" : "";
-        voteCount.innerHTML = `<h3>Round ${environment.time -
-            1}: ${winner}</h3>`;
-        let bars = '<div class="bars">';
-        candidates.forEach(candidate => {
-            const { color, votes } = candidate.getData();
-            const valid = votes / VOTERS > 0.15;
-            let html = `<div class="count" style="flex-basis: ${100 / 7}%;">`;
-            html += `<div class="bar ${!valid &&
-                "not-valid"}" style="background-color: ${color};"></div>`;
-            // html += votes + "<br>";
-            html += `<small>${Math.round((1000 * votes) / VOTERS) /
-                10}%</small>`;
-            html += `</div>`;
-            bars += html;
-        });
-        voteCount.innerHTML += bars;
-    }
+    setTimeout(draw, 2500);
+  }
 
-    function draw() {
-        environment.tick();
-        drawAxes();
-
-        const candidates = environment.memo(getCandidates);
-        const voters = environment.memo(getVoters);
-
-        const serializedVotes = candidates.map(c => c.get("votes")).join(",");
-        if (serializedVotes === environment.get("serializedVotes")) {
-            return log(true);
-        } else {
-            environment.set("serializedVotes", serializedVotes);
-        }
-
-        log();
-
-        candidates.forEach(c => {
-            const { votes } = c.getData();
-            const valid = votes / voters.length >= 0.15;
-            c.set("valid", valid);
-            // reset votes
-            c.set("lastVotes", votes);
-            c.set("votes", 0);
-        });
-
-        setTimeout(draw, 2500);
-    }
-
-    setup();
-    draw();
+  setup();
+  draw();
 </script>
