@@ -6,15 +6,53 @@ import once from "../utils/once";
 const warnOnce = once(console.warn.bind(console));
 
 /**
+ * An `ASCIIRenderer` renders the {@link Agent | `Agent`}s in
+ * a {@linkcode GridEnvironment}. `Agent`s are rendered
+ * using their `"value"` data (a single character).
+ * Since v0.4.0, this class has been deprecated, and it will be removed
+ * entirely in v0.6.0.
+ * ```js
+ * const renderer = new ASCIIRenderer(grid);
+ * renderer.mount("#container-id");
+ * ```
+ * @deprecated since 0.4.0
  * @since 0.0.10
  */
 class ASCIIRenderer extends AbstractRenderer {
-  /** @member GridEnvironment */
+  /**
+   * @hidden
+   * @override
+   */
+  canvas: null;
+  /**
+   * @hidden
+   * @override
+   */
+  context: null;
+  /**
+   * @hidden
+   * @override
+   */
+  width: null;
+  /**
+   * @hidden
+   * @override
+   */
+  height: null;
+  /**
+   * Points to the {@linkcode GridEnvironment} that this
+   * `ASCIIRenderer` is tied to. This is automatically set when the
+   * `ASCIIRenderer` is created.
+   */
   environment: GridEnvironment;
-  /** @member HTMLPreElement */
+  /** @hidden */
   pre: HTMLPreElement;
 
-  constructor(environment: GridEnvironment, opts: Object = {}) {
+  /**
+   * Create a new `ASCIIRenderer` by passing in the
+   * {@linkcode GridEnvironment} you want to be rendered.
+   */
+  constructor(environment: GridEnvironment) {
     super();
 
     warnOnce(
@@ -28,6 +66,7 @@ class ASCIIRenderer extends AbstractRenderer {
   }
 
   /**
+   * Renders the contents of the `ASCIIRenderer`'s {@linkcode GridEnvironment}.
    * @since 0.0.10
    */
   render() {

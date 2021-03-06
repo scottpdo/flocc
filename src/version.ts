@@ -1,2 +1,2 @@
-const version: string = "%%VERSION%%";
+const version: string = "0.5.19";
 export default version;

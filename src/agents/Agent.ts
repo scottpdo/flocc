@@ -17,35 +17,81 @@ const warnOnce1 = once(console.warn.bind(console));
 const warnOnce2 = once(console.warn.bind(console));
 
 /**
+ * This class puts the `Agent` in 'agent-based modeling.' More specifically,
+ * an `Agent` represents an individual unit of data and its associated
+ * behaviors.
  * @since 0.0.5
  */
 class Agent implements DataObj {
   /**
-   * @member {Environment|null} environment
-   * @member {RuleObj[]} rules
-   * @member {RuleObj[]} queue
-   * @member {Object} data
+   * An `Agent` can only belong to a single {@linkcode Environment}. When
+   * `environment.addAgent(agent);` is called, this is value is updated
+   * to point to that `Environment`.
+   *
+   * ```js
+   * const environment = new Environment();
+   * const agent = new Agent();
+   * agent.environment; // returns `null`
+   *
+   * environment.addAgent(agent);
+   * agent.environment === environment; // returns `true`
    */
   environment: Environment = null;
+  /** @hidden */
   rules: Array<RuleObj> = [];
+  /** @hidden */
   queue: Array<RuleObj> = [];
+  /** @hidden */
   data: Data = {};
+  /**
+   * `Agent`s are automatically assigned a unique ID when they are created.
+   * This can be useful when you need to refer to a specific `Agent`, and
+   * they can be retrieved using their ID from their `Environment` by calling
+   * {@link Environment.getAgentById | `environment.getAgentById(id);`}
+   * ```js
+   * const agent = new Agent();
+   * const id = agent.id; // returns "59B4F928-46C8-..." (for example)
+   * ```
+   */
   id: string = uuid();
 
-  // This is used as a temporary store for data that
-  // gets returned from rules. When enqueued rules are executed,
-  // even if there aren't any enqueued rules, .set gets called
-  // on any data that was placed here.
+  /**
+   * This is used as a temporary store for data that
+   * gets returned from rules. When enqueued rules are executed,
+   * even if there aren't any enqueued rules, .set gets called
+   * on any data that was placed here.
+   * @hidden
+   */
   __newData: Data = {};
 
-  // When agent.get('key') is called, this pseudo-private member is set to 'key'.
-  // Once it is retrieved, it is reset to null. If agent.get('key') is called before
-  // this has been reset, that means that there is an infinite loop, and the call
-  // will throw an error.
+  /** When agent.get('key') is called, this pseudo-private member is set to 'key'.
+   * Once it is retrieved, it is reset to null. If agent.get('key') is called before
+   * this has been reset, that means that there is an infinite loop, and the call
+   * will throw an error.
+   * @hidden
+   */
   __retrievingData: string = null;
 
+  /** @hidden */
   __subtree: KDTree = null;
 
+  /**
+   * `Agent`s can be instantiated with or without data. Instantiating
+   * with data is equivalent to creating an `Agent` and immediately
+   * calling {@linkcode Agent.set} to add data.
+   *
+   * ```js
+   * // instantiates an Agent without data
+   * const a = new Agent();
+   *
+   * // instantiates an Agent with data
+   * const b = new Agent({
+   *   x: 50,
+   *   y: 100
+   * });
+   * ```
+   * @param data
+   */
   constructor(data: Data = {}) {
     this.set(data);
   }
@@ -53,8 +99,7 @@ class Agent implements DataObj {
   /**
    * Set a function value. `tick` and `queue` are not automatically called,
    * but any other named value will automatically be called when referenced.
-   * @param {string} name
-   * @param {Function} fn
+   * @hidden
    */
   _setFunctionValue(name: string, fn: Function): void {
     if (disallowed.includes(name)) {
@@ -129,6 +174,7 @@ class Agent implements DataObj {
   /**
    * Helper function to set key-value pair depending on whether value
    * is a function (callable) or not
+   * @hidden
    */
   _setKeyValue(key: string, value: any) {
     if (typeof value === "function") {
@@ -163,24 +209,56 @@ class Agent implements DataObj {
   }
 
   /**
-   * Increment a numeric (assume integer) piece of data
-   * associated with this agent. If `n` is included, increments by
-   * `n`. If the value has not yet been set, initializes it to 1.
-   * @param {string} name
-   * @param {number} n
+   * increment a numeric piece of data associated with this `Agent`
+   * (increasing its value by 1). This method is *synchronous* &mdash;
+   * it immediately increases the value (to *asynchronously* increase it,
+   * the rule function should instead return a new value.
+   *
+   * ```js
+   * agent.set('x', 50);
+   * agent.increment('x');
+   * agent.get('x'); // returns 51
+   * ```
+   *
+   * If the second parameter `n` is included, decrements by that amount.
+   *
+   * ```js
+   * agent.set('x', 50);
+   * agent.increment('x', 10);
+   * agent.get('x'); // returns 60
+   * ```
+   *
+   * If the value has not yet been set, calling this method sets it to `1`
+   * (or to `n`).
    * @since 0.0.8
    */
   increment(name: string, n: number = 1): void {
-    if (!this.get(name)) this.set(name, 0);
+    if (this.get(name) === null) this.set(name, 0);
     this.set(name, this.get(name) + n);
   }
 
   /**
-   * Decrement a numeric (assume integer) piece of data
-   * associated with this agent. If `n` is included, decrements by
-   * `n`. If the value has not yet been set,
-   * initializes it to -1.
-   * @param {string} name
+   * Decrement a numeric piece of data associated with this `Agent`
+   * (decreasing its value by 1). This method is *synchronous* &mdash;
+   * it immediately decreases the value (to *asynchronously* decrease it,
+   * the rule function should instead return a new value.
+   *
+   * ```js
+   * agent.set('x', 50);
+   * agent.decrement('x');
+   * agent.get('x'); // returns 49
+   * ```
+   *
+   * If the second parameter `n` is included, decrements by that amount.
+   *
+   * ```js
+   * agent.set('x', 50);
+   * agent.decrement('x', 10);
+   * agent.get('x'); // returns 40
+   * ```
+   *
+   * If the value has not yet been set, calling this method sets it to `-1`
+   * (or to `-n`).
    * @since 0.0.8
    */
   decrement(name: string, n: number = 1): void {
@@ -188,9 +266,29 @@ class Agent implements DataObj {
   }
 
   /**
-   * Add a rule to be executed during the agent's
-   * environment's tick cycle. When executed, the
-   * @param {Function | Rule} rule
+   * Until v0.5.14, this was the preferred way to add behavior to `Agent`s.
+   * Now, the preferred method is by setting the `Agent`'s `"tick"` value (i.e. `agent.set({ tick: function(agt) { ... }})`).
+   * This method will still be allowed until v0.7.0.
+   *
+   * Adds a rule (a function taking an `Agent` as a callback or a {@linkcode Rule} object) that may be run with every {@linkcode Environment.tick}.
+   * It is possible to add *more than one rule* to an `Agent`, although it
+   * is generally easier to write a longer function or to break it apart
+   * into multiple functions.
+   *
+   * ```js
+   * // adds a rule that *synchronously* increments the Agent's "x" value
+   * agent.addRule(function(agt) {
+   *   agent.increment('x');
+   * });
+   *
+   * // adds a rule that *asynchronously* increments the Agent's "x" value
+   * agent.addRule(function(agt) {
+   *   return {
+   *     x: agt.get('x') + 1
+   *   };
+   * });
+   * ```
+   *
    * @deprecated since version 0.5.14
    * @since 0.0.5
    */
@@ -206,16 +304,34 @@ class Agent implements DataObj {
   }
 
   /**
-   * Enqueue a function to be executed at the end of
-   * the agent's environment's tick cycle (for example,
-   * if agents in an environment should perform their
-   * calculations and updates separately). Additional/external
-   * data passed in as arguments to the enqueued function will
+   * Like {@linkcode Agent.addRule}, this method is deprecated and the
+   * recommended way is to now call
+   * `agent.set('queue', function(agt) { ... });`
+   *
+   * Calling this method enqueues a function to be executed
+   * *asynchronously* (at the end of the {@linkcode Environment}'s tick cycle).
+   * This is useful if a 'cleanup pass' should be performed between
+   * time steps to adjust `Agent` data.
+   *
+   * Below, the `Agent` sets its `"x"` value to `30` whenever it is
+   * activated during the `Environment`'s tick cycle. After all of that
+   * cycle's `Agent`s have been activated, this `Agent` sets its `"x"`
+   * value to `20`. So if any other `Agent` references its `"x"` value
+   * during a tick cycle after it has been activated, it will return `30`,
+   * but in between tick cycles it will return `20`.
+   *
+   * ```js
+   * agent.addRule(agt => {
+   *   agt.set("x", 30);
+   *   agt.enqueue(a => {
+   *     a.set("x", 20);
+   *   });
+   * });
+   * ```
+   *
+   * Any additional parameters passed to the enqueued function will
    * be remembered and passed through when the function is executed.
    *
-   * The `queue` array is cleared at the very end of
-   * the environment's tick cycle.
-   * @param {Function} enqueuedRule
    * @deprecated since version 0.5.14
    * @since 0.0.5
    */
@@ -232,7 +348,7 @@ class Agent implements DataObj {
 
   /**
    * From a RuleObj, execute a single rule (function or structured Rule).
-   * @param {RuleObj} ruleObj
+   * @hidden
    */
   executeRule(ruleObj: RuleObj): Data {
     const { rule, args } = ruleObj;
@@ -247,6 +363,7 @@ class Agent implements DataObj {
 
   /**
    * Execute all rules.
+   * @hidden
    */
   executeRules() {
     const { tick } = this.data;
@@ -267,6 +384,7 @@ class Agent implements DataObj {
 
   /**
    * Execute all enqueued rules.
+   * @hidden
    */
   executeEnqueuedRules() {
     // if new data from the rules

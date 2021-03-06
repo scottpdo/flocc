@@ -52,22 +52,32 @@ const warnOnce = once(console.warn.bind(console));
  * @since 0.0.5
  */
 class Environment extends Agent {
-  /** @member {Agent[]} */
+  /** @hidden */
   agents: Array<Agent> = [];
+  /** @hidden */
   agentsById: Map<string, Agent> = new Map();
+  /** @hidden */
+  environment: Environment = null;
+  /** @hidden */
   cache: Map<string, MemoValue> = new Map();
   helpers: Helpers = {
     kdtree: null,
     network: null,
     terrain: null
   };
+  /** @hidden */
+  id: string;
   /** @member {AbstractRenderer[]} */
   renderers: AbstractRenderer[] = [];
   opts: EnvironmentOptions;
   width: number;
   height: number;
   /**
-   * @member {number} time - The number of `ticks` that have occurred in this Environment's lifetime.
+   * This property will always equal the number of tick cycles that
+   * have passed since the `Environment` was created. If you call
+   * {@linkcode tick} so that it goes forward multiple time steps, it will
+   * increase the `time` by that value (not by just `1`, even though
+   * you only called `tick` once).
    * @since 0.1.4
    * */
   time: number = 0;
@@ -159,8 +169,8 @@ class Environment extends Agent {
   }
 
   /**
-   * From the parameter passed to .tick, get a structured TickOptions object.
-   * @param {number | TickOptions} opts
+   * From the parameter passed to {@linkcode Environment.tick}, get a structured TickOptions object.
+   * @hidden
    */
   _getTickOptions(opts?: number | TickOptions): TickOptions {
     const baseOpts = Object.assign({}, defaultTickOptions);
@@ -185,6 +195,7 @@ class Environment extends Agent {
 
   /**
    * For all agents passed, execute agent rules
+   * @hidden
    */
   _executeAgentRules(agents: Agent[]): void {
     agents.forEach(agent => agent?.executeRules());
@@ -192,20 +203,44 @@ class Environment extends Agent {
 
   /**
    * For all agents passed, execute enqueued agent rules
+   * @hidden
    */
   _executeEnqueuedAgentRules(agents: Agent[]): void {
     agents.forEach(agent => agent?.executeEnqueuedRules());
   }
 
   /**
-   * Moves the environment forward in time,
-   * executing all agent's rules sequentially, followed by
-   * any enqueued rules (which are removed with every tick).
-   * `opts` can be either a number (# of ticks) or config object.
-   * @param {number | TickOptions} opts - Either the # of ticks or a config object
-   * @param {"uniform" | "random"} opts.activation - The activation regime (defaults to "uniform")
-   * @param {number} opts.count - The # of ticks
-   * @param {boolean} randomizeOrder - For uniform activation, whether to randomize the order. Currently defaults to `false` but will default to `true` in v0.6.0.
+   * Runs the `Environment`s tick cycle. Depending on the parameters, one,
+   * some, or all of the {@linkcode Agent}s in the `Environment`
+   * might be activated, and all renderers associated with the
+   * `Environment` will update. After the tick cycle finishes, any rules that were enqueued will be run and the `Environment`'s {@linkcode time} property will have incremented.
+   *
+   * ```js
+   * environment.tick(); // ticks once
+   *
+   * // To run multiple tick cycles, you can pass a number
+   * environment.tick(5); // ticks 5 times
+   * ```
+   *
+   * Passing a configuration object (instead of a number) allows
+   * you to have finer control over the tick cycle. The object can
+   * have the following keys:
+   * - `activation`: Either `"uniform"` or `"random"` (defaults to `"uniform"`).
+   *   - `activation = "uniform"` &mdash; All `Agent`s in the `Environment` are activated with every tick cycle.
+   *   - `activation = "random"` &mdash; One or more `Agent`s are randomly selected to be activated every tick cycle (see `activationCount` below).
+   * - `activationCount`: For `"random"` activation, this many `Agent`s will be activated with each tick cycle. Defaults to `1`. If `activationCount` is greater than the number of `Agent`s in the `Environment`, then all the `Agent`s will be activated exactly once in random order.
+   * - `count`: The number of tick cycles to run.
+   * - `randomizeOrder`: When `activation = "uniform"`, if `randomizeOrder = true`, `Agent`s will be activated in random order, otherwise in the order they were added to the `Environment`. **This currently defaults to `false` but will default to `true` in v0.6.0.**
+   *
+   * ```js
+   * // Ticks three times, activating 10 random agents with each tick cycle.
+   * environment.tick({
+   *   activation: "random",
+   *   activationCount: 10,
+   *   count: 3
+   * });
+   * ```
+   *
    * @since 0.0.5
    */
   tick(opts?: number | TickOptions): void {
@@ -325,6 +360,14 @@ class Environment extends Agent {
    * @param {Function} fn - The function to memoize.
    * @return {any} The return value of the function that was passed.
    * @since 0.3.14
+   * @example
+   * ```js
+   * // Within the same `tick`, this function will only be called once. The
+   * // cached value will be used on subsequent calls.
+   * const blueAgents = environment.memo(function() {
+   *   return environment.getAgents().filter(a => a.get('color') === 'blue');
+   * });
+   * ```
    */
   memo(fn: Function, key?: string): any {
     const serialized = (key ? key + "-" : "") + fn.toString();
