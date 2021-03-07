@@ -114,9 +114,8 @@ class Agent implements DataObj {
   }
 
   /**
-   * Retrieve an arbitrary piece of data associated
-   * with this agent by name.
-   * @param {string} name
+   * Retrieve an arbitrary piece of data associated by name.
+   * If the data has not been {@linkcode set}, returns `null`.
    * @since 0.0.5
    */
   get(name: string): any {
@@ -139,8 +138,20 @@ class Agent implements DataObj {
   }
 
   /**
-   * Retrieve all the data associated with this agent
-   * (useful for destructuring properties).
+   * Retrieve all the data associated with this `Agent` at once.
+   *
+   * ```js
+   * agent.set('x', 3);
+   * agent.set('color', 'blue');
+   * agent.set('active', false);
+   *
+   * agent.getData();
+   * // returns {
+   * //   x: 3,
+   * //   color: 'blue',
+   * //   active: false
+   * // }
+   * ```
    * @since 0.1.0
    */
   getData(): Data {

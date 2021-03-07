@@ -1,4 +1,5 @@
 /**
+ * @hidden
  * @since 0.3.11
  */
 class NumArray {

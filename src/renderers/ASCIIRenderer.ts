@@ -23,16 +23,6 @@ class ASCIIRenderer extends AbstractRenderer {
    * @hidden
    * @override
    */
-  canvas: null;
-  /**
-   * @hidden
-   * @override
-   */
-  context: null;
-  /**
-   * @hidden
-   * @override
-   */
   width: null;
   /**
    * @hidden

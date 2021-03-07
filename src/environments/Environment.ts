@@ -60,6 +60,7 @@ class Environment extends Agent {
   environment: Environment = null;
   /** @hidden */
   cache: Map<string, MemoValue> = new Map();
+  /** @hidden */
   helpers: Helpers = {
     kdtree: null,
     network: null,
@@ -67,8 +68,14 @@ class Environment extends Agent {
   };
   /** @hidden */
   id: string;
-  /** @member {AbstractRenderer[]} */
+  /**
+   * An array of the renderers associated with this `Environment`.
+   * An `Environment` can have multiple renderers, usually one to render
+   * the {@linkcode Agent}s spatially and others for data visualization,
+   * such as a {@linkcode LineChartRenderer}, {@linkcode Histogram}, etc.
+   */
   renderers: AbstractRenderer[] = [];
+  /** @hidden */
   opts: EnvironmentOptions;
   width: number;
   height: number;
@@ -78,10 +85,33 @@ class Environment extends Agent {
    * {@linkcode tick} so that it goes forward multiple time steps, it will
    * increase the `time` by that value (not by just `1`, even though
    * you only called `tick` once).
+   *
+   * ```js
+   * const environment = new Environment();
+   * environment.time; // returns 0
+   *
+   * environment.tick();
+   * environment.time; // returns 1
+   *
+   * environment.tick(3);
+   * environment.time; // returns 4
+   * ```
+   *
    * @since 0.1.4
    * */
   time: number = 0;
 
+  /**
+   * Although `Environment`s inherit {@linkcode Agent} methods
+   * like {@linkcode Agent.set}, {@linkcode Agent.get}, etc. they have
+   * a different `constructor` signature.
+   *
+   * Pass in predefined `Environment` options for:
+   * - `torus` &mdash; Whether the `Environment` should wrap around in 2d space (with `Agent`s that move off the right reappearing on the left, off the top reappearing on the bottom, etc.)
+   * - `width` &mdash; The width of the `Environment` (used when `torus = true`)
+   * - `height` &mdash; The height of the `Environment` (used when `torus = true`)
+   * @override
+   */
   constructor(opts: EnvironmentOptions = defaultEnvironmentOptions) {
     super();
     this.opts = Object.assign({}, defaultEnvironmentOptions);
@@ -91,10 +121,10 @@ class Environment extends Agent {
   }
 
   /**
-   * Add an agent to the environment. Automatically sets the
-   * agent's environment to be this environment.
-   * @param {Agent} agent
-   * @param {boolean} rebalance - Whether to rebalance if there is a KDTree (defaults to true)
+   * Add an {@linkcode Agent} to this `Environment`. Once this is called,
+   * the `Agent`'s {@link Agent.environment | `environment`} property
+   * will automatically be set to this `Environment`.
+   * @param rebalance - Whether to rebalance if there is a `KDTree` (defaults to true)
    * @since 0.0.5
    */
   addAgent(agent: Agent, rebalance: boolean = true): void {
@@ -109,6 +139,11 @@ class Environment extends Agent {
       if (rebalance) this.helpers.kdtree.rebalance();
     }
   }
+
+  /** @hidden */
+  addRule: null;
+  /** @hidden */
+  enqueue: null;
 
   /**
    * Remove an agent from the environment.
@@ -158,7 +193,7 @@ class Environment extends Agent {
   }
 
   /**
-   * Removes all agents from the environment.
+   * Remove all agents from the environment.
    * @since 0.1.3
    */
   clear(): void {
@@ -322,24 +357,39 @@ class Environment extends Agent {
   }
 
   /**
-   * Use a helper with this environment.
-   * @param {EnvironmentHelper} e
+   * Use a helper with this environment. A helper can be one of:
+   * - {@linkcode KDTree}
+   * - {@linkcode Network}
+   * - {@linkcode Terrain}
    * @since 0.1.3
    */
-  use(e: EnvironmentHelper) {
-    if (e instanceof KDTree) this.helpers.kdtree = e;
-    if (e instanceof Network) this.helpers.network = e;
-    if (e instanceof Terrain) this.helpers.terrain = e;
+  use(helper: EnvironmentHelper) {
+    if (helper instanceof KDTree) this.helpers.kdtree = helper;
+    if (helper instanceof Network) this.helpers.network = helper;
+    if (helper instanceof Terrain) this.helpers.terrain = helper;
   }
 
   /**
    * Get an array of data associated with agents in the environment by key.
-   * Equivalent to calling `environment.getAgents().map(agent => agent.get(key));`
-   * Defaults to calculating and storing the result within the same environment tick.
-   * If the 2nd parameter is set to `false`, will recalculate and return the result every time.
-   * @param {string} key - The key for which to retrieve data.
-   * @param {boolean} useCache - Whether or not to cache the result (defaults to true).
-   * @return {any[]} Array of data associated with `agent.get(key)` across all agents.
+   * Calling `environment.stat('name')` is equivalent to calling
+   * `environment.getAgents().map(agent => agent.get('name'));`
+   *
+   * By default, calling this will calculate the result at most once
+   * per time cycle, and return the cached value on subsequent calls (until
+   * the next time cycle, when it will recalculate).
+   *
+   * @param key - The key for which to retrieve data.
+   * @param useCache - Whether or not to cache the result.
+   * @returns Array of data associated with `agent.get(key)` across all agents.
+   *
+   * ```js
+   * environment.addAgent(new Agent({ name: "Alice" }));
+   * environment.addAgent(new Agent({ name: "Bob" }));
+   * environment.addAgent(new Agent({ name: "Chaz" }));
+   *
+   * environment.stat('name'); // returns ['Alice', 'Bob', 'Chaz']
+   * ```
+   *
    * @since 0.3.14
    */
   stat(key: string, useCache: boolean = true): any[] {
@@ -357,14 +407,14 @@ class Environment extends Agent {
 
   /**
    * Pass a function to cache and use the return value within the same environment tick.
-   * @param {Function} fn - The function to memoize.
-   * @return {any} The return value of the function that was passed.
+   * @param fn - The function to memoize.
+   * @return The return value of the function that was passed.
    * @since 0.3.14
-   * @example
+   *
    * ```js
-   * // Within the same `tick`, this function will only be called once. The
-   * // cached value will be used on subsequent calls.
-   * const blueAgents = environment.memo(function() {
+   * // Within the same time cycle, this function will only be called once.
+   * // The cached value will be used on subsequent calls.
+   * const blueAgents = environment.memo(() => {
    *   return environment.getAgents().filter(a => a.get('color') === 'blue');
    * });
    * ```

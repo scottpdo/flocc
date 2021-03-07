@@ -7,7 +7,7 @@
   "typings": "dist/main.d.ts",
   "scripts": {
     "build": "rollup -c && node replace-version",
-    "docs": "typedoc src/main.ts --watch",
+    "docs": "typedoc src/main.ts --watch --out docs/$npm_package_version",
     "watch": "rollup -cw",
     "dev": "concurrently 'npm run watch' 'node client/app.js' 'browser-sync start --watch dist/flocc.js'",
     "format": "prettier --write src",
