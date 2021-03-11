@@ -8,6 +8,28 @@ import copyArray from "../utils/internal/copyArray";
  */
 class Vector implements Point {
   data: Array<number>;
+  /**
+   * The dimension of this `Vector`, or the last index that has a value (plus one).
+   *
+   * ```js
+   * const a = new Vector(1, 1, 1);
+   * a.dimension; // 3
+   *
+   * const b = new Vector(1, 2, 3, 4, 5);
+   * b.dimension; // 5
+   * ```
+   *
+   * Dimensions can be dynamically updated after a `Vector` is created:
+   *
+   * ```js
+   * const v = new Vector(0);
+   * v.dimension; // 1
+   *
+   * v.set(3, 10);
+   * v.dimension; // 4 (indices start at 0)
+   * ```
+   *
+   *  */
   dimension: number;
 
   constructor(...data: Array<number>) {
@@ -58,75 +80,121 @@ class Vector implements Point {
     return this;
   }
 
+  /** @since 0.1.0 */
   get x(): number {
     return this.index(0);
   }
+  /** @since 0.1.0 */
   get y(): number {
     return this.index(1);
   }
+  /** @since 0.1.0 */
   get z(): number {
     return this.index(2);
   }
+  /** @since 0.1.0 */
   get w(): number {
     return this.index(3);
   }
 
-  get xy(): Array<number> {
+  /** @since 0.2.4 */
+  get xy(): [number, number] {
     return [this.index(0), this.index(1)];
   }
-  get xz(): Array<number> {
+  /** @since 0.2.4 */
+  get xz(): [number, number] {
     return [this.index(0), this.index(2)];
   }
-  get yz(): Array<number> {
+  /** @since 0.2.4 */
+  get yz(): [number, number] {
     return [this.index(1), this.index(2)];
   }
 
-  get xyz(): Array<number> {
+  /** @since 0.2.4 */
+  get xyz(): [number, number, number] {
     return [this.index(0), this.index(1), this.index(2)];
   }
 
+  /**
+   * `r` for 'red' (the 1st value)
+   * @since 0.1.0
+   */
   get r(): number {
     return this.index(0);
   }
+  /**
+   * `g` for 'green' (the 2nd value)
+   * @since 0.1.0
+   */
   get g(): number {
     return this.index(1);
   }
+  /**
+   * `b` for 'blue' (the 3rd value)
+   * @since 0.1.0
+   */
   get b(): number {
     return this.index(2);
   }
+  /**
+   * `a` for 'alpha' (the 4th value)
+   * @since 0.1.0
+   */
   get a(): number {
     return this.index(3);
   }
 
-  get rgb(): Array<number> {
+  /** @since 0.2.4 */
+  get rgb(): [number, number, number] {
     return [this.index(0), this.index(1), this.index(2)];
   }
-  get rgba(): Array<number> {
+  /** @since 0.2.4 */
+  get rgba(): [number, number, number, number] {
     return [this.index(0), this.index(1), this.index(2), this.index(3)];
   }
 
+  /** @since 0.1.0 */
   set x(n) {
     this.set(0, n);
   }
+  /** @since 0.1.0 */
   set y(n) {
     this.set(1, n);
   }
+  /** @since 0.1.0 */
   set z(n) {
     this.set(2, n);
   }
+  /** @since 0.1.0 */
   set w(n) {
     this.set(3, n);
   }
 
+  /**
+   * `r` for 'red' (the 1st value)
+   * @since 0.1.0
+   */
   set r(n) {
     this.set(0, n);
   }
+  /**
+   * `g` for 'green' (the 2nd value)
+   * @since 0.1.0
+   */
   set g(n) {
     this.set(1, n);
   }
+  /**
+   * `b` for 'blue' (the 3rd value)
+   * @since 0.1.0
+   */
   set b(n) {
     this.set(2, n);
   }
+  /**
+   * `a` for 'alpha' (the 4th value)
+   * @since 0.1.0
+   */
   set a(n) {
     this.set(3, n);
   }
@@ -207,8 +275,8 @@ class Vector implements Point {
   }
 
   /**
-   * Get the dot product of this vector with another.
-   * @param {Vector} v - The other vector.
+   * Get the {@link https://en.wikipedia.org/wiki/Dot_product | dot product} of this `Vector` with another.
+   * @since 0.2.4
    */
   dot(v: Vector): number {
     const dimension = Math.max(this.dimension, v.dimension);
@@ -223,6 +291,7 @@ class Vector implements Point {
    * @param {Vector} v - The other vector.
    * @param {number} t - The amount by which to interpolate.
    * @returns {Vector} - The new, interpolated vector.
+   * @since 0.2.4
    */
   lerp(v: Vector, t: number): Vector {
     const longerVector = this.dimension > v.dimension ? this : v;

@@ -59,13 +59,69 @@ const method = (
 };
 
 /**
+ * The `Rule` class is an experimental interface for adding behavior to {@linkcode Agent}s. A `Rule` object may be used in place of a `tick` function to be added as `Agent` behavior using `agent.set('tick', tickRule)`. As a trivial example, consider the following `Rule`, which increments the `Agent`'s `x` value with every time step:
+ *
+ * ```js
+ * const rule = new Rule(environment, [
+ *   "set", "x", [
+ *     "add", 1, [
+ *       "get", "x"
+ *     ]
+ *   ]
+ * ]);
+ * agent.set("tick", rule);
+ * ```
+ *
+ * Reading from the outer arrays inward, the steps of this `Rule` instructs the `Agent` to:
+ * - `set` the `Agent`'s `"x"` value to...
+ *   - The result of `add`ing `1` and...
+ *     - The `Agent`'s current `"x"` value
+ *
+ * Generally, `Rule` steps are a deeply nested array, where the first value of any given array is always an instruction or operator (e.g. `"set"`, `"add"`, `"filter"`). See the {@linkcode constructor} function for more information about steps.
  * @since 0.3.0
  */
 class Rule {
+  /**
+   * Points to the {@linkcode Environment} that is passed in the `Rule`'s constructor function (should be the same `Environment` of the {@linkcode Agent} invoking this `Rule`)
+   */
   environment: Environment;
+  /** @hidden */
   steps: Step[] = [];
+  /** @hidden */
   locals: { [key: string]: any } = {};
 
+  /**
+   * A single step may be as simple as `["get", "x"]`. This returns the `Agent`'s `"x"` value to the outer step that contains it. So, for example, the step `["add", 1, ["get", "x"]]`, working from the inside out, retrieves the `"x"` value and then adds `1` to it. More complex steps function similarly, always traversing to the deepest nested step, evaluating it, and 'unwrapping' until all steps have been executed.
+   *
+   * A step's first element should be a string that is one of the allowed operators, followed by a certain number of arguments.
+   *
+   * |Operator|Arguments|Notes|
+   * |---|---|---|
+   * |`"add"`|`2`|Pass 2 numbers, or two steps that evaluate to numbers|
+   * |`"subtract"`|`2`|""|
+   * |`"multiply"`|`2`|""|
+   * |`"divide"`|`2`|""|
+   * |`"mod"`|`2`|""|
+   * |`"power"`|`2`|""|
+   * |`"get"`|`1`|Pass the key of `Agent` data to retrieve|
+   * |`"set"`|`2`|Pass the key and value to set|
+   * |`"enqueue"`|`2`|Pass the key and value to enqueue|
+   * |`"local"`|`2`|Pass the key and value to set as local variables|
+   * |`"if"`|`3`|Pass the conditional (usually a step that evaluates to a boolean), the step to run when `true`, and the step to run when `false|
+   * |`"and"`|`2`|Pass the two steps to logically evaluate|
+   * |`"or"`|`2`|""|
+   * |`"gt"`|`2`|""|
+   * |`"gte"`|`2`|""|
+   * |`"lt"`|`2`|""|
+   * |`"lte"`|`2`|""|
+   * |`"eq"`|`2`|""|
+   * |`"map"`|`2`|Pass an array (or step that evaluates to an array) and a lambda to invoke for each element|
+   * |`"filter"`|`2`|""|
+   * |`"key"`|`2`|Pass an object (or step that evaluates to an object) and the key to retrieve from that object|
+   * |`"agent"`|`0`|No arguments; returns the `Agent`|
+   * |`"environment"`|`0`|No arguments, returns the `Environment`|
+   * |`"vector"`|`any`|Creates an n-dimensional {@linkcode Vector} from the supplied arguments|
+   */
   constructor(environment: Environment, steps: Step[]) {
     this.environment = environment;
     this.steps = steps;
@@ -74,6 +130,7 @@ class Rule {
   /**
    * interpret single array step
    * @since 0.3.0
+   * @hidden
    */
   evaluate = (agent: Agent, step: any[]): any => {
     const first = step && step.length > 0 ? step[0] : null;
@@ -198,6 +255,7 @@ class Rule {
 
   /**
    * @since 0.3.0
+   * @hidden
    */
   call(agent: Agent): any {
     return this.evaluate(agent, this.steps);

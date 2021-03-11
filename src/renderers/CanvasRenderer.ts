@@ -36,7 +36,7 @@ class CanvasRenderer extends AbstractRenderer {
    *
    * The second parameter specifies options, which can include:
    * - `autoPosition` (*boolean* = `false`) &mdash; For `Environment`s using a {@linkcode Network}, whether to automatically position the `Agent`s.
-   * - `background (*string* = `"transparent"`)` &mdash; The background color to draw before rendering any `Agent`s.
+   * - `background` (*string* = `"transparent"`) &mdash; The background color to draw before rendering any `Agent`s.
    * - `connectionColor` (*string* = `"black"`) &mdash; For `Environment`s using a `Network`, the color of lines
    * - `connectionOpacity` (*number* = `1`) &mdash; For `Environment`s using a `Network`, the opacity of lines
    * - `connectionWidth` (*number* = `1`) &mdash; For `Environment`s using a `Network`, the width of lines

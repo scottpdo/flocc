@@ -5,14 +5,10 @@ import { AbstractRenderer } from "./AbstractRenderer";
 import type { Environment } from "../environments/Environment";
 import clamp from "../utils/clamp";
 import once from "../utils/once";
+import type HeatmapAxis from "../types/HeatmapAxis";
 
 const PADDING_AT_BOTTOM = 60;
 const PADDING_AT_LEFT = 60;
-
-interface HeatmapAxis extends NRange {
-  buckets: number;
-  key: string;
-}
 
 const isAxisObject = (obj: any): obj is HeatmapAxis => {
   return obj && typeof obj !== "string";
@@ -42,16 +38,55 @@ const defaultHeatmapOptions: HeatmapOptions = {
 const warnOnce = once(console.warn.bind(console));
 
 /**
+ * A `Heatmap` can be used to visualize the distribution of {@linkcode Agent}s across two metrics.
+ * While {@linkcode Histogram}s are useful for showing the distribution of `Agent`s along a single metric
+ * (or on multiple metrics using the same scale), a `Heatmap` can show how two metrics relate to one another &mdash;
+ * correlation, inverse correlation, in a nonlinear manner, randomly (no correlation), etc.
+ *
+ * <img src="https://cms.flocc.network/wp-content/uploads/2020/11/heatmap-basic.png" />
+ *
+ * Note above that, although the output appears similar to what a {@linkcode CanvasRenderer} might output, the `y` axis is reversed here &mdash; low values are at the bottom and high at the top, whereas on a `CanvasRenderer` high values are at the bottom and low at the top.
+ *
  * @since 0.5.8
  */
 class Heatmap extends AbstractRenderer {
+  /** @hidden */
   opts: HeatmapOptions = defaultHeatmapOptions;
   width: number;
   height: number;
+  /** @hidden */
   buckets: number[];
+  /** @hidden */
   localMax: number;
+  /** @hidden */
   lastUpdatedScale: Date;
 
+  /**
+   * The first parameter must be the {@linkcode Environment} that this
+   * `Heatmap` will render.
+   *
+   * The second parameter specifies options, which can include:
+   * - `from` (*string* = `"white"`) &mdash; The color (name, hex value, or RGB) to draw when a cell contains `0` {@linkcode Agent}s
+   * - `to` (*string* = `"black"`) &mdash; The color (name, hex value, or RGB) to draw when a cell contains the highest number of `Agent`s
+   * - `x` and `y` can be either:
+   *   - *string* = `"x"`/`"y"` respectively &mdash; The name of `Agent` data to measure along the `x`/`y` axis
+   *   - *{ buckets: number; key: string; min: number; max: number }* = `{ buckets: 10, key: 'x' | 'y', min: 0, max: 1 }` &mdash; Include the number of buckets to divide the range `min → max` into, along with the name of `Agent` data
+   * - `width` (*number* = `500`) &mdash; The width, in pixels, of the canvas on which to render
+   * - `height` (*number* = `500`) &mdash; The height, in pixels, of the canvas on which to render
+   * - `scale` (either `"relative"` or `"fixed"`, defaults to `"relative"`)
+   *   - `"relative"` &mdash; The maximum number of `Agent`s in any single cell is automatically used as the highest value in the scale. This updates over time based on `Agent` distribution.
+   *   - `"fixed"` &mdash; You supply the number to use as the maximum value (see `max` below).
+   * - `max` (optional, *number*) &mdash; If you use `scale = "fixed"`, then setting a `max` will cause cells with that number (or higher) of `Agent`s to be drawn using the `to` color.
+   *
+   * ```js
+   * // plots the correlation between age of agents (on the x-axis)
+   * // vs. their wealth (on the y-axis)
+   * const heatmap = new Heatmap(environment, {
+   *   x: 'age',
+   *   y: 'wealth'
+   * });
+   * ```
+   */
   constructor(environment: Environment, opts?: HeatmapOptions) {
     super();
     this.environment = environment;
@@ -75,7 +110,7 @@ class Heatmap extends AbstractRenderer {
 
   /**
    * Map a value (on the range x-min to x-max) onto canvas space to draw it along the x-axis.
-   * @param value
+   * @hidden
    */
   x(value: number): number {
     const { width } = this;
@@ -90,7 +125,7 @@ class Heatmap extends AbstractRenderer {
 
   /**
    * Map a value (on the range y-min to y-max) onto canvas space to draw it along the y-axis.
-   * @param value
+   * @hidden
    */
   y(value: number): number {
     const { height } = this;
@@ -103,6 +138,7 @@ class Heatmap extends AbstractRenderer {
     );
   }
 
+  /** @hidden */
   getKey(axis: "x" | "y"): string {
     const a = this.opts[axis];
     if (isAxisObject(a)) {
@@ -112,12 +148,14 @@ class Heatmap extends AbstractRenderer {
     }
   }
 
+  /** @hidden */
   getBuckets(axis: "x" | "y"): number {
     const a = this.opts[axis];
     if (isAxisObject(a) && a.hasOwnProperty("buckets")) return a.buckets;
     return 10;
   }
 
+  /** @hidden */
   getMin(axis: "x" | "y"): number {
     const a = this.opts[axis];
     if (isAxisObject(a) && a.hasOwnProperty("min")) {
@@ -127,6 +165,7 @@ class Heatmap extends AbstractRenderer {
     }
   }
 
+  /** @hidden */
   getMax(axis: "x" | "y"): number {
     const a = this.opts[axis];
     if (isAxisObject(a) && a.hasOwnProperty("max")) {
@@ -136,6 +175,7 @@ class Heatmap extends AbstractRenderer {
     }
   }
 
+  /** @hidden */
   drawMarkers() {
     const { context, width, height } = this;
     const { from, to } = this.opts;
@@ -224,6 +264,7 @@ class Heatmap extends AbstractRenderer {
     }
   }
 
+  /** @hidden */
   updateScale() {
     const { context, environment, height } = this;
     const { scale } = this.opts;
@@ -252,6 +293,7 @@ class Heatmap extends AbstractRenderer {
     }
   }
 
+  /** @hidden */
   drawRectangles() {
     const { canvas, environment, width, height } = this;
     const { scale, from, to } = this.opts;
@@ -291,12 +333,14 @@ class Heatmap extends AbstractRenderer {
     context.globalAlpha = 1;
   }
 
+  /** @hidden */
   resetBuckets() {
     for (let i = 0; i < this.getBuckets("x") * this.getBuckets("y"); i++) {
       this.buckets[i] = 0;
     }
   }
 
+  /** @hidden */
   updateBuckets() {
     const { environment } = this;
     const xKey = this.getKey("x");

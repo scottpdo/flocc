@@ -21,23 +21,49 @@ interface Pixel {
 
 type TerrainRule = (x: number, y: number) => Pixel | number | void;
 
+const BLACK: Pixel = { r: 0, g: 0, b: 0, a: 255 };
+const WHITE: Pixel = { r: 255, g: 255, b: 255, a: 255 };
+const RED: Pixel = { r: 255, g: 0, b: 0, a: 255 };
+const MAROON: Pixel = { r: 127, g: 0, b: 0, a: 255 };
+const YELLOW: Pixel = { r: 255, g: 255, b: 0, a: 255 };
+const BLUE: Pixel = { r: 0, g: 0, b: 255, a: 255 };
+const GREEN: Pixel = { r: 0, g: 127, b: 0, a: 255 };
+const LIME: Pixel = { r: 0, g: 255, b: 0, a: 255 };
+const AQUA: Pixel = { r: 0, g: 255, b: 255, a: 255 };
+const ORANGE: Pixel = { r: 255, g: 165, b: 0, a: 255 };
+const FUCHSIA: Pixel = { r: 255, g: 0, b: 255, a: 255 };
+const PURPLE: Pixel = { r: 127, g: 0, b: 127, a: 255 };
+
 /**
+ * Each static member of the `Colors` class (e.g. `Colors.GREEN`, `Colors.RED`) is a pixel-like object with `r`, `g`, `b`, and `a` values that range from `0` to `255`.
  * @since 0.4.0
  */
-export const Colors: { [name: string]: Pixel } = {
-  BLACK: { r: 0, g: 0, b: 0, a: 255 },
-  WHITE: { r: 255, g: 255, b: 255, a: 255 },
-  RED: { r: 255, g: 0, b: 0, a: 255 },
-  MAROON: { r: 127, g: 0, b: 0, a: 255 },
-  YELLOW: { r: 255, g: 255, b: 0, a: 255 },
-  BLUE: { r: 0, g: 0, b: 255, a: 255 },
-  GREEN: { r: 0, g: 127, b: 0, a: 255 },
-  LIME: { r: 0, g: 255, b: 0, a: 255 },
-  AQUA: { r: 0, g: 255, b: 255, a: 255 },
-  ORANGE: { r: 255, g: 165, b: 0, a: 255 },
-  FUCHSIA: { r: 255, g: 0, b: 255, a: 255 },
-  PURPLE: { r: 127, g: 0, b: 127, a: 255 }
-};
+export class Colors {
+  /** <div style="width: 100%; height: 20px; background-color: rgb(0, 0, 0);"></div> */
+  static BLACK = BLACK;
+  /** <div style="width: 100%; height: 20px; background-color: rgb(255, 255, 255); border: 1px solid #eee;"></div> */
+  static WHITE = WHITE;
+  /** <div style="width: 100%; height: 20px; background-color: rgb(255, 0, 0);"></div> */
+  static RED = RED;
+  /** <div style="width: 100%; height: 20px; background-color: rgb(127, 0, 0);"></div> */
+  static MAROON = MAROON;
+  /** <div style="width: 100%; height: 20px; background-color: rgb(255,255, 0);"></div> */
+  static YELLOW = YELLOW;
+  /** <div style="width: 100%; height: 20px; background-color: rgb(0, 0, 255);"></div> */
+  static BLUE = BLUE;
+  /** <div style="width: 100%; height: 20px; background-color: rgb(0, 127, 0);"></div> */
+  static GREEN = GREEN;
+  /** <div style="width: 100%; height: 20px; background-color: rgb(0, 255, 0);"></div> */
+  static LIME = LIME;
+  /** <div style="width: 100%; height: 20px; background-color: rgb(0, 255, 255);"></div> */
+  static AQUA = AQUA;
+  /** <div style="width: 100%; height: 20px; background-color: rgb(255, 165, 0);"></div> */
+  static ORANGE = ORANGE;
+  /** <div style="width: 100%; height: 20px; background-color: rgb(255, 0, 255);"></div> */
+  static FUCHSIA = FUCHSIA;
+  /** <div style="width: 100%; height: 20px; background-color: rgb(127, 0, 127);"></div> */
+  static PURPLE = PURPLE;
+}
 
 /**
  * @since 0.4.0
