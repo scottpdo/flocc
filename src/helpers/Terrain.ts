@@ -66,21 +66,51 @@ export class Colors {
 }
 
 /**
+ * The `Terrain` class lets {@linkcode Environment}s function as lattices upon which {@link https://en.wikipedia.org/wiki/Cellular_automaton | cellular automata} can grow. With a `Terrain`, {@linkcode Agent}s may not be necessary, since all the cells of a `Terrain` can follow update rules (similar to but simplified from `Agent`s).
+ *
+ * ### Usage
+ *
+ * ```js
+ * const environment = new Environment();
+ * const terrain = new Terrain(30, 30); // create a 30 x 30 Terrain
+ * environment.use(terrain); // tell the Environment to 'use' this Terrain as a helper
+ * ```
+ *
  * @since 0.4.0
  */
 class Terrain implements EnvironmentHelper {
+  /** @hidden */
   data: Uint8ClampedArray;
+  /** @hidden */
   nextData: Uint8ClampedArray;
+  /** @hidden */
   opts: TerrainOptions;
+  /**
+   * The number of cells across in a `Terrain`. If you use a `scale` larger than `1`, the `Terrain` will be rendered at `width * scale` pixels wide on the screen.
+   */
   width: number;
+  /**
+   * The number of cells from top to bottom in a `Terrain`. If you use a `scale` larger than `1`, the `Terrain` will be rendered at `height * scale` pixels high on the screen.
+   */
   height: number;
+  /** @hidden */
   rule: TerrainRule;
 
   /**
+   * Instantiate a new `Terrain` by passing its `width` and `height` as the first two parameters, and an optional configuration object as the third.
    *
-   * @param {number} width - The width of the terrain
-   * @param {number} height - The height of the terrain
-   * @param options
+   * ### Options
+   *
+   * - `async` (*boolean* = `false`) &mdash; Whether to run the `Terrain` in synchronous (`true`) or asynchronous (`mode`). Defaults to synchronous. Depending on the timing mode, {@link addRule | Terrain update rules} should be written differently.
+   * - `grayscale` (*boolean* = `false`)
+   *   - In **color mode** (the default), each cell of a `Terrain` is represented by a {@link Colors | pixel-like object} (an object with numeric keys `r`, `g`, `b`, and `a` ranging from 0-255).
+   *   - In **grayscale mode**, each cell of a `Terrain` is represented by a single number ranging from 0 (black) to 255 (white).
+   * - `scale` (*number* = `1`) &mdash; The size, in pixels, of each cell's width and height when the `Terrain` is rendered using a {@linkcode CanvasRenderer}. In the below screenshots, the `Terrain` on the left uses a scale of `1` while the one on the right uses a scale of `5`:
+   *
+   * <img alt="Terrain with scale = 1" style="width: 49%;" src="https://cms.flocc.network/wp-content/uploads/2020/04/terrain-1.png">
+   * <img alt="Terrain with scale = 5" style="width: 49%;" src="https://cms.flocc.network/wp-content/uploads/2020/04/terrain-5.png">
+   *
+   * In addition to the above setup, you will need to {@link init | initialize} the `Terrain` and {@link addRule | add an update rule}.
    */
   constructor(
     width: number,
@@ -105,9 +135,16 @@ class Terrain implements EnvironmentHelper {
   }
 
   /**
-   * Initialize (or overwrite) the terrain data by passing a function with parameters (x, y)
-   * and returning a pixel value.
-   * @param {Function} rule - The rule to follow to instantiate pixel values
+   * Initialize (or overwrite) all cell values. The rule you pass has the same signature
+   * as {@linkcode addRule}, but should always return a value (either a number or {@linkcode Colors | pixel-like object}).
+   *
+   * ```js
+   * // initializes cells randomly to either blue or red
+   * terrain.init((x, y) => {
+   *   return utils.uniform() > 0.5 ? Colors.BLUE : Colors.RED;
+   * });
+   * ```
+   *
    * @since 0.4.0
    */
   init(rule: TerrainRule): void {
@@ -132,10 +169,38 @@ class Terrain implements EnvironmentHelper {
   }
 
   /**
-   * Like with agents, this adds an update rule for the terrain. The function
-   * passed as the rule should be called with the parameters (x, y), and should return
-   * a pixel-like object { r: number, g: number, b: number, a: number } or number.
-   * @param {Function} rule - The update rule to be called on environment.tick()
+   * Similar to adding behavior to {@linkcode Agent}s, this adds an update rule for the `Terrain`.
+   * The function passed as the rule should be called with the parameters (`x`, `y`). In synchronous mode,
+   * it should return a value that is the color of that cell on the next time step.
+   *
+   * ```js
+   * // turns a cell red if the x-value is greater than 200,
+   * // blue if the x-value is less than 100,
+   * // and leaves it unchanged in between
+   * terrain.addRule((x, y) => {
+   *   if (x > 200) {
+   *     return Colors.RED;
+   *   } else if (x < 100) {
+   *     return Colors.BLUE;
+   *   }
+   * });
+   * ```
+   *
+   * For grayscale mode, functions passed to `addRule` should return a number instead of a {@linkcode Colors | pixel-like object}.
+   *
+   * In asynchronous mode, functions should use the {@linkcode set} method to update either this cell
+   * or a different cell.
+   *
+   * ```js
+   * // swaps the colors of this cell and the one five cells to the right
+   * terrain.addRule((x, y) => {
+   *   const here = terrain.sample(x, y);
+   *   const there = terrain.sample(x + 5, y);
+   *   terrain.set(x, y, there);
+   *   terrain.set(x + 5, y, here);
+   * });
+   * ```
+   *
    * @since 0.4.0
    */
   addRule(rule: TerrainRule): void {
@@ -144,14 +209,23 @@ class Terrain implements EnvironmentHelper {
 
   /**
    * Given a local path or remote URL to an image, load that image and set
-   * terrain pixel data accordingly. This will scale the image to match the
-   * dimensionss of the terrain.
+   * `Terrain` data accordingly. This will scale the image to match the
+   * dimensions of the terrain.
+   *
    * A 2nd callback parameter fires once the image has been successfully loaded.
-   * @param {string} path - The path or URL to the image
-   * @param {Function} cb - The function to call once the image loads
+   *
+   * ```js
+   * const terrain = new Terrain(400, 400);
+   * terrain.load("/path/to/local/image.jpg", function() {
+   *   console.log("Image loaded successfully!");
+   * });
+   * ```
+   *
+   * @param {string} path - The path to or URL of the image
+   * @param {Function} cb - The function to call once the image loads (takes no parameters)
    * @since 0.4.0
    */
-  load(path: string, cb?: Function): void {
+  load(path: string, callback?: Function): void {
     const img = document.createElement("img");
     img.src = path;
     img.crossOrigin = "anonymous";
@@ -165,7 +239,7 @@ class Terrain implements EnvironmentHelper {
         .getImageData(0, 0, this.width, this.height);
       this.data = data;
 
-      if (cb) cb();
+      if (callback) callback();
     };
 
     img.onerror = () => {
@@ -210,16 +284,21 @@ class Terrain implements EnvironmentHelper {
   }
 
   /**
-   * Get the neighbors of a coordinate within a certain radius.
-   * Depending on the fourth parameter, retrieves either the von Neumann neighborhood
-   * (https://en.wikipedia.org/wiki/Von_Neumann_neighborhood) or the Moore neighborhood
-   * (https://en.wikipedia.org/wiki/Moore_neighborhood).
+   * Get the values of the neighbors of a cell within a certain radius.
+   * Depending on the fourth parameter, retrieves either the {@link https://en.wikipedia.org/wiki/Von_Neumann_neighborhood | von Neumann neighborhood}
+   * or the {@link https://en.wikipedia.org/wiki/Moore_neighborhood | Moore neighborhood}.
    *
-   * @param {number} x - The x coordinate
-   * @param {number} y - The y coordinate
-   * @param {number} radius - how far to look for neighbors
-   * @param {boolean} moore - whether to use the Moore neighborhood or von Neumann (defaults to von Neumann)
-   * @returns {Pixel[] | number[]} - An array of numbers (grayscale only) or pixel-like objects
+   * ```js
+   * // in grayscale mode:
+   * terrain.neighbors(5, 5, 1); // returns [127, 100, 255, 255] (4 values)
+   *
+   * // in color mode:
+   * terrain.neighbors(5, 5, 1, true);
+   * // returns [{ r: 255, g: 0, b: 0, a: 255 }, { r: 127, ... }, ...] (8 values)
+   * ```
+   *
+   * @param moore - Defaults to using the von Neumann neighborhood.
+   * @returns Either an array of numbers (grayscale mode) or {@link Colors | pixel-like objects} (color mode).
    * @since 0.4.0
    */
   neighbors(
@@ -246,6 +325,7 @@ class Terrain implements EnvironmentHelper {
     return neighbors;
   }
 
+  /** @hidden */
   _setAbstract(
     data: Uint8ClampedArray,
     x: number,
@@ -311,6 +391,7 @@ class Terrain implements EnvironmentHelper {
     this._setAbstract(this.data, x, y, r, g, b, a);
   }
 
+  /** @hidden */
   _setNext(
     x: number,
     y: number,
@@ -322,6 +403,7 @@ class Terrain implements EnvironmentHelper {
     this._setAbstract(this.nextData, x, y, r, g, b, a);
   }
 
+  /** @hidden */
   _execute(x: number, y: number): void {
     const { rule, opts } = this;
     const { async } = opts;
@@ -333,6 +415,7 @@ class Terrain implements EnvironmentHelper {
     this._setNext(x, y, result);
   }
 
+  /** @hidden */
   _loop({ randomizeOrder = false }: { randomizeOrder?: boolean }): void {
     const { rule, width, height, opts } = this;
     const { async } = opts;
