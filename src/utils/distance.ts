@@ -3,9 +3,21 @@
 import { Agent } from "../agents/Agent";
 
 /**
- * Finds the distance between `p1` and `p2`. The inputs may be plain objects
- * with `x`, `y`, and/or `z` keys, or Agent-like objects who have
- * `x`, `y`, and/or `z` data.
+ * Finds the distance between `p1` and `p2`.
+ *
+ * The inputs may be plain objects with `x`, `y`, and/or `z` keys, {@linkcode Vector}s,
+ * or {@linkcode Agent}s with `x`, `y`, and/or `z` data.
+ *
+ * ```js
+ * const a1 = new Agent();
+ * const a2 = new Agent({ x: 3, y: 4 });
+ * distance(a1, a2); // returns 5 (defaults to x = 0 and y = 0 for a1)
+ *
+ * const p1 = { x: 0, y: 2 };
+ * const p2 = { x: 0, y: 4 };
+ * distance(p1, p2); // returns 2
+ * ```
+ *
  * @param {Point|Agent} p1
  * @param {Point|Agent} p2
  * @return {number} The distance between p1 and p2.

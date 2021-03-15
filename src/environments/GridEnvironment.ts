@@ -19,13 +19,23 @@ const unhash = (str: string): Point => {
 const warnOnce = once(console.warn.bind(console));
 
 /**
+ * A `GridEnvironment` is the **deprecated** version of a cellular automata.
+ * It's now recommended that you use a standard {@linkcode Environment} with a
+ * {@linkcode Terrain}. This class will be removed entirely in v0.6.0.
+ *
+ * In a `GridEnvironment` with an {@linkcode ASCIIRenderer}, {@linkcode Agent}s are rendered
+ * using their `"value"` data (a single character).
+ *
  * @deprecated since 0.4.0
- * @since 0.0.5
+ * @since 0.0.10
  */
 class GridEnvironment extends Environment {
   cells: Map<string, Cell>;
   _cellHashes: Array<string>;
 
+  /**
+   * Create a `GridEnvironment` with the given `width` and `height`.
+   */
   constructor(width: number = 2, height: number = 2) {
     super();
 
@@ -67,6 +77,7 @@ class GridEnvironment extends Environment {
   }
 
   /**
+   * @hidden
    * @since 0.1.0
    */
   normalize(x: number, y: number): Point {
@@ -78,7 +89,7 @@ class GridEnvironment extends Environment {
   }
 
   /**
-   * For GridEnvironments, `addAgent` takes `x` and `y` values
+   * For `GridEnvironment`s, `addAgent` takes `x` and `y` values
    * and automatically adds a Agent to that cell coordinate.
    * @param {number} x_
    * @param {number} y_
@@ -113,8 +124,8 @@ class GridEnvironment extends Environment {
   }
 
   /**
-   * For GridEnvironments, `removeAgent` takes `x` and `y` values
-   * and removes the Agent (if there is one) at that cell coordinate.
+   * For GridEnvironments, `removeAgentAt` takes `x` and `y` values
+   * and removes the `Agent` (if there is one) at that cell coordinate.
    * @param {number} x_
    * @param {number} y_
    * @since 0.1.0
@@ -287,6 +298,7 @@ class GridEnvironment extends Environment {
 
   /**
    * Execute all cell rules.
+   * @hidden
    * @param { boolean } randomizeOrder
    */
   _executeCellRules(randomizeOrder: boolean) {
@@ -310,6 +322,7 @@ class GridEnvironment extends Environment {
 
   /**
    * Execute all enqueued cell rules.
+   * @hidden
    * @param { boolean } randomizeOrder
    */
   _executeEnqueuedCellRules(randomizeOrder: boolean) {
@@ -332,8 +345,8 @@ class GridEnvironment extends Environment {
   }
 
   /**
-   * Override/extend Environment.tick to include the
-   * GridEnvironment's cells.
+   * Override/extend {@linkcode Environment.tick} to include the
+   * `GridEnvironment`'s cells.
    * @override
    * @param {number} opts
    */

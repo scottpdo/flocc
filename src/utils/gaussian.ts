@@ -3,9 +3,15 @@ import uniform from "./uniform";
 /**
  * Given a mean and standard deviation,
  * returns a value from a normal/Gaussian distribution.
- * @param {number} mean
- * @param {number} sd
- * @returns {number}
+ *
+ * ```js
+ * // returns values mostly between 5 and 15 (but sometimes lower or higher)
+ * gaussian(10, 5);
+ *
+ * // no parameters defaults to mean = 0, std. dev. = 1
+ * gaussian(); // mostly values between -1 and 1
+ * ```
+ *
  * @since 0.0.8
  */
 export default function gaussian(mean: number = 0, sd: number = 1): number {
