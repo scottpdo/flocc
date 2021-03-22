@@ -17,13 +17,35 @@ const defaultOptions: CanvasRendererOptions = {
 };
 
 /**
+ * A `CanvasRenderer` renders an {@linkcode Environment} spatially in two dimensions.
+ * Importantly, it expects that all {@linkcode Agent}s in the `Environment`
+ * have numeric `"x"` and `"y"` values associated with them.
  * @since 0.0.11
  */
 class CanvasRenderer extends AbstractRenderer {
+  /** @hidden */
   opts: CanvasRendererOptions;
+  /** @hidden */
   buffer: HTMLCanvasElement;
+  /** @hidden */
   terrainBuffer: HTMLCanvasElement = document.createElement("canvas");
 
+  /**
+   * The first parameter must be the {@linkcode Environment} that this
+   * `CanvasRenderer` will render.
+   *
+   * The second parameter specifies options, which can include:
+   * - `autoPosition` (*boolean* = `false`) &mdash; For `Environment`s using a {@linkcode Network}, whether to automatically position the `Agent`s.
+   * - `background` (*string* = `"transparent"`) &mdash; The background color to draw before rendering any `Agent`s.
+   * - `connectionColor` (*string* = `"black"`) &mdash; For `Environment`s using a `Network`, the color of lines
+   * - `connectionOpacity` (*number* = `1`) &mdash; For `Environment`s using a `Network`, the opacity of lines
+   * - `connectionWidth` (*number* = `1`) &mdash; For `Environment`s using a `Network`, the width of lines
+   * - `height` (*number* = `500`) &mdash; The height, in pixels, of the canvas on which to render
+   * - `origin` (*{ x: number; y: number }* = `{ x: 0, y: 0 }`) &mdash; The coordinate of the upper-left point of the space to be rendered
+   * - `scale` (*number* = `1`) &mdash; The scale at which to render (the larger the scale, the smaller the size of the space that is actually rendered)
+   * - `trace` (*boolean* = `false`) &mdash; If `true`, the renderer will not clear old drawings, causing the `Agent`s to appear to *trace* their paths across space
+   * - `width` (*number* = `500`) &mdash; The width, in pixels, of the canvas on which to render
+   */
   constructor(environment: Environment, opts: CanvasRendererOptions) {
     super();
 
@@ -51,16 +73,19 @@ class CanvasRenderer extends AbstractRenderer {
     this.context.fillRect(0, 0, width, height);
   }
 
+  /** @hidden */
   x(v: number): number {
     const { origin, scale } = this.opts;
     return window.devicePixelRatio * scale * (v - origin.x);
   }
 
+  /** @hidden */
   y(v: number): number {
     const { origin, scale } = this.opts;
     return window.devicePixelRatio * scale * (v - origin.y);
   }
 
+  /** @hidden */
   createCanvas(): HTMLCanvasElement {
     const dpr = window.devicePixelRatio;
     const { width, height } = this.opts;

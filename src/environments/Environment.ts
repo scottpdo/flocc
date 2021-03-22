@@ -52,26 +52,66 @@ const warnOnce = once(console.warn.bind(console));
  * @since 0.0.5
  */
 class Environment extends Agent {
-  /** @member {Agent[]} */
+  /** @hidden */
   agents: Array<Agent> = [];
+  /** @hidden */
   agentsById: Map<string, Agent> = new Map();
+  /** @hidden */
+  environment: Environment = null;
+  /** @hidden */
   cache: Map<string, MemoValue> = new Map();
+  /** @hidden */
   helpers: Helpers = {
     kdtree: null,
     network: null,
     terrain: null
   };
-  /** @member {AbstractRenderer[]} */
+  /** @hidden */
+  id: string;
+  /**
+   * An array of the renderers associated with this `Environment`.
+   * An `Environment` can have multiple renderers, usually one to render
+   * the {@linkcode Agent}s spatially and others for data visualization,
+   * such as a {@linkcode LineChartRenderer}, {@linkcode Histogram}, etc.
+   */
   renderers: AbstractRenderer[] = [];
+  /** @hidden */
   opts: EnvironmentOptions;
   width: number;
   height: number;
   /**
-   * @member {number} time - The number of `ticks` that have occurred in this Environment's lifetime.
+   * This property will always equal the number of tick cycles that
+   * have passed since the `Environment` was created. If you call
+   * {@linkcode tick} so that it goes forward multiple time steps, it will
+   * increase the `time` by that value (not by just `1`, even though
+   * you only called `tick` once).
+   *
+   * ```js
+   * const environment = new Environment();
+   * environment.time; // returns 0
+   *
+   * environment.tick();
+   * environment.time; // returns 1
+   *
+   * environment.tick(3);
+   * environment.time; // returns 4
+   * ```
+   *
    * @since 0.1.4
    * */
   time: number = 0;
 
+  /**
+   * Although `Environment`s inherit {@linkcode Agent} methods
+   * like {@linkcode Agent.set}, {@linkcode Agent.get}, etc. they have
+   * a different `constructor` signature.
+   *
+   * Pass in predefined `Environment` options for:
+   * - `torus` &mdash; Whether the `Environment` should wrap around in 2d space (with `Agent`s that move off the right reappearing on the left, off the top reappearing on the bottom, etc.)
+   * - `width` &mdash; The width of the `Environment` (used when `torus = true`)
+   * - `height` &mdash; The height of the `Environment` (used when `torus = true`)
+   * @override
+   */
   constructor(opts: EnvironmentOptions = defaultEnvironmentOptions) {
     super();
     this.opts = Object.assign({}, defaultEnvironmentOptions);
@@ -81,10 +121,10 @@ class Environment extends Agent {
   }
 
   /**
-   * Add an agent to the environment. Automatically sets the
-   * agent's environment to be this environment.
-   * @param {Agent} agent
-   * @param {boolean} rebalance - Whether to rebalance if there is a KDTree (defaults to true)
+   * Add an {@linkcode Agent} to this `Environment`. Once this is called,
+   * the `Agent`'s {@link Agent.environment | `environment`} property
+   * will automatically be set to this `Environment`.
+   * @param rebalance - Whether to rebalance if there is a `KDTree` (defaults to true)
    * @since 0.0.5
    */
   addAgent(agent: Agent, rebalance: boolean = true): void {
@@ -99,6 +139,11 @@ class Environment extends Agent {
       if (rebalance) this.helpers.kdtree.rebalance();
     }
   }
+
+  /** @hidden */
+  addRule: null;
+  /** @hidden */
+  enqueue: null;
 
   /**
    * Remove an agent from the environment.
@@ -148,7 +193,7 @@ class Environment extends Agent {
   }
 
   /**
-   * Removes all agents from the environment.
+   * Remove all agents from the environment.
    * @since 0.1.3
    */
   clear(): void {
@@ -159,8 +204,8 @@ class Environment extends Agent {
   }
 
   /**
-   * From the parameter passed to .tick, get a structured TickOptions object.
-   * @param {number | TickOptions} opts
+   * From the parameter passed to {@linkcode Environment.tick}, get a structured TickOptions object.
+   * @hidden
    */
   _getTickOptions(opts?: number | TickOptions): TickOptions {
     const baseOpts = Object.assign({}, defaultTickOptions);
@@ -185,6 +230,7 @@ class Environment extends Agent {
 
   /**
    * For all agents passed, execute agent rules
+   * @hidden
    */
   _executeAgentRules(agents: Agent[]): void {
     agents.forEach(agent => agent?.executeRules());
@@ -192,20 +238,44 @@ class Environment extends Agent {
 
   /**
    * For all agents passed, execute enqueued agent rules
+   * @hidden
    */
   _executeEnqueuedAgentRules(agents: Agent[]): void {
     agents.forEach(agent => agent?.executeEnqueuedRules());
   }
 
   /**
-   * Moves the environment forward in time,
-   * executing all agent's rules sequentially, followed by
-   * any enqueued rules (which are removed with every tick).
-   * `opts` can be either a number (# of ticks) or config object.
-   * @param {number | TickOptions} opts - Either the # of ticks or a config object
-   * @param {"uniform" | "random"} opts.activation - The activation regime (defaults to "uniform")
-   * @param {number} opts.count - The # of ticks
-   * @param {boolean} randomizeOrder - For uniform activation, whether to randomize the order. Currently defaults to `false` but will default to `true` in v0.6.0.
+   * Runs the `Environment`s tick cycle. Depending on the parameters, one,
+   * some, or all of the {@linkcode Agent}s in the `Environment`
+   * might be activated, and all renderers associated with the
+   * `Environment` will update. After the tick cycle finishes, any rules that were enqueued will be run and the `Environment`'s {@linkcode time} property will have incremented.
+   *
+   * ```js
+   * environment.tick(); // ticks once
+   *
+   * // To run multiple tick cycles, you can pass a number
+   * environment.tick(5); // ticks 5 times
+   * ```
+   *
+   * Passing a configuration object (instead of a number) allows
+   * you to have finer control over the tick cycle. The object can
+   * have the following keys:
+   * - `activation`: Either `"uniform"` or `"random"` (defaults to `"uniform"`).
+   *   - `activation = "uniform"` &mdash; All `Agent`s in the `Environment` are activated with every tick cycle.
+   *   - `activation = "random"` &mdash; One or more `Agent`s are randomly selected to be activated every tick cycle (see `activationCount` below).
+   * - `activationCount`: For `"random"` activation, this many `Agent`s will be activated with each tick cycle. Defaults to `1`. If `activationCount` is greater than the number of `Agent`s in the `Environment`, then all the `Agent`s will be activated exactly once in random order.
+   * - `count`: The number of tick cycles to run.
+   * - `randomizeOrder`: When `activation = "uniform"`, if `randomizeOrder = true`, `Agent`s will be activated in random order, otherwise in the order they were added to the `Environment`. **This currently defaults to `false` but will default to `true` in v0.6.0.**
+   *
+   * ```js
+   * // Ticks three times, activating 10 random agents with each tick cycle.
+   * environment.tick({
+   *   activation: "random",
+   *   activationCount: 10,
+   *   count: 3
+   * });
+   * ```
+   *
    * @since 0.0.5
    */
   tick(opts?: number | TickOptions): void {
@@ -287,24 +357,39 @@ class Environment extends Agent {
   }
 
   /**
-   * Use a helper with this environment.
-   * @param {EnvironmentHelper} e
+   * Use a helper with this environment. A helper can be one of:
+   * - {@linkcode KDTree}
+   * - {@linkcode Network}
+   * - {@linkcode Terrain}
    * @since 0.1.3
    */
-  use(e: EnvironmentHelper) {
-    if (e instanceof KDTree) this.helpers.kdtree = e;
-    if (e instanceof Network) this.helpers.network = e;
-    if (e instanceof Terrain) this.helpers.terrain = e;
+  use(helper: EnvironmentHelper) {
+    if (helper instanceof KDTree) this.helpers.kdtree = helper;
+    if (helper instanceof Network) this.helpers.network = helper;
+    if (helper instanceof Terrain) this.helpers.terrain = helper;
   }
 
   /**
    * Get an array of data associated with agents in the environment by key.
-   * Equivalent to calling `environment.getAgents().map(agent => agent.get(key));`
-   * Defaults to calculating and storing the result within the same environment tick.
-   * If the 2nd parameter is set to `false`, will recalculate and return the result every time.
-   * @param {string} key - The key for which to retrieve data.
-   * @param {boolean} useCache - Whether or not to cache the result (defaults to true).
-   * @return {any[]} Array of data associated with `agent.get(key)` across all agents.
+   * Calling `environment.stat('name')` is equivalent to calling
+   * `environment.getAgents().map(agent => agent.get('name'));`
+   *
+   * By default, calling this will calculate the result at most once
+   * per time cycle, and return the cached value on subsequent calls (until
+   * the next time cycle, when it will recalculate).
+   *
+   * @param key - The key for which to retrieve data.
+   * @param useCache - Whether or not to cache the result.
+   * @returns Array of data associated with `agent.get(key)` across all agents.
+   *
+   * ```js
+   * environment.addAgent(new Agent({ name: "Alice" }));
+   * environment.addAgent(new Agent({ name: "Bob" }));
+   * environment.addAgent(new Agent({ name: "Chaz" }));
+   *
+   * environment.stat('name'); // returns ['Alice', 'Bob', 'Chaz']
+   * ```
+   *
    * @since 0.3.14
    */
   stat(key: string, useCache: boolean = true): any[] {
@@ -322,9 +407,17 @@ class Environment extends Agent {
 
   /**
    * Pass a function to cache and use the return value within the same environment tick.
-   * @param {Function} fn - The function to memoize.
-   * @return {any} The return value of the function that was passed.
+   * @param fn - The function to memoize.
+   * @return The return value of the function that was passed.
    * @since 0.3.14
+   *
+   * ```js
+   * // Within the same time cycle, this function will only be called once.
+   * // The cached value will be used on subsequent calls.
+   * const blueAgents = environment.memo(() => {
+   *   return environment.getAgents().filter(a => a.get('color') === 'blue');
+   * });
+   * ```
    */
   memo(fn: Function, key?: string): any {
     const serialized = (key ? key + "-" : "") + fn.toString();

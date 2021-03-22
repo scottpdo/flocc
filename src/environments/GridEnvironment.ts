@@ -19,6 +19,7 @@ const unhash = (str: string): Point => {
 const warnOnce = once(console.warn.bind(console));
 
 /**
+ * @deprecated since 0.4.0
  * @since 0.0.5
  */
 class GridEnvironment extends Environment {

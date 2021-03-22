@@ -1,12 +1,13 @@
 {
   "name": "flocc",
-  "version": "0.5.18",
+  "version": "0.5.19",
   "description": "Agent-based modeling in JavaScript in the browser or server.",
   "main": "dist/flocc.js",
   "module": "dist/flocc.es.js",
   "typings": "dist/main.d.ts",
   "scripts": {
     "build": "rollup -c && node replace-version",
+    "docs": "typedoc src/main.ts --watch --out docs/$npm_package_version",
     "watch": "rollup -cw",
     "dev": "concurrently 'npm run watch' 'node client/app.js' 'browser-sync start --watch dist/flocc.js'",
     "format": "prettier --write src",
@@ -30,7 +31,8 @@
     "puppeteer": "^2.1.1",
     "rollup": "2.1.0",
     "rollup-plugin-typescript2": "0.26.0",
-    "typescript": "3.8.3",
+    "typedoc": "^0.20.28",
+    "typescript": "4.1.3",
     "yargs": "^15.3.1"
   },
   "files": [

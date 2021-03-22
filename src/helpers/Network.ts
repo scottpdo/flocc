@@ -5,29 +5,34 @@ import mean from "../utils/mean";
 import shuffle from "../utils/shuffle";
 import { Array2D } from "./Array2D";
 
-interface AgentCallback {
-  (agent: Agent, index: number): any;
-}
-
 /**
+ * A `Network` allows {@linkcode Agent}s to be connected to each other.
  * @since 0.1.3
  */
 class Network implements EnvironmentHelper {
+  /** @hidden */
   adjacencyList: Map<Agent, Agent[]> = new Map();
-  // instantiated and updated in _resetAdjacencyMatrix
+  /**
+   * instantiated and updated in _resetAdjacencyMatrix
+   * @hidden
+   */
   adjacencyMatrix: Array2D = null;
 
   /**
-   * list (JS array) of all the agents
-   * in the order they were added to the graph
+   * An array of the {@linkcode Agent}s in this `Network`
+   * (in the order they were added).
    */
   agents: Agent[] = [];
 
   /**
    * Add an agent to the network.
-   * Returns `true` if the agent was successfully added.
-   * Returns `false` if the agent was already in the network.
-   * @param {Agent} agent
+   * @returns Returns `true` if the `Agent` was successfully added, `false` otherwise.
+   *
+   * ```js
+   * const a = new Agent();
+   * network.addAgent(a); // returns true
+   * network.addAgent(a); // returns false since `a` was already in the `Network`
+   * ```
    * @since 0.1.3
    */
   addAgent(agent: Agent): boolean {
@@ -41,8 +46,8 @@ class Network implements EnvironmentHelper {
   }
 
   /**
-   * Add all agents in an environment to this network.
-   * @param {Environment} environment
+   * Given an {@linkcode Environment}, add all the {@linkcode Agent}s in that `Environment`
+   * to this `Network`. (This is a shortcut for calling `environment.getAgents().forEach(a => network.addAgent(a)));`)
    * @since 0.2.1
    */
   addFromEnvironment(environment: Environment): void {
@@ -50,10 +55,20 @@ class Network implements EnvironmentHelper {
   }
 
   /**
-   * Remove an agent from the network.
-   * Returns `true` if the agent was successfully removed.
+   * Removes an {@linkcode Agent} from the `Network`.
+   *
+   * ```js
+   * const a = new Agent();
+   * network.addAgent(a);
+   *
+   * network.removeAgent(a); // returns true
+   *
+   * network.removeAgent(a); // returns false since `a` was no longer in the `Network`
+   * ```
+   *
+   * @returns Returns `true` if the agent was successfully removed.
+   *
    * Returns `false` if the agent was not in the network to begin with.
-   * @param {Agent} agent
    * @since 0.1.3
    */
   removeAgent(agent: Agent): boolean {
@@ -75,7 +90,17 @@ class Network implements EnvironmentHelper {
   }
 
   /**
-   * Removes all agents from the network.
+   * Removes all {@linkcode Agent}s from the `Network`.
+   *
+   * ```js
+   * const network = new Network();
+   * network.addAgent(new Agent());
+   * network.size(); // returns 1
+   *
+   * network.clear();
+   * network.size(); // returns 0
+   * ```
+   *
    * @since 0.2.1
    */
   clear(): void {
@@ -86,23 +111,36 @@ class Network implements EnvironmentHelper {
   }
 
   /**
-   * Returns true if successfully connected the two agents, false otherwise
-   * (for example, if tried to add an edge between an agent + itself
-   * or if the connection already exists).
-   * @param {*} a1
-   * @param {*} a2
+   * Attempts to create a connection between {@linkcode Agent}s `a` and `b`.
+   * @returns Returns `true` if the connection was successfully created (i.e. if `a` and `b` were previously not connected and now are).
+   *
+   * ```js
+   * const a = new Agent();
+   * const b = new Agent();
+   * network.addAgent(a);
+   * network.addAgent(b);
+   *
+   * network.connect(a, b); // returns true
+   *
+   * network.connect(a, b); // returns false since they are now already connected
+   *
+   * const c = new Agent();
+   * network.connect(a, c); // returns false since `c` is not in the `Network`
+   * ```
+   *
+   * Returns `false` otherwise, for example if `a` and `b` are the same `Agent`, or if either is not in the `Network`.
    * @since 0.1.3
    */
-  connect(a1: Agent, a2: Agent): boolean {
-    if (a1 === a2) return false;
-    if (!this.isInNetwork(a1) || !this.isInNetwork(a2)) return false;
+  connect(a: Agent, b: Agent): boolean {
+    if (a === b) return false;
+    if (!this.isInNetwork(a) || !this.isInNetwork(b)) return false;
 
-    if (!this.areConnected(a1, a2)) {
-      this.adjacencyList.get(a1).push(a2);
-      this.adjacencyList.get(a2).push(a1);
+    if (!this.areConnected(a, b)) {
+      this.adjacencyList.get(a).push(b);
+      this.adjacencyList.get(b).push(a);
 
-      const i1 = this.indexOf(a1);
-      const i2 = this.indexOf(a2);
+      const i1 = this.indexOf(a);
+      const i2 = this.indexOf(b);
       this.adjacencyMatrix.set(i1, i2, 1);
       this.adjacencyMatrix.set(i2, i1, 1);
       return true;
@@ -112,15 +150,22 @@ class Network implements EnvironmentHelper {
   }
 
   /**
-   * Returns `true` if the given agents are connected in the network.
-   * @param {Agent} a1
-   * @param {Agent} a2
+   * @returns Returns `true` if {@linkcode Agent}s `a` and `b` are connected, `false` if they are not.
+   *
+   * ```js
+   * network.connect(a, b);
+   * network.areConnected(a, b); // returns true since they have been connected
+   *
+   * network.disconnect(a, b);
+   * network.areConnected(a, b); // returns false since they have been disconnected
+   * ```
+   *
    * @since 0.1.3
    */
-  areConnected(a1: Agent, a2: Agent): boolean {
-    if (!this.isInNetwork(a1) || !this.isInNetwork(a2)) return false;
-    const i1 = this.indexOf(a1);
-    const i2 = this.indexOf(a2);
+  areConnected(a: Agent, b: Agent): boolean {
+    if (!this.isInNetwork(a) || !this.isInNetwork(b)) return false;
+    const i1 = this.indexOf(a);
+    const i2 = this.indexOf(b);
     return (
       this.adjacencyMatrix.get(i1, i2) === 1 &&
       this.adjacencyMatrix.get(i2, i1) === 1
@@ -128,10 +173,21 @@ class Network implements EnvironmentHelper {
   }
 
   /**
-   * Like with connect, returns `true` if the edge was successfully
-   * removed, false if otherwise (if edge did not exist in the first place).
-   * @param {agent} a1
-   * @param {agent} a2
+   * Attempts to sever the connection between {@linkcode Agent}s `a` and `b`.
+   * @returns Returns `true` if the `Agent`s were successfully disconnected, `false` otherwise.
+   *
+   * ```js
+   * const a = new Agent();
+   * const b = new Agent();
+   * network.addAgent(a);
+   * network.addAgent(b);
+   *
+   * network.connect(a, b);
+   * network.disconnect(a, b); // returns true since they were connected and are no longer
+   *
+   * network.disconnect(a, b); // returns false since they were already not connected
+   * ```
+   *
    * @since 0.1.3
    */
   disconnect(a1: Agent, a2: Agent): boolean {
@@ -154,7 +210,17 @@ class Network implements EnvironmentHelper {
   }
 
   /**
-   * Number of agents in the network.
+   * @returns Returns the number of {@linkcode Agent}s in the `Network`.
+   *
+   * ```js
+   * const a = new Agent();
+   * const b = new Agent();
+   * const c = new Agent();
+   * [a, b, c].forEach(agt => network.addAgent(agt));
+   *
+   * network.size(); // returns 3
+   * ```
+   *
    * @since 0.1.3
    */
   size(): number {
@@ -162,27 +228,24 @@ class Network implements EnvironmentHelper {
   }
 
   /**
-   * Given a callback function, loop over all the agents in the network
-   * and invoke the callback, passing the agent + its index as parameters.
-   * @param {Function} cb
+   * Loop over all the {@linkcode Agent}s in the `Network` (in the order they were added),
+   * and invoke the `callback` function with the `Agent` and an index passed as parameters.
    * @since 0.1.3
    */
-  forEach(cb: AgentCallback) {
-    this.agents.forEach(cb);
+  forEach(callback: (agent: Agent, index: number) => any) {
+    this.agents.forEach(callback);
   }
 
   /**
-   * Same as forEach, but in random order.
-   * @param {Function} cb
+   * The same method as {@linkcode forEach}, but executes in random order.
    * @since 0.1.3
    */
-  forEachRand(cb: AgentCallback) {
-    shuffle(this.agents).forEach(cb);
+  forEachRand(callback: (agent: Agent, index: number) => any) {
+    shuffle(this.agents).forEach(callback);
   }
 
   /**
-   * Returns true if the agent is in the network, false if it is not.
-   * @param {Agent} agent
+   * Returns `true` if the given {@linkcode Agent} is in the `Network`, `false` if it is not.
    * @since 0.1.3
    */
   isInNetwork(agent: Agent): boolean {
@@ -190,8 +253,11 @@ class Network implements EnvironmentHelper {
   }
 
   /**
-   * Get the agent at index i.
-   * @param {number} i
+   * Returns the {@linkcode Agent} at index `i`, where `i = 0` is the first `Agent`
+   * added to the `Network`, `i = 1` the second, etc.
+   *
+   * Negative indices are allowed, so `network.get(-1)` returns the `Agent` that was most recently
+   * added to the `Network`, `-2` the second-most recent, etc.
    * @since 0.1.3
    */
   get(i: number): Agent {
@@ -201,8 +267,7 @@ class Network implements EnvironmentHelper {
   }
 
   /**
-   * Get the index of a given agent.
-   * @param {Agent} agent
+   * Returns the index of the given {@linkcode Agent} in the {@linkcode agents} array.
    * @since 0.1.3
    */
   indexOf(agent: Agent): number {
@@ -210,9 +275,19 @@ class Network implements EnvironmentHelper {
   }
 
   /**
-   * Return the agents that are neighbors of a given agent
-   * (in a JS array). If the agent is not in the network, returns `null`.
-   * @param {Agent} agent
+   * Returns an array of {@linkcode Agent}s that are connected to the given `Agent` (in no guaranteed order).
+   *
+   * Returns `null` if the given `Agent` is not in the `Network`.
+   *
+   * ```js
+   * // suppose a, b, and c are connected
+   * network.neighbors(a); // returns [b, c] (or [c, b])
+   *
+   * network.disconnect(a, c);
+   * network.neighbors(a); // returns [b]
+   * network.neighbors(c); // returns [b]
+   * ```
+   *
    * @since 0.1.3
    */
   neighbors(agent: Agent): Agent[] | null {
@@ -221,7 +296,7 @@ class Network implements EnvironmentHelper {
   }
 
   /**
-   * Connect every agent in the network to every other agent.
+   * Draw a connection between every pair of {@linkcode Agent}s in the `Network`.
    * @since 0.1.3
    */
   complete(): void {
@@ -235,6 +310,7 @@ class Network implements EnvironmentHelper {
   /**
    * Internal helper function to reset the adjacencyMatrix.
    * This gets called when agents are added to or removed from the network.
+   * @hidden
    */
   _resetAdjacencyMatrix(): void {
     const size = this.size();
@@ -252,11 +328,7 @@ class Network implements EnvironmentHelper {
   }
 
   /**
-   * Returns `true` if a, b, and c are a 'triplet' of agents --
-   * if (at least) one of the three is connected to the other two.
-   * @param {Agent} a
-   * @param {Agent} b
-   * @param {Agent} c
+   * Returns `true` if `Agent`s a, b, and c form a 'triplet' &mdash; if (at least) one of the three is connected to the other two. Returns `false` otherwise.
    * @since 0.5.17
    */
   isTriplet(a: Agent, b: Agent, c: Agent): boolean {
@@ -270,11 +342,7 @@ class Network implements EnvironmentHelper {
   }
 
   /**
-   * Returns `true` if a, b, and c are a 'closed triplet' of agents --
-   * each connected to the other two.
-   * @param {Agent} a
-   * @param {Agent} b
-   * @param {Agent} c
+   * Returns `true` if `Agent`s a, b, and c form a 'closed triplet' &mdash; if each of the three are connected to the other two. Returns `false` otherwise.
    * @since 0.5.17
    */
   isClosedTriplet(a: Agent, b: Agent, c: Agent): boolean {
@@ -287,6 +355,7 @@ class Network implements EnvironmentHelper {
     return connections === 3;
   }
 
+  /** @hidden */
   _globalClusteringCoefficient(): number {
     let triplets = 0;
     let closedTriplets = 0;
@@ -305,12 +374,15 @@ class Network implements EnvironmentHelper {
   }
 
   /**
-   * If an agent is passed as the single parameter, returns the local
-   * clustering coefficient for that agent (a measure of how connected that
-   * agent's neighbors are to each other).
-   * If no parameter is passed, returns the global clustering coefficient
-   * of the network (an aggregate measure of how connected are the agents).
-   * @param {Agent} [agent]
+   * The {@link https://en.wikipedia.org/wiki/Clustering_coefficient | clustering coefficient} is a measure of how
+   * closely connected either an individual {@linkcode Agent}'s connections are or the `Network` as a whole is.
+   *
+   * If an `Agent` is passed as the single parameter, returns the {@link https://en.wikipedia.org/wiki/Clustering_coefficient#Local_clustering_coefficient | local
+   * clustering coefficient} for that `Agent`.
+   *
+   * If no parameter is passed, returns the {@link https://en.wikipedia.org/wiki/Clustering_coefficient#Global_clustering_coefficient | global clustering coefficient}
+   * of the `Network` (an aggregate measure of how connected the `Agent`s are).
+   *
    * @since 0.5.17
    */
   clusteringCoefficient(agent?: Agent): number {
@@ -336,9 +408,11 @@ class Network implements EnvironmentHelper {
   }
 
   /**
-   * Returns the average clustering coefficient for the network (the average
-   * of the local clustering coefficient across all agents). Note that
-   * this is a different measurement from the _global_ clustering coefficient.
+   * Returns the {@link https://en.wikipedia.org/wiki/Clustering_coefficient#Network_average_clustering_coefficient | average clustering coefficient} for the `Network` (the average
+   * of the {@link Network.clusteringCoefficient | local clustering coefficient} across all `Agent`s).
+   *
+   * Note that this is a different measurement from the _global_ clustering coefficient
+   * (i.e. calling {@linkcode clusteringCoefficient} without any parameters).
    * @since 0.5.17
    */
   averageClusteringCoefficient(): number {
