@@ -9,7 +9,7 @@
     "build": "rollup -c && node replace-version",
     "docs": "typedoc src/main.ts --watch --out docs/$npm_package_version",
     "docs-build": "typedoc src/main.ts --out docs/$npm_package_version",
-    "docs-redirect": "cat docs-redirect.html > docs/index.html && sed -i \"s/{{ VERSION }}/$npm_package_version/g\" docs/index.html",
+    "docs-redirect": "cat _redirects > docs/_redirects && sed -i \"s/{{ VERSION }}/$npm_package_version/g\" docs/_redirects",
     "watch": "rollup -cw",
     "dev": "concurrently 'npm run watch' 'node client/app.js' 'browser-sync start --watch dist/flocc.js'",
     "format": "prettier --write src",
