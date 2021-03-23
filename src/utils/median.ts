@@ -1,8 +1,16 @@
 import percentile from "./percentile";
 
 /**
- * Find the median value of an array of numbers. If there are an even number
- * of elements in the array, takes the mean of the two values closest to the median.
+ * Return the mean value from an array of numbers.
+ *
+ * ```js
+ * median([1, 2, 3]); // returns 2
+ * median([10]); // returns 10
+ * median([1, 2, 3, 4]); // returns 2.5 (the mean of the two median values)
+ *
+ * median([]); // returns null for empty arrays
+ * ```
+ *
  * @param {number[]} arr
  * @since 0.2.0
  */

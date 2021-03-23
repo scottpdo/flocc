@@ -18,9 +18,6 @@ import { Agent } from "../agents/Agent";
  * distance(p1, p2); // returns 2
  * ```
  *
- * @param {Point|Agent} p1
- * @param {Point|Agent} p2
- * @return {number} The distance between p1 and p2.
  * @since 0.0.10
  */
 export default function distance(p1: Point | Agent, p2: Point | Agent): number {
