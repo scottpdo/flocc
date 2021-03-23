@@ -9,7 +9,7 @@ const warnOnce = once(console.warn.bind(console));
  * An `ASCIIRenderer` renders the {@link Agent | `Agent`}s in
  * a {@linkcode GridEnvironment}. `Agent`s are rendered
  * using their `"value"` data (a single character).
- * Since v0.4.0, this class has been deprecated, and it will be removed
+ * Since v0.4.0, this class has been **deprecated**, and it will be removed
  * entirely in v0.6.0.
  * ```js
  * const renderer = new ASCIIRenderer(grid);

@@ -61,13 +61,26 @@ class Vector implements Point {
   }
 
   /**
-   * Overwrite the value at a given index or position. If the index is beyond the dimension of this vector,
-   * the dimension will be increased to the dimensionality implied by the index.
-   * @param i {number | string} - The numerical index (0-based) or lowercase string value ('x') to set.
-   * @param value {number} - The value to set at this index/position.
+   * Set the value at a given index. If the index is greater than the {@linkcode dimension}
+   * of this `Vector`, the dimension will be increased to the dimensionality implied by the index.
+   * @param i The numerical index (0-based) or lowercase string value (e.g. `"x"`) to set.
+   * @param value The value to set at this index/position.
+   *
+   * ```js
+   * const vector = new Vector();
+   * vector.set(0, 10);
+   * vector.set('y', 2);
+   * vector.set(2, 4);
+   *
+   * vector.xyz; // [10, 2, 4]
+   * ```
+   *
    * @since 0.1.0
    */
-  set(i: number | string, value: number): this {
+  set(
+    i: number | "x" | "y" | "z" | "w" | "r" | "g" | "b" | "a",
+    value: number
+  ): this {
     let index: number;
 
     if (i === "x" || i === "r") {

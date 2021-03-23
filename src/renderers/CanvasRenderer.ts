@@ -20,6 +20,20 @@ const defaultOptions: CanvasRendererOptions = {
  * A `CanvasRenderer` renders an {@linkcode Environment} spatially in two dimensions.
  * Importantly, it expects that all {@linkcode Agent}s in the `Environment`
  * have numeric `"x"` and `"y"` values associated with them.
+ *
+ * `CanvasRenderer`s will render all `Agent`s that are visible in the rendered `Environment` space,
+ * with the color of their `"color"` value (defaulting to black).
+ * Depending on the `"shape"` of the `Agent`, additional data might be needed. `Agent` `"shape"`s can be:
+ * - `"circle"` (default) &mdash; Draws a circle centered at the `Agent`'s `"x"` / `"y"` values.
+ *   - If the `Agent` has a `"size"` value, uses that for the circle radius (defaults to 1px).
+ * - `"arrow"` &mdash; Draws an arrow centered at the `Agent`'s `"x"` / `"y"` values.
+ *   - The arrow will point in the direction of the `Agent`s `"vx"` / `"vy"` values. For example, an `Agent` with `"vx" = 1` and `"vy" = 0` will be rendered as an arrow pointing to the right.
+ *   - Also uses the `"size" value.
+ * - `"rect"` &mdash; Draws a rectangle with the upper-left corner at `"x"` / `"y"`.
+ *   - Uses the `Agent`'s `"width"` and `"height"` values for the dimensions of the rectangle.
+ * - `"triangle"` &mdash; Draws a triangle centered at the `Agent`'s `"x"` / `"y"` values.
+ *   - Also uses the `"size"` value.
+ *
  * @since 0.0.11
  */
 class CanvasRenderer extends AbstractRenderer {
