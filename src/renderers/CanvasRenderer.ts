@@ -109,6 +109,7 @@ class CanvasRenderer extends AbstractRenderer {
     return canvas;
   }
 
+  /** @hidden */
   drawPath(points: [number, number][], dx: number = 0, dy: number = 0): void {
     const bufferContext = this.buffer.getContext("2d");
     points.forEach(([px, py], i) => {
@@ -120,6 +121,7 @@ class CanvasRenderer extends AbstractRenderer {
     });
   }
 
+  /** @hidden */
   drawPathWrap(points: [number, number][]): void {
     const { width, height } = this;
 
@@ -145,12 +147,14 @@ class CanvasRenderer extends AbstractRenderer {
     if (upper) this.drawPath(points, 0, height);
   }
 
+  /** @hidden */
   drawCircle(x: number, y: number, r: number): void {
     const bufferContext = this.buffer.getContext("2d");
     bufferContext.moveTo(this.x(x), this.y(y));
     bufferContext.arc(this.x(x), this.y(y), r, 0, 2 * Math.PI);
   }
 
+  /** @hidden */
   drawCircleWrap(x: number, y: number, size: number): void {
     const { width, height } = this;
     if (this.x(x + size) >= width) {
@@ -172,10 +176,7 @@ class CanvasRenderer extends AbstractRenderer {
   /**
    * Draw a rectangle centered at (x, y). Automatically calculates the offset
    * for both width and height.
-   * @param x
-   * @param y
-   * @param width
-   * @param height
+   * @hidden
    */
   drawRect(x: number, y: number, width: number, height: number): void {
     const bufferContext = this.buffer.getContext("2d");
@@ -188,6 +189,7 @@ class CanvasRenderer extends AbstractRenderer {
     );
   }
 
+  /** @hidden */
   drawRectWrap(x: number, y: number, w: number, h: number): void {
     const { width, height } = this.opts;
     if (this.x(x + w / 2) >= width) {
