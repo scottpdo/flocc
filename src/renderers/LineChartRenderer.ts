@@ -91,7 +91,7 @@ class LineChartRenderer extends AbstractRenderer {
     let x = value;
     if (opts.autoScroll && t >= width) {
       x -= t - width;
-    } else if (opts.autoScale && t >= width) {
+    } else if (opts.autoScale) {
       x *= width / t;
     }
     return x | 0;
@@ -145,7 +145,7 @@ class LineChartRenderer extends AbstractRenderer {
 
     // draw time values for horizontal axis
     const min = opts.autoScroll && t >= width ? t - width : 0;
-    const max = opts.autoScale && t >= width ? t : width;
+    const max = opts.autoScale ? Math.max(t, 5) : width;
     const timeRange: NRange = { min, max };
     const timeMarkers = extractRoundNumbers(timeRange);
     context.save();
