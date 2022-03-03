@@ -1,5 +1,4 @@
 const {
-  Agent,
   Environment,
   LineChartRenderer,
   utils
@@ -8,7 +7,6 @@ const fs = require("fs");
 const PNG = require("pngjs").PNG;
 const pixelmatch = require("pixelmatch");
 const puppeteer = require("puppeteer");
-let browser, page;
 
 const width = 200;
 const height = 400;
@@ -40,8 +38,8 @@ it("Can add metrics to a LineChartRenderer", () => {
 });
 
 it("Renders static LineChartRenderer test correctly", async () => {
-  browser = await puppeteer.launch();
-  page = await browser.newPage();
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
   try {
     await page.goto("http://localhost:3000/linechart", {
       waitUntil: "networkidle2"
@@ -71,8 +69,8 @@ it("Renders static LineChartRenderer test correctly", async () => {
 });
 
 it("Renders static Lorenz attractor test correctly", async () => {
-  browser = await puppeteer.launch();
-  page = await browser.newPage();
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
   try {
     await page.goto("http://localhost:3000/lorenz-static", {
       waitUntil: "networkidle2"
