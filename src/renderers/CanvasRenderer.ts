@@ -13,8 +13,17 @@ const defaultOptions: CanvasRendererOptions = {
   width: 500,
   height: 500,
   scale: 1,
-  trace: false
+  trace: false,
+  interactive: false,
+  zoomMin: 0.1,
+  zoomMax: 10
 };
+
+/** @hidden */
+type InteractiveEventName = "click" | "hover" | "unhover";
+
+/** @hidden */
+type InteractiveCallback = (agent: Agent, event: MouseEvent) => void;
 
 /**
  * A `CanvasRenderer` renders an {@linkcode Environment} spatially in two dimensions.
@@ -34,6 +43,12 @@ const defaultOptions: CanvasRendererOptions = {
  * - `"triangle"` &mdash; Draws a triangle centered at the `Agent`'s `"x"` / `"y"` values.
  *   - Also uses the `"size"` value.
  *
+ * When `interactive` is set to `true` in the options, the renderer supports:
+ * - **Click/hover detection** &mdash; Use {@linkcode on} to listen for `"click"`, `"hover"`, and `"unhover"` events on agents.
+ * - **Agent selection** &mdash; Clicking an agent selects it (highlighted with a stroke). Access selected agents via {@linkcode selected}.
+ * - **Pan** &mdash; Click and drag on empty space to pan.
+ * - **Zoom** &mdash; Scroll to zoom in/out (bounded by `zoomMin` / `zoomMax`).
+ *
  * @since 0.0.11
  */
 class CanvasRenderer extends AbstractRenderer {
@@ -43,6 +58,27 @@ class CanvasRenderer extends AbstractRenderer {
   buffer: HTMLCanvasElement;
   /** @hidden */
   terrainBuffer: HTMLCanvasElement = document.createElement("canvas");
+
+  /** The currently selected agents (only used when `interactive` is `true`). */
+  selected: Agent[] = [];
+
+  /** @hidden */
+  private _listeners: Map<InteractiveEventName, InteractiveCallback[]> = new Map();
+  /** @hidden */
+  private _hoveredAgent: Agent | null = null;
+  /** @hidden */
+  private _isPanning: boolean = false;
+  /** @hidden */
+  private _panStart: { x: number; y: number } | null = null;
+  /** @hidden */
+  private _panOriginStart: { x: number; y: number } | null = null;
+  /** @hidden */
+  private _boundHandlers: {
+    mousedown?: (e: MouseEvent) => void;
+    mousemove?: (e: MouseEvent) => void;
+    mouseup?: (e: MouseEvent) => void;
+    wheel?: (e: WheelEvent) => void;
+  } = {};
 
   /**
    * The first parameter must be the {@linkcode Environment} that this
@@ -55,10 +91,14 @@ class CanvasRenderer extends AbstractRenderer {
    * - `connectionOpacity` (*number* = `1`) &mdash; For `Environment`s using a `Network`, the opacity of lines
    * - `connectionWidth` (*number* = `1`) &mdash; For `Environment`s using a `Network`, the width of lines
    * - `height` (*number* = `500`) &mdash; The height, in pixels, of the canvas on which to render
+   * - `interactive` (*boolean* = `false`) &mdash; Enables interactive features (click/hover detection, selection, pan, zoom)
+   * - `onSelect` (*function*) &mdash; Optional callback when an agent is selected or deselected
    * - `origin` (*{ x: number; y: number }* = `{ x: 0, y: 0 }`) &mdash; The coordinate of the upper-left point of the space to be rendered
    * - `scale` (*number* = `1`) &mdash; The scale at which to render (the larger the scale, the smaller the size of the space that is actually rendered)
    * - `trace` (*boolean* = `false`) &mdash; If `true`, the renderer will not clear old drawings, causing the `Agent`s to appear to *trace* their paths across space
    * - `width` (*number* = `500`) &mdash; The width, in pixels, of the canvas on which to render
+   * - `zoomMin` (*number* = `0.1`) &mdash; Minimum scale when zooming
+   * - `zoomMax` (*number* = `10`) &mdash; Maximum scale when zooming
    */
   constructor(environment: Environment, opts: CanvasRendererOptions) {
     super();
@@ -85,6 +125,165 @@ class CanvasRenderer extends AbstractRenderer {
 
     this.context.fillStyle = opts.background;
     this.context.fillRect(0, 0, width, height);
+
+    if (this.opts.interactive) {
+      this._setupInteractiveListeners();
+    }
+  }
+
+  /**
+   * Register a callback for an interactive event.
+   * Supported event names: `"click"`, `"hover"`, `"unhover"`.
+   *
+   * ```js
+   * renderer.on("click", (agent, event) => {
+   *   console.log("Clicked agent:", agent.id);
+   * });
+   * ```
+   *
+   * @param eventName - The event to listen for.
+   * @param callback - The callback, invoked with the `Agent` and the `MouseEvent`.
+   */
+  on(eventName: InteractiveEventName, callback: InteractiveCallback): void {
+    if (!this._listeners.has(eventName)) {
+      this._listeners.set(eventName, []);
+    }
+    this._listeners.get(eventName).push(callback);
+  }
+
+  /** @hidden */
+  private _emit(eventName: InteractiveEventName, agent: Agent, event: MouseEvent): void {
+    const callbacks = this._listeners.get(eventName);
+    if (callbacks) {
+      callbacks.forEach(cb => cb(agent, event));
+    }
+  }
+
+  /**
+   * Given a mouse event, return the agent at that position (if any).
+   * Hit-testing accounts for the agent's shape and size.
+   * @hidden
+   */
+  _agentAtPoint(clientX: number, clientY: number): Agent | null {
+    const rect = this.canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio;
+    const canvasX = (clientX - rect.left) * dpr;
+    const canvasY = (clientY - rect.top) * dpr;
+
+    const agents = this.environment.getAgents();
+    // Iterate in reverse so topmost-drawn agent is found first
+    for (let i = agents.length - 1; i >= 0; i--) {
+      const agent = agents[i];
+      const data = agent.getData();
+      const ax = this.x(data.x);
+      const ay = this.y(data.y);
+      const shape = data.shape;
+      const size = (data.size || 1) * dpr;
+
+      if (shape === "rect") {
+        const w = (data.width || 1) * dpr;
+        const h = (data.height || 1) * dpr;
+        const rx = ax - w / 2;
+        const ry = ay - h / 2;
+        if (canvasX >= rx && canvasX <= rx + w && canvasY >= ry && canvasY <= ry + h) {
+          return agent;
+        }
+      } else if (shape === "triangle") {
+        // Simple bounding-box hit test for triangles
+        const halfSize = size / 2;
+        if (
+          canvasX >= ax - halfSize &&
+          canvasX <= ax + halfSize &&
+          canvasY >= ay - halfSize &&
+          canvasY <= ay + halfSize
+        ) {
+          return agent;
+        }
+      } else {
+        // Default: circle (and arrow) — distance-based hit test
+        const dx = canvasX - ax;
+        const dy = canvasY - ay;
+        const hitRadius = Math.max(size, 4 * dpr); // minimum hit area for tiny agents
+        if (dx * dx + dy * dy <= hitRadius * hitRadius) {
+          return agent;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /** @hidden */
+  private _setupInteractiveListeners(): void {
+    const onMouseDown = (e: MouseEvent) => {
+      const agent = this._agentAtPoint(e.clientX, e.clientY);
+      if (agent) {
+        // Agent click — select it
+        this.selected = [agent];
+        if (this.opts.onSelect) this.opts.onSelect(agent);
+        this._emit("click", agent, e);
+        this.render();
+      } else {
+        // Empty space — deselect and start panning
+        if (this.selected.length > 0) {
+          this.selected = [];
+          if (this.opts.onSelect) this.opts.onSelect(null);
+          this.render();
+        }
+        this._isPanning = true;
+        this._panStart = { x: e.clientX, y: e.clientY };
+        this._panOriginStart = { x: this.opts.origin.x, y: this.opts.origin.y };
+      }
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (this._isPanning && this._panStart && this._panOriginStart) {
+        const dpr = window.devicePixelRatio;
+        const dx = e.clientX - this._panStart.x;
+        const dy = e.clientY - this._panStart.y;
+        this.opts.origin = {
+          x: this._panOriginStart.x - dx / (this.opts.scale * dpr),
+          y: this._panOriginStart.y - dy / (this.opts.scale * dpr)
+        };
+        this.render();
+        return;
+      }
+
+      // Hover detection
+      const agent = this._agentAtPoint(e.clientX, e.clientY);
+      if (agent !== this._hoveredAgent) {
+        if (this._hoveredAgent) {
+          this._emit("unhover", this._hoveredAgent, e);
+        }
+        if (agent) {
+          this._emit("hover", agent, e);
+        }
+        this._hoveredAgent = agent;
+      }
+    };
+
+    const onMouseUp = (e: MouseEvent) => {
+      this._isPanning = false;
+      this._panStart = null;
+      this._panOriginStart = null;
+    };
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const { zoomMin, zoomMax } = this.opts;
+      const delta = e.deltaY > 0 ? 0.9 : 1.1;
+      let newScale = this.opts.scale * delta;
+      newScale = Math.max(zoomMin, Math.min(zoomMax, newScale));
+      this.opts.scale = newScale;
+      this.render();
+    };
+
+    this._boundHandlers = { mousedown: onMouseDown, mousemove: onMouseMove, mouseup: onMouseUp, wheel: onWheel };
+
+    this.canvas.addEventListener("mousedown", onMouseDown);
+    this.canvas.addEventListener("mousemove", onMouseMove);
+    this.canvas.addEventListener("mouseup", onMouseUp);
+    this.canvas.addEventListener("wheel", onWheel, { passive: false });
   }
 
   /** @hidden */
@@ -208,6 +407,42 @@ class CanvasRenderer extends AbstractRenderer {
     }
     if (this.y(y + h / 2) > height) this.drawRect(x, y - height, w, h);
     if (this.y(y - height / 2) < 0) this.drawRect(x, y + height, w, h);
+  }
+
+  /**
+   * Draw a selection highlight around the given agent.
+   * @hidden
+   */
+  private _drawSelectionHighlight(agent: Agent): void {
+    const bufferContext = this.buffer.getContext("2d");
+    const dpr = window.devicePixelRatio;
+    const data = agent.getData();
+    const ax = this.x(data.x);
+    const ay = this.y(data.y);
+    const shape = data.shape;
+    const size = (data.size || 1) * dpr;
+
+    bufferContext.save();
+    bufferContext.strokeStyle = "#0af";
+    bufferContext.lineWidth = 2 * dpr;
+
+    if (shape === "rect") {
+      const w = (data.width || 1) * dpr;
+      const h = (data.height || 1) * dpr;
+      bufferContext.strokeRect(
+        ax - w / 2 - 2 * dpr,
+        ay - h / 2 - 2 * dpr,
+        w + 4 * dpr,
+        h + 4 * dpr
+      );
+    } else {
+      bufferContext.beginPath();
+      const highlightRadius = Math.max(size, 4 * dpr) + 3 * dpr;
+      bufferContext.arc(ax, ay, highlightRadius, 0, 2 * Math.PI);
+      bufferContext.stroke();
+    }
+
+    bufferContext.restore();
   }
 
   render(): void {
@@ -381,6 +616,13 @@ class CanvasRenderer extends AbstractRenderer {
         bufferContext.restore();
       }
     });
+
+    // Draw selection highlights for selected agents
+    if (opts.interactive && this.selected.length > 0) {
+      this.selected.forEach(agent => {
+        this._drawSelectionHighlight(agent);
+      });
+    }
 
     context.drawImage(buffer, 0, 0);
   }

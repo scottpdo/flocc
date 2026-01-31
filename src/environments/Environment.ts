@@ -79,6 +79,17 @@ class Environment extends Agent {
   opts: EnvironmentOptions;
   width: number;
   height: number;
+
+  /**
+   * Whether the `Environment` tick cycle is currently playing.
+   * Use {@linkcode pause}, {@linkcode resume}, or {@linkcode toggle}
+   * to control playback.
+   * @since 0.5.22
+   */
+  playing: boolean = true;
+
+  /** @hidden */
+  private _tickIntervalId: ReturnType<typeof setInterval> | null = null;
   /**
    * This property will always equal the number of tick cycles that
    * have passed since the `Environment` was created. If you call
@@ -279,6 +290,9 @@ class Environment extends Agent {
    * @since 0.0.5
    */
   tick(opts?: number | TickOptions): void {
+    // If paused, skip the tick cycle (use `step()` to advance manually)
+    if (!this.playing) return;
+
     const {
       activation,
       activationCount,
@@ -354,6 +368,51 @@ class Environment extends Agent {
     }
 
     this.renderers.forEach(r => r.render());
+  }
+
+  /**
+   * Pause the tick cycle. While paused, calling {@linkcode tick} will
+   * be a no-op unless you use {@linkcode step} to advance manually.
+   * @since 0.5.22
+   */
+  pause(): void {
+    this.playing = false;
+  }
+
+  /**
+   * Resume the tick cycle after it has been paused.
+   * @since 0.5.22
+   */
+  resume(): void {
+    this.playing = true;
+  }
+
+  /**
+   * Toggle the tick cycle between playing and paused.
+   * @since 0.5.22
+   */
+  toggle(): void {
+    this.playing = !this.playing;
+  }
+
+  /**
+   * Advance the `Environment` by exactly one tick, regardless of whether
+   * it is paused. This is useful for stepping through the simulation
+   * frame-by-frame while paused.
+   *
+   * ```js
+   * environment.pause();
+   * environment.step(); // advances one tick
+   * ```
+   *
+   * @since 0.5.22
+   */
+  step(opts?: number | TickOptions): void {
+    // Temporarily mark as playing so tick executes, then restore
+    const wasPlaying = this.playing;
+    this.playing = true;
+    this.tick(opts);
+    this.playing = wasPlaying;
   }
 
   /**
