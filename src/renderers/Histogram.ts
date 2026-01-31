@@ -189,10 +189,10 @@ class Histogram extends AbstractRenderer {
   }
 
   drawBuckets(bucketValues: number[], offset: number = 0): void {
-    const { canvas } = this;
+    const { canvas, width, height } = this;
     const metric = this._metric;
     const numMetrics = Array.isArray(metric) ? metric.length : 1;
-    const { aboveMax, belowMin, color, width, height } = this.opts;
+    const { aboveMax, belowMin, color } = this.opts;
     const context = canvas.getContext("2d");
     context.fillStyle = Array.isArray(color)
       ? color[offset % color.length]
