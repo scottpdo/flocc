@@ -124,7 +124,7 @@ class CanvasRenderer extends AbstractRenderer {
     this.terrainBuffer.height = height;
 
     this.context.fillStyle = opts.background;
-    this.context.fillRect(0, 0, width, height);
+    this.context.fillRect(0, 0, this.width, this.height);
 
     if (this.opts.interactive) {
       this._setupInteractiveListeners();
@@ -474,7 +474,9 @@ class CanvasRenderer extends AbstractRenderer {
     if (opts.autoPosition && environment.helpers.network) {
       environment.getAgents().forEach(agent => {
         const { network } = this.environment.helpers;
-        const { width, height } = this;
+        // Use CSS pixel dimensions (opts), not the DPI-scaled canvas dimensions,
+        // since x() and y() already apply the devicePixelRatio transform.
+        const { width: w, height: h } = this.opts;
 
         // only set once
         if (
@@ -483,8 +485,8 @@ class CanvasRenderer extends AbstractRenderer {
         ) {
           const idx = network.indexOf(agent);
           const angle = idx / network.agents.length;
-          const x = width / 2 + 0.4 * width * Math.cos(2 * Math.PI * angle);
-          const y = height / 2 + 0.4 * height * Math.sin(2 * Math.PI * angle);
+          const x = w / 2 + 0.4 * w * Math.cos(2 * Math.PI * angle);
+          const y = h / 2 + 0.4 * h * Math.sin(2 * Math.PI * angle);
           agent.set({ x, y });
         }
       });
@@ -552,8 +554,8 @@ class CanvasRenderer extends AbstractRenderer {
           context.globalAlpha = this.opts.connectionOpacity;
           context.strokeStyle = this.opts.connectionColor;
           context.lineWidth = this.opts.connectionWidth;
-          context.moveTo(this.x(x), this.x(y));
-          context.lineTo(this.x(nx), this.x(ny));
+          context.moveTo(this.x(x), this.y(y));
+          context.lineTo(this.x(nx), this.y(ny));
           context.stroke();
           context.closePath();
           context.restore();
