@@ -329,11 +329,12 @@ class CanvasRenderer extends AbstractRenderer {
     let lower = false;
     let upper = false;
 
+    // points are already in DPR-scaled pixel space, so compare directly
     points.forEach(([px, py]) => {
-      if (this.x(px) >= width) right = true;
-      if (this.x(px) < 0) left = true;
-      if (this.y(py) >= height) lower = true;
-      if (this.y(py) < 0) upper = true;
+      if (px >= width) right = true;
+      if (px < 0) left = true;
+      if (py >= height) lower = true;
+      if (py < 0) upper = true;
     });
 
     if (right) this.drawPath(points, -width, 0);
@@ -356,20 +357,22 @@ class CanvasRenderer extends AbstractRenderer {
   /** @hidden */
   drawCircleWrap(x: number, y: number, size: number): void {
     const { width, height } = this;
+    const worldWidth = this.opts.width;
+    const worldHeight = this.opts.height;
     if (this.x(x + size) >= width) {
-      this.drawCircle(x - width, y, size);
+      this.drawCircle(x - worldWidth, y, size);
       if (this.y(y + size) >= height)
-        this.drawCircle(x - width, y - height, size);
-      if (this.y(y - size) < 0) this.drawCircle(x - width, y + height, size);
+        this.drawCircle(x - worldWidth, y - worldHeight, size);
+      if (this.y(y - size) < 0) this.drawCircle(x - worldWidth, y + worldHeight, size);
     }
     if (this.x(x - size) < 0) {
-      this.drawCircle(x + width, y, size);
+      this.drawCircle(x + worldWidth, y, size);
       if (this.y(y + size) >= height)
-        this.drawCircle(x + width, y - height, size);
-      if (this.y(y - size) < 0) this.drawCircle(x + width, y + height, size);
+        this.drawCircle(x + worldWidth, y - worldHeight, size);
+      if (this.y(y - size) < 0) this.drawCircle(x + worldWidth, y + worldHeight, size);
     }
-    if (this.y(y + size) > height) this.drawCircle(x, y - height, size);
-    if (this.y(y - size) < 0) this.drawCircle(x, y + height, size);
+    if (this.y(y + size) > height) this.drawCircle(x, y - worldHeight, size);
+    if (this.y(y - size) < 0) this.drawCircle(x, y + worldHeight, size);
   }
 
   /**
@@ -390,23 +393,25 @@ class CanvasRenderer extends AbstractRenderer {
 
   /** @hidden */
   drawRectWrap(x: number, y: number, w: number, h: number): void {
-    const { width, height } = this.opts;
+    const { width, height } = this;
+    const worldWidth = this.opts.width;
+    const worldHeight = this.opts.height;
     if (this.x(x + w / 2) >= width) {
-      this.drawRect(x - width, y, w, h);
+      this.drawRect(x - worldWidth, y, w, h);
       if (this.y(y + h / 2) >= height)
-        this.drawRect(x - width, y - height, w, h);
-      if (this.y(y - height / 2) < 0)
-        this.drawRect(x - width, y + height, w, h);
+        this.drawRect(x - worldWidth, y - worldHeight, w, h);
+      if (this.y(y - h / 2) < 0)
+        this.drawRect(x - worldWidth, y + worldHeight, w, h);
     }
     if (this.x(x - w / 2) < 0) {
-      this.drawRect(x + width, y, w, h);
+      this.drawRect(x + worldWidth, y, w, h);
       if (this.y(y + h / 2) >= height)
-        this.drawRect(x + width, y - height, w, h);
-      if (this.y(y - height / 2) < 0)
-        this.drawRect(x + width, y + height, w, h);
+        this.drawRect(x + worldWidth, y - worldHeight, w, h);
+      if (this.y(y - h / 2) < 0)
+        this.drawRect(x + worldWidth, y + worldHeight, w, h);
     }
-    if (this.y(y + h / 2) > height) this.drawRect(x, y - height, w, h);
-    if (this.y(y - height / 2) < 0) this.drawRect(x, y + height, w, h);
+    if (this.y(y + h / 2) > height) this.drawRect(x, y - worldHeight, w, h);
+    if (this.y(y - h / 2) < 0) this.drawRect(x, y + worldHeight, w, h);
   }
 
   /**
@@ -465,9 +470,9 @@ class CanvasRenderer extends AbstractRenderer {
     // if "trace" is truthy, don't clear the canvas with every frame
     // to trace the paths of agents
     if (!trace) {
-      context.clearRect(0, 0, width * dpr, height * dpr);
+      context.clearRect(0, 0, width, height);
       context.fillStyle = opts.background;
-      context.fillRect(0, 0, width * dpr, height * dpr);
+      context.fillRect(0, 0, width, height);
     }
 
     // automatically position agents in an environment that uses a network helper
@@ -589,10 +594,11 @@ class CanvasRenderer extends AbstractRenderer {
       } else if (shape === "triangle") {
         bufferContext.beginPath();
 
+        const scaledSize = size * dpr;
         const points: [number, number][] = [
-          [this.x(x), this.y(y) - size / 2],
-          [this.x(x) + size / 2, this.y(y) + size / 2],
-          [this.x(x) - size / 2, this.y(y) + size / 2]
+          [this.x(x), this.y(y) - scaledSize / 2],
+          [this.x(x) + scaledSize / 2, this.y(y) + scaledSize / 2],
+          [this.x(x) - scaledSize / 2, this.y(y) + scaledSize / 2]
         ];
 
         this.drawPath(points);

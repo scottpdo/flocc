@@ -86,18 +86,20 @@ class Histogram extends AbstractRenderer {
 
   x(value: number): number {
     const { width, markerWidth } = this;
+    const dpr = window.devicePixelRatio;
     return remap(
       value,
       0,
       width,
-      markerWidth + PADDING_AT_LEFT,
-      width - PADDING_AT_RIGHT
+      markerWidth + PADDING_AT_LEFT * dpr,
+      width - PADDING_AT_RIGHT * dpr
     );
   }
 
   y(value: number): number {
     const { height, maxValue } = this;
-    return remap(value, 0, maxValue, height - PADDING_AT_BOTTOM, 0);
+    const dpr = window.devicePixelRatio;
+    return remap(value, 0, maxValue, height - PADDING_AT_BOTTOM * dpr, 0);
   }
 
   setMaxValue(): void {
@@ -124,11 +126,12 @@ class Histogram extends AbstractRenderer {
     const context = this.canvas.getContext("2d");
     const { height, width } = this;
     const { aboveMax, belowMin, buckets, min, max } = this.opts;
+    const dpr = window.devicePixelRatio;
     const yMin = 0;
     const yMax = this.maxValue;
     const markers = extractRoundNumbers({ min: yMin, max: yMax });
     context.fillStyle = "black";
-    context.font = `${14 * window.devicePixelRatio}px Helvetica`;
+    context.font = `${14 * dpr}px Helvetica`;
 
     // determine the width of the longest marker
     this.markerWidth = getMax(
@@ -145,9 +148,9 @@ class Histogram extends AbstractRenderer {
         this.y(marker)
       );
       context.beginPath();
-      context.moveTo(this.markerWidth + 10, this.y(marker));
+      context.moveTo(this.markerWidth + 10 * dpr, this.y(marker));
       context.lineTo(this.width, this.y(marker));
-      context.setLineDash(LINE_DASH);
+      context.setLineDash(LINE_DASH.map(v => v * dpr));
       context.stroke();
     });
 
@@ -177,10 +180,10 @@ class Histogram extends AbstractRenderer {
             (i * width) / bucketValues.length +
               (0.5 * width) / bucketValues.length
           ),
-          height - 50
+          height - 50 * dpr
         );
         context.rotate(Math.PI / 4);
-        context.font = `${12 * window.devicePixelRatio}px Helvetica`;
+        context.font = `${12 * dpr}px Helvetica`;
         context.textAlign = "left";
         context.textBaseline = "middle";
         context.fillText(label, 0, 0);
@@ -193,6 +196,7 @@ class Histogram extends AbstractRenderer {
     const metric = this._metric;
     const numMetrics = Array.isArray(metric) ? metric.length : 1;
     const { aboveMax, belowMin, color } = this.opts;
+    const dpr = window.devicePixelRatio;
     const context = canvas.getContext("2d");
     context.fillStyle = Array.isArray(color)
       ? color[offset % color.length]
@@ -201,7 +205,7 @@ class Histogram extends AbstractRenderer {
     const numBuckets = bucketValues.length;
 
     let barWidth =
-      (width - PADDING_AT_LEFT - PADDING_AT_RIGHT - this.markerWidth) /
+      (width - PADDING_AT_LEFT * dpr - PADDING_AT_RIGHT * dpr - this.markerWidth) /
       numBuckets;
     barWidth *= 0.8;
 
@@ -210,9 +214,9 @@ class Histogram extends AbstractRenderer {
       let x = this.x(((0.1 + i) * width) / numBuckets);
       context.fillRect(
         x + (offset * barWidth - (numMetrics - 1)) / numMetrics + offset,
-        remap(mappedValue, 0, 1, height - PADDING_AT_BOTTOM, 0),
+        remap(mappedValue, 0, 1, height - PADDING_AT_BOTTOM * dpr, 0),
         barWidth / numMetrics,
-        remap(mappedValue, 0, 1, 0, height - PADDING_AT_BOTTOM)
+        remap(mappedValue, 0, 1, 0, height - PADDING_AT_BOTTOM * dpr)
       );
     });
   }
