@@ -1,9 +1,31 @@
+<style>
+  body { font-family: sans-serif; }
+  #controls { margin: 8px 0; }
+  #controls button {
+    padding: 4px 12px;
+    margin-right: 4px;
+    cursor: pointer;
+  }
+  #info {
+    font-size: 13px;
+    color: #555;
+    margin-top: 4px;
+    min-height: 1.4em;
+  }
+</style>
+
 <h1>Network Diffusion</h1>
 
+<div id="controls">
+  <button id="toggle">Pause</button>
+  <button id="step" disabled>Step</button>
+</div>
+<div id="info">Click an agent to inspect its wealth and connections.</div>
 <div id="container"></div>
 <div id="chart"></div>
 <script>
   utils.seed(1);
+
   /* ----- PARAMETERS ----- */
   const POPULATION = 60;
   const REWIRING_PROBABILITY = 0.2;
@@ -12,15 +34,19 @@
   /* ----- SETUP ----- */
   const environment = new Environment();
   const network = new Network();
-  console.log(network);
   environment.use(network);
 
   const renderer = new CanvasRenderer(environment, {
     autoPosition: true,
     width: 400,
-    height: 400
+    height: 400,
+    interactive: true,
+    onSelect(agent) {
+      updateInfo(agent);
+    }
   });
   renderer.mount("#container");
+
   const chart = new LineChartRenderer(environment, {
     background: "#eee",
     width: 300,
@@ -28,6 +54,52 @@
     range: { min: -0.25, max: 13 }
   });
   chart.mount("#chart");
+
+  // --- Pause / Step controls ---
+  const toggleBtn = document.getElementById("toggle");
+  const stepBtn = document.getElementById("step");
+
+  toggleBtn.addEventListener("click", () => {
+    environment.toggle();
+    toggleBtn.textContent = environment.playing ? "Pause" : "Resume";
+    stepBtn.disabled = environment.playing;
+  });
+
+  stepBtn.addEventListener("click", () => {
+    environment.step();
+    renderer.render();
+  });
+
+  // --- Interactive events ---
+  renderer.on("click", (agent) => {
+    // Highlight the clicked agent's neighbors by color
+    environment.getAgents().forEach(a => a.set("color", "black"));
+    const neighbors = network.neighbors(agent);
+    neighbors.forEach(n => n.set("color", "#f50"));
+    agent.set("color", "#0af");
+    renderer.render();
+  });
+
+  renderer.on("hover", (agent) => {
+    renderer.canvas.style.cursor = "pointer";
+  });
+
+  renderer.on("unhover", () => {
+    renderer.canvas.style.cursor = "default";
+  });
+
+  function updateInfo(agent) {
+    const infoEl = document.getElementById("info");
+    if (!agent) {
+      infoEl.textContent = "Click an agent to inspect its wealth and connections.";
+      environment.getAgents().forEach(a => a.set("color", "black"));
+      renderer.render();
+      return;
+    }
+    const neighbors = network.neighbors(agent);
+    const size = agent.get("size");
+    infoEl.textContent = `Wealth: ${size.toFixed(3)} — ${neighbors.length} connection${neighbors.length !== 1 ? "s" : ""}`;
+  }
 
   function tick(agent) {
     const neighbors = network.neighbors(agent);
@@ -53,34 +125,23 @@
       for (let j = i - 2; j < i + 2; j++) {
         const clampedJ =
           j < 0 ? j + POPULATION : j >= POPULATION ? j - POPULATION : j;
-        network.connect(network.get(i), network.get(j));
+        network.connect(network.get(i), network.get(clampedJ));
       }
     }
 
-    network.agents.forEach((agent, i) => {
+    network.agents.forEach((agent) => {
       network.neighbors(agent).forEach(neighbor => {
         if (utils.uniform() < REWIRING_PROBABILITY) {
           network.disconnect(agent, neighbor);
-
           const j = utils.random(0, POPULATION);
           network.connect(agent, network.get(j));
         }
       });
     });
 
-    chart.metric("size", {
-      fn: utils.stdDev
-    });
-
-    chart.metric("size", {
-      color: "blue",
-      fn: utils.max
-    });
-
-    chart.metric("size", {
-      color: "red",
-      fn: utils.min
-    });
+    chart.metric("size", { fn: utils.stdDev });
+    chart.metric("size", { color: "blue", fn: utils.max });
+    chart.metric("size", { color: "red", fn: utils.min });
   }
 
   function draw() {
