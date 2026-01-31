@@ -1,0 +1,20 @@
+<div id="container"></div>
+<script>
+    const { Agent, Environment, Histogram } = flocc;
+
+    const environment = new Environment();
+    const agent = new Agent({ value: 0.5 });
+    environment.addAgent(agent);
+
+    const histogram = new Histogram(environment, {
+        buckets: 1,
+        min: 0,
+        max: 1,
+        width: 500,
+        height: 500
+    });
+    histogram.mount("#container");
+    histogram.metric("value");
+
+    environment.tick();
+</script>

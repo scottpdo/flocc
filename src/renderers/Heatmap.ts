@@ -114,11 +114,12 @@ class Heatmap extends AbstractRenderer {
    */
   x(value: number): number {
     const { width } = this;
+    const dpr = window.devicePixelRatio;
     return remap(
       value,
       this.getMin("x"),
       this.getMax("x"),
-      PADDING_AT_LEFT,
+      PADDING_AT_LEFT * dpr,
       width
     );
   }
@@ -129,11 +130,12 @@ class Heatmap extends AbstractRenderer {
    */
   y(value: number): number {
     const { height } = this;
+    const dpr = window.devicePixelRatio;
     return remap(
       value,
       this.getMin("y"),
       this.getMax("y"),
-      height - PADDING_AT_BOTTOM,
+      height - PADDING_AT_BOTTOM * dpr,
       0
     );
   }
@@ -179,85 +181,88 @@ class Heatmap extends AbstractRenderer {
   drawMarkers() {
     const { context, width, height } = this;
     const { from, to } = this.opts;
+    const dpr = window.devicePixelRatio;
+    const padLeft = PADDING_AT_LEFT * dpr;
+    const padBottom = PADDING_AT_BOTTOM * dpr;
 
     context.strokeStyle = "black";
     context.lineWidth = 1;
-    context.moveTo(PADDING_AT_LEFT - 1, 0);
-    context.lineTo(PADDING_AT_LEFT - 1, height - PADDING_AT_BOTTOM + 1);
-    context.lineTo(width, height - PADDING_AT_BOTTOM + 1);
+    context.moveTo(padLeft - 1, 0);
+    context.lineTo(padLeft - 1, height - padBottom + 1);
+    context.lineTo(width, height - padBottom + 1);
     context.stroke();
 
     context.lineWidth = 0;
     const gradient = context.createLinearGradient(
-      10,
+      10 * dpr,
       0,
-      PADDING_AT_LEFT - 10,
+      padLeft - 10 * dpr,
       0
     );
     gradient.addColorStop(0, from);
     gradient.addColorStop(1, to);
     context.fillStyle = gradient;
     context.fillRect(
-      10,
-      height - PADDING_AT_BOTTOM + 20,
-      PADDING_AT_LEFT - 24,
-      20
+      10 * dpr,
+      height - padBottom + 20 * dpr,
+      padLeft - 24 * dpr,
+      20 * dpr
     );
 
     context.fillStyle = "black";
 
     let step = (this.getMax("x") - this.getMin("x")) / this.getBuckets("x");
     let originalStep = step;
-    while (Math.abs(this.x(step) - this.x(0)) < 35) step *= 2;
+    while (Math.abs(this.x(step) - this.x(0)) < 35 * dpr) step *= 2;
 
     for (
       let marker = this.getMin("x");
       marker <= this.getMax("x");
       marker += originalStep
     ) {
-      if (this.x(marker) + 10 > width) continue;
-      context.moveTo(this.x(marker), height - PADDING_AT_BOTTOM);
-      context.lineTo(this.x(marker), height - PADDING_AT_BOTTOM + 10);
+      if (this.x(marker) + 10 * dpr > width) continue;
+      context.moveTo(this.x(marker), height - padBottom);
+      context.lineTo(this.x(marker), height - padBottom + 10 * dpr);
       context.stroke();
 
       if (
         Math.abs(((marker - this.getMin("x")) / step) % 1) < 0.001 ||
         Math.abs((((marker - this.getMin("x")) / step) % 1) - 1) < 0.001
       ) {
-        context.font = `${12 * window.devicePixelRatio}px Helvetica`;
+        context.font = `${12 * dpr}px Helvetica`;
         context.textAlign = "center";
         context.fillText(
           marker.toLocaleString(),
           this.x(marker),
-          height - PADDING_AT_BOTTOM + 24
+          height - padBottom + 24 * dpr
         );
       }
     }
 
     step = (this.getMax("y") - this.getMin("y")) / this.getBuckets("y");
     originalStep = step;
-    while (Math.abs(this.y(step) - this.y(0)) < 20) step *= 2;
+    while (Math.abs(this.y(step) - this.y(0)) < 20 * dpr) step *= 2;
 
     for (
       let marker = this.getMin("y");
       marker <= this.getMax("y");
       marker += originalStep
     ) {
-      if (this.y(marker) - 10 < 0) continue;
-      context.moveTo(PADDING_AT_LEFT, this.y(marker));
-      context.lineTo(PADDING_AT_LEFT - 10, this.y(marker));
+      if (this.y(marker) - 10 * dpr < 0) continue;
+      context.moveTo(padLeft, this.y(marker));
+      context.lineTo(padLeft - 10 * dpr, this.y(marker));
       context.stroke();
 
       if (
         Math.abs(((marker - this.getMin("y")) / step) % 1) < 0.001 ||
         Math.abs((((marker - this.getMin("y")) / step) % 1) - 1) < 0.001
       ) {
-        context.font = `${12 * window.devicePixelRatio}px Helvetica`;
+        context.font = `${12 * dpr}px Helvetica`;
         context.textAlign = "right";
         context.textBaseline = "middle";
         context.fillText(
           marker.toLocaleString(),
-          PADDING_AT_LEFT - 14,
+          padLeft - 14 * dpr,
           this.y(marker)
         );
       }
@@ -268,6 +273,8 @@ class Heatmap extends AbstractRenderer {
   updateScale() {
     const { context, environment, height } = this;
     const { scale } = this.opts;
+    const dpr = window.devicePixelRatio;
+    const padLeft = PADDING_AT_LEFT * dpr;
 
     let max = scale === "relative" ? this.localMax : this.opts.max;
     if (max === undefined) {
@@ -280,14 +287,14 @@ class Heatmap extends AbstractRenderer {
     }
 
     if (!this.lastUpdatedScale || +new Date() - +this.lastUpdatedScale > 250) {
-      context.clearRect(0, height - 20, PADDING_AT_LEFT, 20);
+      context.clearRect(0, height - 20 * dpr, padLeft, 20 * dpr);
 
       context.fillStyle = "black";
-      context.font = `${12 * window.devicePixelRatio}px Helvetica`;
+      context.font = `${12 * dpr}px Helvetica`;
       context.textAlign = "center";
       context.textBaseline = "bottom";
-      context.fillText("0", 10, height - 5);
-      context.fillText(max.toString(), PADDING_AT_LEFT - 16, height - 5);
+      context.fillText("0", 10 * dpr, height - 5 * dpr);
+      context.fillText(max.toString(), padLeft - 16 * dpr, height - 5 * dpr);
 
       this.lastUpdatedScale = new Date();
     }
@@ -297,6 +304,9 @@ class Heatmap extends AbstractRenderer {
   drawRectangles() {
     const { canvas, environment, width, height } = this;
     const { scale, from, to } = this.opts;
+    const dpr = window.devicePixelRatio;
+    const padLeft = PADDING_AT_LEFT * dpr;
+    const padBottom = PADDING_AT_BOTTOM * dpr;
     const context = canvas.getContext("2d");
     const xBuckets = this.getBuckets("x");
     const yBuckets = this.getBuckets("y");
@@ -305,10 +315,10 @@ class Heatmap extends AbstractRenderer {
 
     // clear background by drawing background rectangle
     context.fillStyle = from;
-    context.fillRect(PADDING_AT_LEFT, 0, width, height - PADDING_AT_BOTTOM);
+    context.fillRect(padLeft, 0, width - padLeft, height - padBottom);
 
-    const w = width / xBuckets;
-    const h = height / yBuckets;
+    const w = (width - padLeft) / xBuckets;
+    const h = (height - padBottom) / yBuckets;
 
     for (let row = 0; row < yBuckets; row++) {
       for (let column = 0; column < xBuckets; column++) {
@@ -324,8 +334,8 @@ class Heatmap extends AbstractRenderer {
           this.y(
             remap(row, -1, yBuckets - 1, this.getMin("y"), this.getMax("y"))
           ),
-          (w * (width - PADDING_AT_LEFT)) / width,
-          (h * (height - PADDING_AT_BOTTOM)) / height
+          w,
+          h
         );
       }
     }

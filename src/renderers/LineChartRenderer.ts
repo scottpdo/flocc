@@ -101,12 +101,16 @@ class LineChartRenderer extends AbstractRenderer {
     const { height } = this;
     const { range } = this.opts;
     const { min, max } = range;
-    const pxPerUnit = (height - 2 * PADDING_BOTTOM) / (max - min);
-    return Math.round(height - (value - min) * pxPerUnit) - 2 * PADDING_BOTTOM;
+    const dpr = window.devicePixelRatio;
+    const paddingBottom = PADDING_BOTTOM * dpr;
+    const pxPerUnit = (height - 2 * paddingBottom) / (max - min);
+    return Math.round(height - (value - min) * pxPerUnit) - 2 * paddingBottom;
   }
 
   drawBackground() {
     const { context, width, height, opts, t } = this;
+    const dpr = window.devicePixelRatio;
+    const paddingBottom = PADDING_BOTTOM * dpr;
     // draw background and lines
     context.fillStyle = this.opts.background;
     context.fillRect(0, 0, width, height);
@@ -116,29 +120,29 @@ class LineChartRenderer extends AbstractRenderer {
 
     let textMaxWidth = 0;
     // write values on vertical axis
-    context.font = `${14 * window.devicePixelRatio}px Helvetica`;
+    context.font = `${14 * dpr}px Helvetica`;
     context.fillStyle = "#000";
     context.textBaseline = "middle";
 
     markers.forEach(marker => {
-      if (this.y(marker) < 10 || this.y(marker) + 10 > height) return;
+      if (this.y(marker) < 10 * dpr || this.y(marker) + 10 * dpr > height) return;
       const { width } = context.measureText(marker.toLocaleString());
       if (width > textMaxWidth) textMaxWidth = width;
-      context.fillText(marker.toLocaleString(), 5, this.y(marker));
+      context.fillText(marker.toLocaleString(), 5 * dpr, this.y(marker));
     });
 
     // draw horizontal lines for vertical axis
     context.save();
     context.strokeStyle = "#999";
     markers.forEach(marker => {
-      if (this.y(marker) >= height - PADDING_BOTTOM) return;
+      if (this.y(marker) >= height - paddingBottom) return;
       context.beginPath();
-      context.moveTo(textMaxWidth + 10, this.y(marker));
+      context.moveTo(textMaxWidth + 10 * dpr, this.y(marker));
       context.lineTo(
         this.x(Math.max(width, this.environment.time)),
         this.y(marker)
       );
-      context.setLineDash(lineDash);
+      context.setLineDash(lineDash.map(v => v * dpr));
       context.stroke();
     });
     context.restore();
@@ -159,17 +163,17 @@ class LineChartRenderer extends AbstractRenderer {
         return;
       }
 
-      context.font = `${11 * window.devicePixelRatio}px Helvetica`;
+      context.font = `${11 * dpr}px Helvetica`;
       context.fillText(
         marker.toLocaleString(),
         this.x(marker),
-        height - PADDING_BOTTOM
+        height - paddingBottom
       );
 
       context.strokeStyle = "black";
       context.lineWidth = 1;
       context.beginPath();
-      context.moveTo(this.x(marker), height - 4);
+      context.moveTo(this.x(marker), height - 4 * dpr);
       context.lineTo(this.x(marker), height);
       context.stroke();
     });
