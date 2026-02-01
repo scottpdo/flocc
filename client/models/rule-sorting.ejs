@@ -10,11 +10,9 @@
 <h1>Bubble Sort Agents (Rules DSL)</h1>
 <p>
   Each bar is an agent with a <code>value</code>. On every tick, adjacent agents
-  compare values and swap if out of order — a visual bubble sort expressed
-  entirely through the <code>Rule</code> DSL. Demonstrates <code>get</code>,
-  <code>set</code>, <code>if</code>, <code>gt</code>, <code>key</code>,
-  <code>method</code>, and <code>log</code> (open the console to see the
-  improved log output on swaps).
+  compare values and swap if out of order — a visual bubble sort. The
+  comparison and swap logic is expressed through the <code>Rule</code> DSL.
+  Open the browser console to see the improved <code>log</code> output on swaps.
 </p>
 
 <div id="controls">
@@ -42,49 +40,31 @@
   renderer.mount("#container");
 
   /**
-   * The sorting rule: each agent looks at its right neighbor.
-   * If this agent's value > neighbor's value, they swap positions.
+   * The sorting rule: each agent checks its "rightValue" (set by the
+   * linkNeighbors pass each tick). If our value is greater, we flag
+   * ourselves for swapping. The Rule handles the comparison logic;
+   * a thin JS pass handles the actual index reassignment since the
+   * DSL can't do array indexing by variable.
    *
    * This uses log to trace swaps — open the browser console to
    * see the improved Rule log format in action.
    */
-  const sortRule = new Rule(environment, [
-    /* Store our index */
-    ["local", "myIdx", ["get", "idx"]],
-    /* Find the agent to our right (idx + 1) */
-    ["local", "rightNeighbor",
-      ["method", ["environment"], "getAgents"]
-    ],
-    ["local", "right",
-      ["filter", ["local", "rightNeighbor"],
-        ["eq", ["add", ["local", "myIdx"], 1], ["method", "get", "idx"]]
-      ]
-    ],
-    /* If there's a right neighbor and our value is greater, swap */
+  const compareRule = new Rule(environment, [
     ["if",
       ["and",
-        ["gt", ["key", ["local", "right"], "length"], 0],
-        ["gt",
-          ["get", "value"],
-          ["method", ["key", ["local", "right"], 0], "get", "value"]
-        ]
+        ["gte", ["get", "rightValue"], 0],
+        ["gt", ["get", "value"], ["get", "rightValue"]]
       ],
       [
-        /* Log the swap using the improved log operator */
-        ["log", ["get", "value"]],
-        /* Swap indices */
-        ["local", "rightAgent", ["key", ["local", "right"], 0]],
-        ["local", "myOldIdx", ["get", "idx"]],
-        ["enqueue", "idx", ["method", ["local", "rightAgent"], "get", "idx"]],
-        ["method", ["local", "rightAgent"], "set", "idx",
-          ["local", "myOldIdx"]
-        ]
-      ]
+        ["log", "swap", ["get", "value"]],
+        ["set", "shouldSwap", 1]
+      ],
+      ["set", "shouldSwap", 0]
     ]
   ]);
 
-  /* Show validation diagnostics in console */
-  const diags = sortRule.validate();
+  /* Validate and show diagnostics */
+  const diags = compareRule.validate();
   if (diags.length > 0) {
     console.group("Sort rule validation");
     diags.forEach(d => console[d.level === "error" ? "error" : "warn"](
@@ -93,9 +73,12 @@
     console.groupEnd();
   }
 
+  let agents = [];
+
   function makeAgents() {
+    agents = [];
     const values = Array.from({ length: COUNT }, (_, i) => i + 1);
-    /* Shuffle */
+    /* Fisher-Yates shuffle */
     for (let i = values.length - 1; i > 0; i--) {
       const j = Math.floor(utils.uniform() * (i + 1));
       [values[i], values[j]] = [values[j], values[i]];
@@ -105,19 +88,67 @@
       const agent = new Agent();
       agent.set("value", v);
       agent.set("idx", i);
+      agent.set("shouldSwap", 0);
+      agent.set("rightValue", -1);
       agent.set("shape", "rect");
       const height = (v / COUNT) * (MAX_HEIGHT - 10);
       agent.set("width", BAR_WIDTH - 2);
       agent.set("height", height);
       agent.set("color", `hsl(${(v / COUNT) * 240}, 70%, 55%)`);
-      agent.addRule(sortRule);
-      /* Position tick — update x/y based on current idx */
-      agent.addRule(function positionTick(a) {
-        a.set("x", a.get("idx") * BAR_WIDTH + 1);
-        a.set("y", MAX_HEIGHT - a.get("height"));
-      });
+      /* Position derived from idx */
+      agent.set("x", i * BAR_WIDTH + 1);
+      agent.set("y", MAX_HEIGHT - height);
+      agent.addRule(compareRule);
       environment.addAgent(agent);
+      agents.push(agent);
     });
+  }
+
+  /**
+   * Before each tick: write each agent's right neighbor's value onto it.
+   * After each tick: read shouldSwap flags and perform actual swaps.
+   * This keeps the Rule focused on the comparison logic.
+   */
+  function linkNeighbors() {
+    /* Sort agents array by current idx for fast lookup */
+    agents.sort((a, b) => a.get("idx") - b.get("idx"));
+    for (let i = 0; i < agents.length; i++) {
+      if (i < agents.length - 1) {
+        agents[i].set("rightValue", agents[i + 1].get("value"));
+      } else {
+        agents[i].set("rightValue", -1); /* no right neighbor */
+      }
+    }
+  }
+
+  function performSwaps() {
+    agents.sort((a, b) => a.get("idx") - b.get("idx"));
+    /* Walk left to right; swap flagged pairs, skip the swapped-into agent */
+    for (let i = 0; i < agents.length - 1; i++) {
+      const left = agents[i];
+      const right = agents[i + 1];
+      if (left.get("shouldSwap") === 1) {
+        /* Swap indices */
+        const li = left.get("idx");
+        const ri = right.get("idx");
+        left.set("idx", ri);
+        right.set("idx", li);
+        /* Update positions */
+        left.set("x", ri * BAR_WIDTH + 1);
+        right.set("x", li * BAR_WIDTH + 1);
+        /* Clear flag and skip next (already swapped) */
+        left.set("shouldSwap", 0);
+        i++;
+      }
+    }
+  }
+
+  function isSorted() {
+    agents.sort((a, b) => a.get("idx") - b.get("idx"));
+    for (let i = 0; i < agents.length - 1; i++) {
+      if (agents[i].get("value") > agents[i + 1].get("value")) return false;
+    }
+    return true;
   }
 
   makeAgents();
@@ -133,26 +164,35 @@
     toggleBtn.textContent = environment.playing ? "Pause" : "Play";
     stepBtn.disabled = environment.playing;
   });
-  stepBtn.addEventListener("click", () => environment.step());
+  stepBtn.addEventListener("click", () => {
+    linkNeighbors();
+    environment.step();
+    performSwaps();
+    infoEl.textContent = `Tick ${environment.time}`;
+    if (isSorted()) {
+      infoEl.textContent = `Sorted in ${environment.time} ticks!`;
+    }
+  });
   resetBtn.addEventListener("click", () => {
     environment.getAgents().slice().forEach(a => environment.removeAgent(a));
     environment.time = 0;
+    utils.seed(Math.floor(Math.random() * 10000));
     makeAgents();
     infoEl.textContent = "Sorting...";
+    if (!environment.playing) {
+      toggleBtn.textContent = "Pause";
+      stepBtn.disabled = true;
+      environment.toggle();
+    }
   });
 
   /* ── Run ── */
   (function draw() {
     if (environment.playing) {
+      linkNeighbors();
       environment.tick();
-      /* Check if sorted */
-      const agents = environment.getAgents();
-      const sorted = agents.every(a => {
-        if (a.get("idx") === COUNT - 1) return true;
-        const right = agents.find(b => b.get("idx") === a.get("idx") + 1);
-        return right && a.get("value") <= right.get("value");
-      });
-      if (sorted) {
+      performSwaps();
+      if (isSorted()) {
         infoEl.textContent = `Sorted in ${environment.time} ticks!`;
         environment.pause();
         toggleBtn.textContent = "Play";
