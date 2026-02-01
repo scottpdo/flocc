@@ -1,0 +1,166 @@
+<style>
+  body { font-family: sans-serif; padding: 0 12px; }
+  h1 { font-size: 18px; }
+  p { font-size: 13px; color: #555; max-width: 600px; line-height: 1.5; }
+  #controls { margin: 8px 0; }
+  #controls button { padding: 4px 12px; margin-right: 4px; cursor: pointer; }
+  #info { font-size: 13px; color: #555; margin-top: 4px; }
+</style>
+
+<h1>Bubble Sort Agents (Rules DSL)</h1>
+<p>
+  Each bar is an agent with a <code>value</code>. On every tick, adjacent agents
+  compare values and swap if out of order — a visual bubble sort expressed
+  entirely through the <code>Rule</code> DSL. Demonstrates <code>get</code>,
+  <code>set</code>, <code>if</code>, <code>gt</code>, <code>key</code>,
+  <code>method</code>, and <code>log</code> (open the console to see the
+  improved log output on swaps).
+</p>
+
+<div id="controls">
+  <button id="toggle">Pause</button>
+  <button id="step" disabled>Step</button>
+  <button id="reset">Reset</button>
+</div>
+<div id="info">Sorting...</div>
+<div id="container"></div>
+
+<script>
+  const COUNT = 40;
+  const BAR_WIDTH = 12;
+  const MAX_HEIGHT = 300;
+  const CANVAS_WIDTH = COUNT * BAR_WIDTH;
+
+  const environment = new Environment();
+
+  const renderer = new CanvasRenderer(environment, {
+    width: CANVAS_WIDTH,
+    height: MAX_HEIGHT,
+    background: "#f8f8f8",
+    scale: 1
+  });
+  renderer.mount("#container");
+
+  /**
+   * The sorting rule: each agent looks at its right neighbor.
+   * If this agent's value > neighbor's value, they swap positions.
+   *
+   * This uses log to trace swaps — open the browser console to
+   * see the improved Rule log format in action.
+   */
+  const sortRule = new Rule(environment, [
+    /* Store our index */
+    ["local", "myIdx", ["get", "idx"]],
+    /* Find the agent to our right (idx + 1) */
+    ["local", "rightNeighbor",
+      ["method", ["environment"], "getAgents"]
+    ],
+    ["local", "right",
+      ["filter", ["local", "rightNeighbor"],
+        ["eq", ["add", ["local", "myIdx"], 1], ["method", "get", "idx"]]
+      ]
+    ],
+    /* If there's a right neighbor and our value is greater, swap */
+    ["if",
+      ["and",
+        ["gt", ["key", ["local", "right"], "length"], 0],
+        ["gt",
+          ["get", "value"],
+          ["method", ["key", ["local", "right"], 0], "get", "value"]
+        ]
+      ],
+      [
+        /* Log the swap using the improved log operator */
+        ["log", ["get", "value"]],
+        /* Swap indices */
+        ["local", "rightAgent", ["key", ["local", "right"], 0]],
+        ["local", "myOldIdx", ["get", "idx"]],
+        ["enqueue", "idx", ["method", ["local", "rightAgent"], "get", "idx"]],
+        ["method", ["local", "rightAgent"], "set", "idx",
+          ["local", "myOldIdx"]
+        ]
+      ]
+    ]
+  ]);
+
+  /* Show validation diagnostics in console */
+  const diags = sortRule.validate();
+  if (diags.length > 0) {
+    console.group("Sort rule validation");
+    diags.forEach(d => console[d.level === "error" ? "error" : "warn"](
+      `${d.path}: ${d.message}`
+    ));
+    console.groupEnd();
+  }
+
+  function makeAgents() {
+    const values = Array.from({ length: COUNT }, (_, i) => i + 1);
+    /* Shuffle */
+    for (let i = values.length - 1; i > 0; i--) {
+      const j = Math.floor(utils.uniform() * (i + 1));
+      [values[i], values[j]] = [values[j], values[i]];
+    }
+
+    values.forEach((v, i) => {
+      const agent = new Agent();
+      agent.set("value", v);
+      agent.set("idx", i);
+      agent.set("shape", "rect");
+      const height = (v / COUNT) * (MAX_HEIGHT - 10);
+      agent.set("width", BAR_WIDTH - 2);
+      agent.set("height", height);
+      agent.set("color", `hsl(${(v / COUNT) * 240}, 70%, 55%)`);
+      agent.addRule(sortRule);
+      /* Position tick — update x/y based on current idx */
+      agent.addRule(function positionTick(a) {
+        a.set("x", a.get("idx") * BAR_WIDTH + 1);
+        a.set("y", MAX_HEIGHT - a.get("height"));
+      });
+      environment.addAgent(agent);
+    });
+  }
+
+  makeAgents();
+
+  /* ── Controls ── */
+  const toggleBtn = document.getElementById("toggle");
+  const stepBtn = document.getElementById("step");
+  const resetBtn = document.getElementById("reset");
+  const infoEl = document.getElementById("info");
+
+  toggleBtn.addEventListener("click", () => {
+    environment.toggle();
+    toggleBtn.textContent = environment.playing ? "Pause" : "Play";
+    stepBtn.disabled = environment.playing;
+  });
+  stepBtn.addEventListener("click", () => environment.step());
+  resetBtn.addEventListener("click", () => {
+    environment.getAgents().slice().forEach(a => environment.removeAgent(a));
+    environment.time = 0;
+    makeAgents();
+    infoEl.textContent = "Sorting...";
+  });
+
+  /* ── Run ── */
+  (function draw() {
+    if (environment.playing) {
+      environment.tick();
+      /* Check if sorted */
+      const agents = environment.getAgents();
+      const sorted = agents.every(a => {
+        if (a.get("idx") === COUNT - 1) return true;
+        const right = agents.find(b => b.get("idx") === a.get("idx") + 1);
+        return right && a.get("value") <= right.get("value");
+      });
+      if (sorted) {
+        infoEl.textContent = `Sorted in ${environment.time} ticks!`;
+        environment.pause();
+        toggleBtn.textContent = "Play";
+        stepBtn.disabled = false;
+      } else {
+        infoEl.textContent = `Tick ${environment.time}...`;
+      }
+    }
+    requestAnimationFrame(draw);
+  })();
+</script>
