@@ -260,7 +260,7 @@ describe("Rule.operatorInfo", () => {
 
   it("has correct info for variable arity operators", () => {
     expect(Rule.operatorInfo.local).toEqual({ min: 1, max: 2 });
-    expect(Rule.operatorInfo["if"]).toEqual({ min: 3, max: 3 });
+    expect(Rule.operatorInfo["if"]).toEqual({ min: 2, max: 3 });
   });
 });
 
@@ -382,6 +382,22 @@ describe("Regression tests", () => {
 
     const rule2 = new Rule(environment, ["if", false, 1, 2]);
     expect(rule2.call()).toBe(2);
+  });
+
+  it("if without else branch (2 args) works and returns null on false", () => {
+    jest.spyOn(console, "warn").mockImplementation(() => {});
+    const rule = new Rule(environment, ["if", true, 42]);
+    expect(rule.call()).toBe(42);
+
+    const rule2 = new Rule(environment, ["if", false, 42]);
+    expect(rule2.call()).toBeNull();
+
+    // Should not trigger any arity warnings
+    expect(console.warn).not.toHaveBeenCalled();
+
+    // validate() should also be clean
+    expect(rule.validate()).toEqual([]);
+    jest.restoreAllMocks();
   });
 
   it("set and get with agent", () => {

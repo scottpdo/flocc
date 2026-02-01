@@ -60,7 +60,7 @@ const operatorInfo: { [key: string]: OperatorArity } = {
   set: { min: 2, max: 2 },
   enqueue: { min: 2, max: 2 },
   local: { min: 1, max: 2 },
-  if: { min: 3, max: 3 },
+  if: { min: 2, max: 3 },
   and: { min: 2, max: 2 },
   or: { min: 2, max: 2 },
   gt: { min: 2, max: 2 },
