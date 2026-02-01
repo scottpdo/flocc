@@ -1,7 +1,7 @@
 export { Agent } from "./agents/Agent";
 export { Vector } from "./helpers/Vector";
 export { Network } from "./helpers/Network";
-export { Rule } from "./helpers/Rule";
+export { Rule, RuleDiagnostic } from "./helpers/Rule";
 export { KDTree } from "./helpers/KDTree";
 export { NumArray } from "./helpers/NumArray";
 export { Colors, Terrain } from "./helpers/Terrain";

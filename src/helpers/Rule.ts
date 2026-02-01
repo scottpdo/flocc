@@ -27,11 +27,58 @@ enum Operators {
   method = "method",
   agent = "agent",
   environment = "environment",
-  vector = "vector"
+  vector = "vector",
+  log = "log"
 }
 
 type StepToken = number | string | Step;
 interface Step extends Array<StepToken> {}
+
+interface RuleDiagnostic {
+  path: string;
+  level: "error" | "warning";
+  message: string;
+}
+
+/**
+ * Operator info: maps operator names to their expected argument counts.
+ * `min` and `max` define the valid range. If `max` is Infinity, the operator is variadic.
+ */
+interface OperatorArity {
+  min: number;
+  max: number;
+}
+
+const operatorInfo: { [key: string]: OperatorArity } = {
+  add: { min: 2, max: 2 },
+  subtract: { min: 2, max: 2 },
+  multiply: { min: 2, max: 2 },
+  divide: { min: 2, max: 2 },
+  mod: { min: 2, max: 2 },
+  power: { min: 2, max: 2 },
+  get: { min: 1, max: 1 },
+  set: { min: 2, max: 2 },
+  enqueue: { min: 2, max: 2 },
+  local: { min: 1, max: 2 },
+  if: { min: 3, max: 3 },
+  and: { min: 2, max: 2 },
+  or: { min: 2, max: 2 },
+  gt: { min: 2, max: 2 },
+  gte: { min: 2, max: 2 },
+  lt: { min: 2, max: 2 },
+  lte: { min: 2, max: 2 },
+  eq: { min: 2, max: 2 },
+  map: { min: 2, max: 2 },
+  filter: { min: 2, max: 2 },
+  key: { min: 2, max: 2 },
+  method: { min: 2, max: Infinity },
+  agent: { min: 0, max: 0 },
+  environment: { min: 0, max: 0 },
+  vector: { min: 1, max: Infinity },
+  log: { min: 1, max: Infinity }
+};
+
+const ARITHMETIC_OPS = new Set(["add", "subtract", "multiply", "divide", "mod", "power"]);
 
 const add = (a: number, b: number): number => a + b;
 const subtract = (a: number, b: number): number => a - b;
@@ -57,6 +104,57 @@ const method = (
   if (!obj || !obj[name] || !(obj[name] instanceof Function)) return null;
   return obj[name](...args);
 };
+
+/**
+ * Format a step into a readable string representation for logging.
+ */
+function formatStep(step: any): string {
+  if (step === null || step === undefined) return String(step);
+  if (typeof step === "number" || typeof step === "boolean") return String(step);
+  if (typeof step === "string") return JSON.stringify(step);
+  if (step instanceof Array) {
+    if (step.length === 0) return "[]";
+    const parts = step.map((s: any) => formatStep(s));
+    return "(" + parts.join(" ") + ")";
+  }
+  if (typeof step === "object") {
+    try {
+      return JSON.stringify(step);
+    } catch {
+      return String(step);
+    }
+  }
+  return String(step);
+}
+
+function validOperatorNames(): string {
+  return Object.keys(operatorInfo).join(", ");
+}
+
+function checkArity(op: string, argCount: number, strict: boolean = false): string | null {
+  const info = operatorInfo[op];
+  if (!info) return null;
+  if (info.min === info.max) {
+    if (argCount < info.min) {
+      return `Rule: "${op}" expects ${info.min} argument${info.min !== 1 ? "s" : ""}, got ${argCount}`;
+    }
+    if (strict && argCount > info.max) {
+      return `Rule: "${op}" expects ${info.min} argument${info.min !== 1 ? "s" : ""}, got ${argCount}`;
+    }
+  } else if (info.max === Infinity) {
+    if (argCount < info.min) {
+      return `Rule: "${op}" expects at least ${info.min} argument${info.min !== 1 ? "s" : ""}, got ${argCount}`;
+    }
+  } else {
+    if (argCount < info.min) {
+      return `Rule: "${op}" expects ${info.min}-${info.max} arguments, got ${argCount}`;
+    }
+    if (strict && argCount > info.max) {
+      return `Rule: "${op}" expects ${info.min}-${info.max} arguments, got ${argCount}`;
+    }
+  }
+  return null;
+}
 
 /**
  * The `Rule` class is an experimental interface for adding behavior to {@linkcode Agent}s. A `Rule` object may be used in place of a `tick` function to be added as `Agent` behavior using `agent.set('tick', tickRule)`. As a trivial example, consider the following `Rule`, which increments the `Agent`'s `x` value with every time step:
@@ -91,6 +189,11 @@ class Rule {
   locals: { [key: string]: any } = {};
 
   /**
+   * Static operator info mapping operator names to their expected argument counts.
+   */
+  static operatorInfo: { [key: string]: OperatorArity } = operatorInfo;
+
+  /**
    * A single step may be as simple as `["get", "x"]`. This returns the `Agent`'s `"x"` value to the outer step that contains it. So, for example, the step `["add", 1, ["get", "x"]]`, working from the inside out, retrieves the `"x"` value and then adds `1` to it. More complex steps function similarly, always traversing to the deepest nested step, evaluating it, and 'unwrapping' until all steps have been executed.
    *
    * A step's first element should be a string that is one of the allowed operators, followed by a certain number of arguments.
@@ -121,10 +224,112 @@ class Rule {
    * |`"agent"`|`0`|No arguments; returns the `Agent`|
    * |`"environment"`|`0`|No arguments, returns the `Environment`|
    * |`"vector"`|`any`|Creates an n-dimensional {@linkcode Vector} from the supplied arguments|
+   * |`"log"`|`any`|Logs expression(s) and returns the last evaluated value|
    */
   constructor(environment: Environment, steps: Step[]) {
     this.environment = environment;
     this.steps = steps;
+  }
+
+  /**
+   * Validate the rule's step tree and return an array of diagnostics.
+   * Does not throw — returns diagnostics for inspection.
+   * @since 0.6.0
+   */
+  validate(): RuleDiagnostic[] {
+    const diagnostics: RuleDiagnostic[] = [];
+
+    if (!this.steps || (Array.isArray(this.steps) && this.steps.length === 0)) {
+      diagnostics.push({
+        path: "root",
+        level: "warning",
+        message: "Empty steps array"
+      });
+      return diagnostics;
+    }
+
+    // Check if steps is a single step (first element is a string operator)
+    // or an array of steps (first element is an array)
+    const isMultiStep = Array.isArray(this.steps[0]);
+
+    if (isMultiStep) {
+      // Multiple top-level steps
+      for (let i = 0; i < this.steps.length; i++) {
+        const step = this.steps[i];
+        if (!Array.isArray(step)) {
+          diagnostics.push({
+            path: `[${i}]`,
+            level: "warning",
+            message: `Step is a bare value (${typeof step}: ${JSON.stringify(step)}) instead of an array`
+          });
+        } else {
+          this._validateStep(step, `[${i}]`, diagnostics);
+        }
+      }
+    } else {
+      // Single step (the steps array IS the step)
+      this._validateStep(this.steps, "root", diagnostics);
+    }
+
+    return diagnostics;
+  }
+
+  /** @hidden */
+  private _validateStep(step: any[], path: string, diagnostics: RuleDiagnostic[]): void {
+    if (step.length === 0) {
+      diagnostics.push({
+        path,
+        level: "warning",
+        message: "Empty step array"
+      });
+      return;
+    }
+
+    const first = step[0];
+
+    // If first element is an array, it's a nested step sequence
+    if (Array.isArray(first)) {
+      this._validateStep(first, path + "[0]", diagnostics);
+      for (let i = 1; i < step.length; i++) {
+        if (Array.isArray(step[i])) {
+          this._validateStep(step[i] as any[], path + `[${i}]`, diagnostics);
+        }
+      }
+      return;
+    }
+
+    if (typeof first === "string") {
+      const argCount = step.length - 1;
+
+      // Check if operator is known
+      if (!(first in Operators)) {
+        if (step.length > 1) {
+          diagnostics.push({
+            path,
+            level: "error",
+            message: `Unknown operator "${first}". Valid operators: ${validOperatorNames()}`
+          });
+        }
+        return;
+      }
+
+      // Check arity (strict: also warn on too many args)
+      const arityMsg = checkArity(first, argCount, true);
+      if (arityMsg) {
+        diagnostics.push({
+          path,
+          level: "error",
+          message: arityMsg
+        });
+      }
+
+      // Recurse into sub-steps
+      for (let i = 1; i < step.length; i++) {
+        if (Array.isArray(step[i])) {
+          this._validateStep(step[i] as any[], path + `[${i}]`, diagnostics);
+        }
+      }
+    }
   }
 
   /**
@@ -142,36 +347,66 @@ class Rule {
       return innerStep;
     }
 
-    if (first === "log") {
-      console.log(
-        "logging",
-        step.slice(1),
-        this.evaluate(agent, step.slice(1))
-      );
-      return null;
+    if (first === Operators.log) {
+      const args = step.slice(1);
+      if (args.length === 0) {
+        console.warn(`Rule: "log" expects at least 1 argument, got 0`);
+        return null;
+      }
+      let lastValue: any = null;
+      for (let i = 0; i < args.length; i++) {
+        const expr = args[i];
+        const evaluated = this.evaluate(agent, [expr]);
+        console.log(`Rule log: ${formatStep(expr)} → ${formatStep(evaluated)}`);
+        lastValue = evaluated;
+      }
+      return lastValue;
     }
 
     if (!(first in Operators) && step.length > 1) {
+      if (typeof first === "string") {
+        console.warn(`Rule: unknown operator "${first}". Valid operators: ${validOperatorNames()}`);
+      }
       return step;
+    }
+
+    const argCount = step.length - 1;
+
+    // Arity check at runtime for known operators
+    if (typeof first === "string" && first in Operators) {
+      const arityMsg = checkArity(first, argCount);
+      if (arityMsg) {
+        console.warn(arityMsg);
+      }
     }
 
     const a = step.length > 1 ? [step[1]] : undefined;
     const b = step.length > 2 ? [step[2]] : undefined;
     const c = step.length > 3 ? [step[3]] : undefined;
 
-    if (first === Operators.add)
-      return add(this.evaluate(agent, a), this.evaluate(agent, b));
-    if (first === Operators.subtract)
-      return subtract(this.evaluate(agent, a), this.evaluate(agent, b));
-    if (first === Operators.multiply)
-      return multiply(this.evaluate(agent, a), this.evaluate(agent, b));
-    if (first === Operators.divide)
-      return divide(this.evaluate(agent, a), this.evaluate(agent, b));
-    if (first === Operators.mod)
-      return mod(this.evaluate(agent, a), this.evaluate(agent, b));
-    if (first === Operators.power)
-      return power(this.evaluate(agent, a), this.evaluate(agent, b));
-    if (first === Operators.get) return get(agent, this.evaluate(agent, a));
+    // Arithmetic operators with type checking
+    if (ARITHMETIC_OPS.has(first)) {
+      const va = this.evaluate(agent, a);
+      const vb = this.evaluate(agent, b);
+      if (typeof va !== "number" || typeof vb !== "number") {
+        console.warn(`Rule: "${first}" expects numeric arguments, got ${typeof va} and ${typeof vb}`);
+      }
+      if (first === Operators.add) return add(va, vb);
+      if (first === Operators.subtract) return subtract(va, vb);
+      if (first === Operators.multiply) return multiply(va, vb);
+      if (first === Operators.divide) return divide(va, vb);
+      if (first === Operators.mod) return mod(va, vb);
+      if (first === Operators.power) return power(va, vb);
+    }
+
+    if (first === Operators.get) {
+      const keyName = this.evaluate(agent, a);
+      const result = get(agent, keyName);
+      if (result === null || result === undefined) {
+        console.warn(`Rule: "get" returned null for key "${keyName}" — key may not exist on agent`);
+      }
+      return result;
+    }
     if (first === Operators.set)
       return set(agent, this.evaluate(agent, a), this.evaluate(agent, b));
     if (first === Operators.enqueue) {
@@ -262,4 +497,4 @@ class Rule {
   }
 }
 
-export { Rule };
+export { Rule, RuleDiagnostic };
