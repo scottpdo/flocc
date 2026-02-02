@@ -1,0 +1,221 @@
+<style>
+  body { font-family: sans-serif; padding: 0 12px; }
+  h1 { font-size: 18px; }
+  p { font-size: 13px; color: #555; max-width: 600px; line-height: 1.5; }
+  #controls { margin: 8px 0; }
+  #controls button { padding: 4px 12px; margin-right: 4px; cursor: pointer; }
+  #info { font-size: 13px; color: #555; margin-top: 4px; }
+</style>
+
+<h1>Bubble Sort Agents (Rules DSL)</h1>
+<p>
+  Each bar is an agent with a <code>value</code>. On every tick, adjacent agents
+  compare values and swap if out of order — a visual bubble sort. The
+  comparison logic is expressed through the <code>Rule</code> DSL; a thin
+  orchestration layer handles neighbor linking and position updates.
+  Open the browser console to see <code>log</code> output on swaps.
+</p>
+<p>
+  <strong>Note:</strong> This example also reveals a limitation of the
+  <code>filter</code> operator — its lambda pattern (element spliced as a
+  positional arg) can't support complex predicates like "find the agent
+  whose <code>idx</code> equals mine + 1." The neighbor lookup is handled
+  in JS for this reason.
+</p>
+
+<div id="controls">
+  <button id="toggle">Pause</button>
+  <button id="step" disabled>Step</button>
+  <button id="reset">Reset</button>
+</div>
+<div id="info">Sorting...</div>
+<div id="container"></div>
+
+<script>
+  const COUNT = 40;
+  const BAR_WIDTH = 12;
+  const MAX_HEIGHT = 300;
+  const CANVAS_WIDTH = COUNT * BAR_WIDTH;
+
+  const environment = new Environment();
+
+  const renderer = new CanvasRenderer(environment, {
+    width: CANVAS_WIDTH,
+    height: MAX_HEIGHT,
+    background: "#f8f8f8",
+    scale: 1
+  });
+  renderer.mount("#container");
+
+  /**
+   * The comparison rule: each agent checks "rightValue" (injected by
+   * the linkNeighbors pass). If our value is greater, flag for swap.
+   *
+   * This Rule is called manually — not via addRule — so we can
+   * ensure evaluate → swap → render ordering.
+   */
+  const compareRule = new Rule(environment, [
+    ["if",
+      ["and",
+        ["gte", ["get", "rightValue"], 0],
+        ["gt", ["get", "value"], ["get", "rightValue"]]
+      ],
+      [
+        ["log", "swap", ["get", "value"]],
+        ["set", "shouldSwap", 1]
+      ],
+      ["set", "shouldSwap", 0]
+    ]
+  ]);
+
+  /* Validate and show diagnostics */
+  const diags = compareRule.validate();
+  if (diags.length > 0) {
+    console.group("Sort rule validation");
+    diags.forEach(d => console[d.level === "error" ? "error" : "warn"](
+      `${d.path}: ${d.message}`
+    ));
+    console.groupEnd();
+  }
+
+  let agents = [];
+
+  function makeAgents() {
+    agents = [];
+    const values = Array.from({ length: COUNT }, (_, i) => i + 1);
+    /* Fisher-Yates shuffle */
+    for (let i = values.length - 1; i > 0; i--) {
+      const j = Math.floor(utils.uniform() * (i + 1));
+      [values[i], values[j]] = [values[j], values[i]];
+    }
+
+    values.forEach((v, i) => {
+      const agent = new Agent();
+      agent.set("value", v);
+      agent.set("idx", i);
+      agent.set("shouldSwap", 0);
+      agent.set("rightValue", -1);
+      agent.set("shape", "rect");
+      const height = (v / COUNT) * (MAX_HEIGHT - 10);
+      agent.set("width", BAR_WIDTH - 2);
+      agent.set("height", height);
+      agent.set("color", `hsl(${(v / COUNT) * 240}, 70%, 55%)`);
+      agent.set("x", i * BAR_WIDTH + 1);
+      agent.set("y", MAX_HEIGHT - height);
+      /* No addRule(compareRule) — we call it manually for correct ordering */
+      environment.addAgent(agent);
+      agents.push(agent);
+    });
+  }
+
+  /** Write each agent's right neighbor's value onto it. */
+  function linkNeighbors() {
+    agents.sort((a, b) => a.get("idx") - b.get("idx"));
+    for (let i = 0; i < agents.length; i++) {
+      if (i < agents.length - 1) {
+        agents[i].set("rightValue", agents[i + 1].get("value"));
+      } else {
+        agents[i].set("rightValue", -1);
+      }
+    }
+  }
+
+  /** Evaluate the comparison Rule on every agent. */
+  function evaluateComparisons() {
+    for (let i = 0; i < agents.length; i++) {
+      compareRule.call(agents[i]);
+    }
+  }
+
+  /** Read shouldSwap flags, perform index + position swaps. */
+  function performSwaps() {
+    agents.sort((a, b) => a.get("idx") - b.get("idx"));
+    let swapped = false;
+    for (let i = 0; i < agents.length - 1; i++) {
+      const left = agents[i];
+      const right = agents[i + 1];
+      if (left.get("shouldSwap") === 1) {
+        const li = left.get("idx");
+        const ri = right.get("idx");
+        left.set("idx", ri);
+        right.set("idx", li);
+        left.set("x", ri * BAR_WIDTH + 1);
+        right.set("x", li * BAR_WIDTH + 1);
+        left.set("shouldSwap", 0);
+        swapped = true;
+        i++; /* skip the swapped-into agent */
+      }
+    }
+    return swapped;
+  }
+
+  function isSorted() {
+    agents.sort((a, b) => a.get("idx") - b.get("idx"));
+    for (let i = 0; i < agents.length - 1; i++) {
+      if (agents[i].get("value") > agents[i + 1].get("value")) return false;
+    }
+    return true;
+  }
+
+  /**
+   * One full sorting step:
+   * 1. Link neighbors (inject rightValue)
+   * 2. Evaluate comparison Rule on each agent
+   * 3. Perform swaps (update idx + x positions)
+   * 4. Tick environment (triggers renderer to draw)
+   */
+  function sortStep() {
+    linkNeighbors();
+    evaluateComparisons();
+    performSwaps();
+    environment.tick(); /* render with correct positions */
+  }
+
+  makeAgents();
+
+  /* ── Controls ── */
+  const toggleBtn = document.getElementById("toggle");
+  const stepBtn = document.getElementById("step");
+  const resetBtn = document.getElementById("reset");
+  const infoEl = document.getElementById("info");
+
+  toggleBtn.addEventListener("click", () => {
+    environment.toggle();
+    toggleBtn.textContent = environment.playing ? "Pause" : "Play";
+    stepBtn.disabled = environment.playing;
+  });
+  stepBtn.addEventListener("click", () => {
+    sortStep();
+    infoEl.textContent = isSorted()
+      ? `Sorted in ${environment.time} ticks!`
+      : `Tick ${environment.time}`;
+  });
+  resetBtn.addEventListener("click", () => {
+    environment.getAgents().slice().forEach(a => environment.removeAgent(a));
+    environment.time = 0;
+    utils.seed(Math.floor(Math.random() * 10000));
+    makeAgents();
+    infoEl.textContent = "Sorting...";
+    if (!environment.playing) {
+      toggleBtn.textContent = "Pause";
+      stepBtn.disabled = true;
+      environment.toggle();
+    }
+  });
+
+  /* ── Run ── */
+  (function draw() {
+    if (environment.playing) {
+      sortStep();
+      if (isSorted()) {
+        infoEl.textContent = `Sorted in ${environment.time} ticks!`;
+        environment.pause();
+        toggleBtn.textContent = "Play";
+        stepBtn.disabled = false;
+      } else {
+        infoEl.textContent = `Tick ${environment.time}...`;
+      }
+    }
+    requestAnimationFrame(draw);
+  })();
+</script>

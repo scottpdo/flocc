@@ -1,0 +1,346 @@
+<style>
+  body { font-family: sans-serif; padding: 0 12px; }
+  h1 { font-size: 18px; }
+  p { font-size: 13px; color: #555; max-width: 600px; line-height: 1.5; }
+  .columns { display: flex; gap: 16px; align-items: flex-start; }
+  #controls { margin: 8px 0; }
+  #controls button { padding: 4px 12px; margin-right: 4px; cursor: pointer; }
+  #info { font-size: 13px; color: #555; margin-top: 4px; }
+  #rule-display {
+    background: #1e1e2e;
+    color: #cdd6f4;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 11px;
+    line-height: 1.5;
+    padding: 12px;
+    border-radius: 6px;
+    width: 420px;
+    max-height: 400px;
+    overflow-y: auto;
+    white-space: pre;
+  }
+  #rule-display .op { color: #cba6f7; }
+  #rule-display .num { color: #fab387; }
+  #rule-display .str { color: #a6e3a1; }
+  #rule-display .paren { color: #6c7086; }
+  #rule-header {
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 6px;
+  }
+  #legend { font-size: 12px; color: #888; margin-top: 8px; line-height: 1.6; }
+  #legend span { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: middle; margin-right: 4px; }
+</style>
+
+<h1>Self-Modifying Rule: Learning Forager</h1>
+<p>
+  An agent explores a 2D space with hidden food sources. It starts with a
+  <strong>pure random walk</strong>. Each time it finds food, it
+  <strong>rewrites its own Rule</strong> — splicing in new directional biases.
+  Watch the rule grow in real time on the right. This is only possible because
+  Rules are <em>data</em> (nested arrays), not opaque functions.
+</p>
+
+<div id="controls">
+  <button id="toggle">Pause</button>
+  <button id="step" disabled>Step</button>
+  <button id="reset">Reset</button>
+</div>
+<div id="info">Exploring...</div>
+
+<div class="columns">
+  <div>
+    <div id="container"></div>
+    <div id="legend">
+      <span style="background: #f38ba8;"></span> Forager &nbsp;
+      <span style="background: #a6e3a1;"></span> Food (undiscovered) &nbsp;
+      <span style="background: #585b70;"></span> Food (eaten) &nbsp;
+      <span style="background: rgba(166,227,161,0.15); border: 1px solid #a6e3a1;"></span> Learned bias zone
+    </div>
+  </div>
+  <div>
+    <div id="rule-header">Agent's Rule (live)</div>
+    <div id="rule-display"></div>
+  </div>
+</div>
+
+<script>
+  const WIDTH = 400;
+  const HEIGHT = 400;
+  const FOOD_COUNT = 8;
+  const FOOD_RADIUS = 12;
+  const BIAS_STRENGTH = 0.6;
+  const WALK_SPEED = 2.0;
+  const DETECTION_RADIUS = 15;
+
+  const environment = new Environment();
+
+  /* Give environment a random method callable from Rules via "method" */
+  environment.random = () => Math.random();
+
+  const renderer = new CanvasRenderer(environment, {
+    width: WIDTH,
+    height: HEIGHT,
+    background: "#1a1a2e",
+    scale: 1
+  });
+  renderer.mount("#container");
+
+  /* ── Food sources ── */
+  const foods = [];
+  function placeFoods() {
+    for (let i = 0; i < FOOD_COUNT; i++) {
+      const food = new Agent();
+      const fx = 30 + Math.random() * (WIDTH - 60);
+      const fy = 30 + Math.random() * (HEIGHT - 60);
+      food.set("x", fx);
+      food.set("y", fy);
+      food.set("fx", fx);
+      food.set("fy", fy);
+      food.set("shape", "circle");
+      food.set("size", 5);
+      food.set("color", "#a6e3a1");
+      food.set("eaten", 0);
+      food.set("type", "food");
+      environment.addAgent(food);
+      foods.push(food);
+    }
+  }
+
+  /* ── Bias zone indicators (faint circles showing learned areas) ── */
+  const biasMarkers = [];
+  function addBiasMarker(fx, fy) {
+    const marker = new Agent();
+    marker.set("x", fx);
+    marker.set("y", fy);
+    marker.set("shape", "circle");
+    marker.set("size", DETECTION_RADIUS * 2);
+    marker.set("color", "rgba(166, 227, 161, 0.08)");
+    marker.set("type", "marker");
+    environment.addAgent(marker);
+    biasMarkers.push(marker);
+  }
+
+  /* ── The Forager ── */
+  const forager = new Agent();
+  forager.set("x", WIDTH / 2);
+  forager.set("y", HEIGHT / 2);
+  forager.set("shape", "circle");
+  forager.set("size", 6);
+  forager.set("color", "#f38ba8");
+  forager.set("type", "forager");
+
+  /*
+   * BASE RULE: pure random walk.
+   * Uses environment.random() via "method" so it's re-evaluated each tick.
+   * Wraps at boundaries using "mod".
+   */
+  const randomWalkSteps = [
+    ["set", "x",
+      ["mod",
+        ["add", ["get", "x"],
+          ["multiply", WALK_SPEED,
+            ["subtract", ["multiply", 2, ["method", ["environment"], "random"]], 1]
+          ]
+        ],
+        WIDTH
+      ]
+    ],
+    ["set", "y",
+      ["mod",
+        ["add", ["get", "y"],
+          ["multiply", WALK_SPEED,
+            ["subtract", ["multiply", 2, ["method", ["environment"], "random"]], 1]
+          ]
+        ],
+        HEIGHT
+      ]
+    ]
+  ];
+
+  const movementRule = new Rule(environment, [...randomWalkSteps]);
+  let learnedCount = 0;
+
+  /**
+   * LEARNING: When the forager finds food, it rewrites its own Rule.
+   *
+   * For food at (fx, fy), we prepend four conditional bias steps:
+   *   - if x > fx + margin → nudge x left
+   *   - if x < fx - margin → nudge x right
+   *   - if y > fy + margin → nudge y up
+   *   - if y < fy - margin → nudge y down
+   *
+   * The rule GROWS over time. Each learned location adds branches
+   * to the decision tree. This is the key idea: the agent's behavior
+   * becomes more complex through self-modification of its own rule data.
+   *
+   * You could NOT do this with a JavaScript tick function — you can't
+   * splice new conditionals into a closure at runtime.
+   */
+  function learnLocation(fx, fy) {
+    const margin = DETECTION_RADIUS;
+    const biasSteps = [
+      ["if", ["gt", ["get", "x"], fx + margin],
+        ["set", "x", ["subtract", ["get", "x"], BIAS_STRENGTH]]
+      ],
+      ["if", ["lt", ["get", "x"], fx - margin],
+        ["set", "x", ["add", ["get", "x"], BIAS_STRENGTH]]
+      ],
+      ["if", ["gt", ["get", "y"], fy + margin],
+        ["set", "y", ["subtract", ["get", "y"], BIAS_STRENGTH]]
+      ],
+      ["if", ["lt", ["get", "y"], fy - margin],
+        ["set", "y", ["add", ["get", "y"], BIAS_STRENGTH]]
+      ]
+    ];
+
+    /* Mutate the rule: prepend bias steps before the random walk.
+       This is the self-modification — steps is just an array. */
+    movementRule.steps = [...biasSteps, ...movementRule.steps];
+    learnedCount++;
+
+    /* Validate the modified rule still parses correctly */
+    const diags = movementRule.validate();
+    if (diags.length > 0) {
+      console.warn("Post-mutation diagnostics:", diags);
+    }
+
+    addBiasMarker(fx, fy);
+    updateRuleDisplay();
+  }
+
+  /**
+   * Detection logic: check if forager is near any uneaten food.
+   * This is JS because it needs to iterate over other agents —
+   * something the Rule DSL can't express directly.
+   */
+  function checkForFood() {
+    const fx = forager.get("x");
+    const fy = forager.get("y");
+    for (const food of foods) {
+      if (food.get("eaten") === 1) continue;
+      const dx = food.get("fx") - fx;
+      const dy = food.get("fy") - fy;
+      if (Math.sqrt(dx * dx + dy * dy) < DETECTION_RADIUS) {
+        food.set("eaten", 1);
+        food.set("color", "#585b70");
+        food.set("size", 3);
+        learnLocation(food.get("fx"), food.get("fy"));
+        return true;
+      }
+    }
+    return false;
+  }
+
+  environment.addAgent(forager);
+  placeFoods();
+
+  /* ── Rule display ── */
+  const ruleDisplay = document.getElementById("rule-display");
+  const OPERATORS = new Set([
+    "add", "subtract", "multiply", "divide", "mod", "power",
+    "get", "set", "enqueue", "local", "if", "and", "or",
+    "gt", "gte", "lt", "lte", "eq", "map", "filter",
+    "key", "method", "agent", "environment", "vector", "log"
+  ]);
+
+  function formatStepHTML(step, indent) {
+    if (step === null || step === undefined) return String(step);
+    if (typeof step === "number") return `<span class="num">${step}</span>`;
+    if (typeof step === "boolean") return `<span class="num">${step}</span>`;
+    if (typeof step === "string") {
+      if (OPERATORS.has(step)) return `<span class="op">${step}</span>`;
+      return `<span class="str">"${step}"</span>`;
+    }
+    if (!(step instanceof Array)) return String(step);
+    if (step.length === 0) return "<span class=\"paren\">[]</span>";
+
+    const inner = indent + "  ";
+    /* Short steps on one line */
+    const flat = "(" + step.map(s => formatStepHTML(s, inner).replace(/<[^>]*>/g, "")).join(" ") + ")";
+    if (flat.length < 50 && !flat.includes("\n")) {
+      const parts = step.map(s => formatStepHTML(s, inner));
+      return `<span class="paren">(</span>${parts.join(" ")}<span class="paren">)</span>`;
+    }
+
+    /* Multi-line */
+    const first = formatStepHTML(step[0], inner);
+    const rest = step.slice(1).map(s => "\n" + inner + formatStepHTML(s, inner));
+    return `<span class="paren">(</span>${first}${rest.join("")}<span class="paren">)</span>`;
+  }
+
+  function updateRuleDisplay() {
+    const steps = movementRule.steps;
+    /* Top level is always an array of steps */
+    const isMulti = Array.isArray(steps[0]);
+    let html = "";
+    if (isMulti) {
+      html = steps.map(s => formatStepHTML(s, "")).join("\n\n");
+    } else {
+      html = formatStepHTML(steps, "");
+    }
+    ruleDisplay.innerHTML = html;
+    document.getElementById("rule-header").textContent =
+      `Agent's Rule (live) — ${learnedCount} learned bias${learnedCount !== 1 ? "es" : ""}, ${movementRule.steps.length} steps`;
+  }
+
+  updateRuleDisplay();
+
+  /* ── Controls ── */
+  const toggleBtn = document.getElementById("toggle");
+  const stepBtn = document.getElementById("step");
+  const resetBtn = document.getElementById("reset");
+  const infoEl = document.getElementById("info");
+
+  toggleBtn.addEventListener("click", () => {
+    environment.toggle();
+    toggleBtn.textContent = environment.playing ? "Pause" : "Play";
+    stepBtn.disabled = environment.playing;
+  });
+
+  stepBtn.addEventListener("click", () => {
+    movementRule.call(forager);
+    checkForFood();
+    environment.tick();
+    updateRuleDisplay();
+    updateInfo();
+  });
+
+  resetBtn.addEventListener("click", () => {
+    environment.getAgents().slice().forEach(a => environment.removeAgent(a));
+    foods.length = 0;
+    biasMarkers.length = 0;
+    learnedCount = 0;
+    movementRule.steps = [...randomWalkSteps];
+    environment.time = 0;
+    forager.set("x", WIDTH / 2);
+    forager.set("y", HEIGHT / 2);
+    environment.addAgent(forager);
+    placeFoods();
+    updateRuleDisplay();
+    infoEl.textContent = "Exploring...";
+    if (!environment.playing) {
+      toggleBtn.textContent = "Pause";
+      stepBtn.disabled = true;
+      environment.toggle();
+    }
+  });
+
+  function updateInfo() {
+    const eaten = foods.filter(f => f.get("eaten") === 1).length;
+    infoEl.textContent = `Tick ${environment.time} · Food found: ${eaten}/${FOOD_COUNT} · Rule steps: ${movementRule.steps.length}`;
+  }
+
+  /* ── Run ── */
+  (function draw() {
+    if (environment.playing) {
+      /* Evaluate movement rule manually, then tick for rendering */
+      movementRule.call(forager);
+      checkForFood();
+      environment.tick();
+      if (environment.time % 10 === 0) updateRuleDisplay();
+      updateInfo();
+    }
+    requestAnimationFrame(draw);
+  })();
+</script>

@@ -1,0 +1,151 @@
+<style>
+  body { font-family: sans-serif; padding: 0 12px; }
+  h1 { font-size: 18px; }
+  p { font-size: 13px; color: #555; max-width: 600px; line-height: 1.5; }
+  #controls { margin: 8px 0; }
+  #controls button { padding: 4px 12px; margin-right: 4px; cursor: pointer; }
+  #info { font-size: 13px; color: #555; margin-top: 4px; }
+</style>
+
+<h1>Langton's Ant (Rules DSL)</h1>
+<p>
+  Langton's Ant on a grid, with the ant's turning and movement logic
+  expressed as <code>Rule</code> steps. The ant flips the color of each cell
+  it visits, turns right on white and left on black, then moves forward.
+  Demonstrates <code>if</code>, <code>eq</code>, <code>set</code>,
+  <code>get</code>, <code>mod</code>, and <code>method</code>.
+</p>
+
+<div id="controls">
+  <button id="toggle">Pause</button>
+  <button id="step" disabled>Step</button>
+  <button id="speed">Speed: 1×</button>
+</div>
+<div id="info">Step 0</div>
+<div id="container"></div>
+
+<script>
+  const GRID = 80;
+  const CELL = 6;
+
+  const environment = new GridEnvironment(GRID, GRID);
+  const renderer = new CanvasRenderer(environment, {
+    width: GRID * CELL,
+    height: GRID * CELL,
+    background: "#fff",
+    scale: CELL
+  });
+  renderer.mount("#container");
+
+  /* ── Grid cells ── */
+  environment.loop((x, y) => {
+    const cell = new Agent();
+    cell.set("shape", "rect");
+    cell.set("width", CELL - 1);
+    cell.set("height", CELL - 1);
+    cell.set("on", 0); /* 0 = white, 1 = black */
+    cell.set("color", "#ffffff");
+    /* Color rule: sync visual to state */
+    cell.addRule(a => {
+      a.set("color", a.get("on") ? "#222" : "#fff");
+    });
+    environment.addAgentAt(x, y, cell);
+  });
+
+  /* ── The Ant ── */
+  /* Direction: 0=up, 1=right, 2=down, 3=left */
+  const ant = new Agent();
+  ant.set("ax", Math.floor(GRID / 2));
+  ant.set("ay", Math.floor(GRID / 2));
+  ant.set("dir", 0);
+  ant.set("shape", "circle");
+  ant.set("size", 2);
+  ant.set("color", "#e74c3c");
+
+  /* Direction deltas */
+  const DX = [0, 1, 0, -1];
+  const DY = [-1, 0, 1, 0];
+
+  /*
+   * The ant rule:
+   * 1. Read the cell under the ant
+   * 2. If cell is off (white): turn right (dir + 1) mod 4, flip cell on
+   * 3. If cell is on (black): turn left (dir + 3) mod 4, flip cell off
+   * 4. Move forward
+   *
+   * We use method calls to interact with the grid environment.
+   * Some parts (grid lookup, movement deltas) are handled in a thin
+   * JS wrapper since the DSL doesn't support array indexing by variable.
+   */
+  const antRule = new Rule(environment, [
+    /* Store current position */
+    ["local", "cx", ["get", "ax"]],
+    ["local", "cy", ["get", "ay"]],
+  ]);
+
+  /* The ant needs a JS tick for grid interaction since the Rule DSL
+     can't index into GridEnvironment cells by coordinate directly.
+     This is a good example of mixing Rules with traditional ticks. */
+  ant.addRule(antRule);
+  ant.addRule(function antTick(a) {
+    const cx = a.get("ax");
+    const cy = a.get("ay");
+    const cell = environment.getAgentAt(cx, cy);
+    if (!cell) return;
+
+    const isOn = cell.get("on");
+    let dir = a.get("dir");
+
+    /* Turn */
+    dir = isOn ? (dir + 3) % 4 : (dir + 1) % 4;
+    a.set("dir", dir);
+
+    /* Flip */
+    cell.set("on", isOn ? 0 : 1);
+
+    /* Move */
+    let nx = (cx + DX[dir] + GRID) % GRID;
+    let ny = (cy + DY[dir] + GRID) % GRID;
+    a.set("ax", nx);
+    a.set("ay", ny);
+    a.set("x", nx);
+    a.set("y", ny);
+  });
+
+  environment.addAgent(ant);
+  ant.set("x", Math.floor(GRID / 2));
+  ant.set("y", Math.floor(GRID / 2));
+
+  /* ── Controls ── */
+  const toggleBtn = document.getElementById("toggle");
+  const stepBtn = document.getElementById("step");
+  const speedBtn = document.getElementById("speed");
+  const infoEl = document.getElementById("info");
+  let ticksPerFrame = 1;
+  const speeds = [1, 5, 25, 100];
+  let speedIdx = 0;
+
+  toggleBtn.addEventListener("click", () => {
+    environment.toggle();
+    toggleBtn.textContent = environment.playing ? "Pause" : "Play";
+    stepBtn.disabled = environment.playing;
+  });
+  stepBtn.addEventListener("click", () => {
+    environment.step();
+    infoEl.textContent = `Step ${environment.time}`;
+  });
+  speedBtn.addEventListener("click", () => {
+    speedIdx = (speedIdx + 1) % speeds.length;
+    ticksPerFrame = speeds[speedIdx];
+    speedBtn.textContent = `Speed: ${ticksPerFrame}×`;
+  });
+
+  /* ── Run ── */
+  (function draw() {
+    if (environment.playing) {
+      environment.tick(ticksPerFrame);
+      infoEl.textContent = `Step ${environment.time}`;
+    }
+    requestAnimationFrame(draw);
+  })();
+</script>

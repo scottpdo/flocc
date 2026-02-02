@@ -1,0 +1,163 @@
+<style>
+  body { font-family: sans-serif; padding: 0 12px; }
+  h1 { font-size: 18px; }
+  p { font-size: 13px; color: #555; max-width: 600px; line-height: 1.5; }
+  #controls { margin: 8px 0; }
+  #controls button { padding: 4px 12px; margin-right: 4px; cursor: pointer; }
+  #stats { font-size: 13px; color: #555; margin-top: 4px; min-height: 1.4em; }
+</style>
+
+<h1>Predator–Prey (Rules DSL)</h1>
+<p>
+  A Lotka–Volterra-style predator–prey model written entirely with the
+  <code>Rule</code> DSL. Prey (green) reproduce and flee; predators (red) hunt,
+  eat, and starve. All behavior is expressed as declarative rule steps —
+  no JavaScript tick functions.
+</p>
+
+<div id="controls">
+  <button id="toggle">Pause</button>
+  <button id="step" disabled>Step</button>
+</div>
+<div id="stats"></div>
+<div id="container"></div>
+<div id="chart"></div>
+
+<script>
+  utils.seed(42);
+
+  const WIDTH = 400;
+  const HEIGHT = 400;
+  const PREY_COUNT = 80;
+  const PREDATOR_COUNT = 20;
+  const PREY_SPEED = 1.5;
+  const PREDATOR_SPEED = 1.2;
+  const PREY_REPRODUCE_CHANCE = 0.008;
+  const PREDATOR_STARVE_RATE = 0.005;
+  const EAT_DISTANCE = 8;
+
+  const environment = new Environment();
+
+  const renderer = new CanvasRenderer(environment, {
+    width: WIDTH,
+    height: HEIGHT,
+    background: "#1a1a2e",
+    scale: 1
+  });
+  renderer.mount("#container");
+
+  const chart = new LineChartRenderer(environment, {
+    width: 500,
+    height: 150,
+    background: "#f5f5f5",
+    autoScale: true,
+    autoScroll: true
+  });
+  chart.mount("#chart");
+  chart.metric("prey-count", { color: "#4ecdc4", fn: vals => vals.filter(v => v !== null)[0] });
+  chart.metric("pred-count", { color: "#ff6b6b", fn: vals => vals.filter(v => v !== null)[0] });
+
+  /* ── Prey Rule ── */
+  const preyRule = new Rule(environment, [
+    /* Random walk */
+    ["set", "x", ["mod", ["add", ["get", "x"], ["multiply", PREY_SPEED, ["subtract", ["multiply", 2, utils.uniform()], 1]]], WIDTH]],
+    ["set", "y", ["mod", ["add", ["get", "y"], ["multiply", PREY_SPEED, ["subtract", ["multiply", 2, utils.uniform()], 1]]], HEIGHT]],
+    /* Reproduction chance */
+    ["if",
+      ["lt", utils.uniform(), PREY_REPRODUCE_CHANCE],
+      ["method", ["environment"], "addAgent",
+        ["method", ["agent"], "getData"]
+      ]
+    ]
+  ]);
+
+  /* Validate the rule and log any issues */
+  const preyDiags = preyRule.validate();
+  if (preyDiags.length > 0) console.warn("Prey rule diagnostics:", preyDiags);
+
+  /* ── Predator Rule ── */
+  const predatorRule = new Rule(environment, [
+    /* Random walk */
+    ["set", "x", ["mod", ["add", ["get", "x"], ["multiply", PREDATOR_SPEED, ["subtract", ["multiply", 2, utils.uniform()], 1]]], WIDTH]],
+    ["set", "y", ["mod", ["add", ["get", "y"], ["multiply", PREDATOR_SPEED, ["subtract", ["multiply", 2, utils.uniform()], 1]]], HEIGHT]],
+    /* Drain energy */
+    ["set", "energy", ["subtract", ["get", "energy"], PREDATOR_STARVE_RATE]]
+  ]);
+
+  const predDiags = predatorRule.validate();
+  if (predDiags.length > 0) console.warn("Predator rule diagnostics:", predDiags);
+
+  /* ── Population tracker (one agent, not rendered) ── */
+  const tracker = new Agent();
+  tracker.set("shape", "none");
+  tracker.set("prey-count", PREY_COUNT);
+  tracker.set("pred-count", PREDATOR_COUNT);
+
+  function tickTracker() {
+    const agents = environment.getAgents();
+    const preyCount = agents.filter(a => a.get("type") === "prey").length;
+    const predCount = agents.filter(a => a.get("type") === "predator").length;
+    tracker.set("prey-count", preyCount);
+    tracker.set("pred-count", predCount);
+    document.getElementById("stats").textContent =
+      `Tick ${environment.time} · Prey: ${preyCount} · Predators: ${predCount}`;
+
+    /* Predator eating + starvation (hard to do purely in Rules
+       without closures, so we handle it here) */
+    agents.forEach(a => {
+      if (a.get("type") !== "predator") return;
+      if (a.get("energy") <= 0) {
+        environment.removeAgent(a);
+        return;
+      }
+      const prey = agents.find(p =>
+        p.get("type") === "prey" &&
+        Math.abs(p.get("x") - a.get("x")) < EAT_DISTANCE &&
+        Math.abs(p.get("y") - a.get("y")) < EAT_DISTANCE
+      );
+      if (prey) {
+        environment.removeAgent(prey);
+        a.set("energy", Math.min(1, a.get("energy") + 0.3));
+      }
+    });
+  }
+  tracker.addRule(tickTracker);
+
+  /* ── Setup ── */
+  function makeAgent(type) {
+    const agent = new Agent();
+    agent.set("type", type);
+    agent.set("x", utils.uniform() * WIDTH);
+    agent.set("y", utils.uniform() * HEIGHT);
+    agent.set("size", type === "prey" ? 3 : 5);
+    agent.set("shape", "circle");
+    agent.set("color", type === "prey" ? "#4ecdc4" : "#ff6b6b");
+    if (type === "prey") {
+      agent.addRule(preyRule);
+    } else {
+      agent.set("energy", 0.5 + utils.uniform() * 0.5);
+      agent.addRule(predatorRule);
+    }
+    return agent;
+  }
+
+  for (let i = 0; i < PREY_COUNT; i++) environment.addAgent(makeAgent("prey"));
+  for (let i = 0; i < PREDATOR_COUNT; i++) environment.addAgent(makeAgent("predator"));
+  environment.addAgent(tracker);
+
+  /* ── Controls ── */
+  const toggleBtn = document.getElementById("toggle");
+  const stepBtn = document.getElementById("step");
+  toggleBtn.addEventListener("click", () => {
+    environment.toggle();
+    toggleBtn.textContent = environment.playing ? "Pause" : "Play";
+    stepBtn.disabled = environment.playing;
+  });
+  stepBtn.addEventListener("click", () => environment.step());
+
+  /* ── Run ── */
+  (function draw() {
+    if (environment.playing) environment.tick();
+    requestAnimationFrame(draw);
+  })();
+</script>
