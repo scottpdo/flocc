@@ -40,6 +40,11 @@ interface RuleDiagnostic {
   message: string;
 }
 
+interface RuleFormatOptions {
+  indent?: string;
+  maxLineWidth?: number;
+}
+
 /**
  * Operator info: maps operator names to their expected argument counts.
  * `min` and `max` define the valid range. If `max` is Infinity, the operator is variadic.
@@ -106,25 +111,87 @@ const method = (
 };
 
 /**
+ * Format a single value for step display. If isFirst is true and the value is
+ * a known operator string, render it bare (unquoted).
+ */
+function formatStepValue(val: any, isFirst: boolean): string {
+  if (val === null || val === undefined) return String(val);
+  if (typeof val === "number" || typeof val === "boolean") return String(val);
+  if (typeof val === "string") {
+    if (isFirst && val in Operators) return val;
+    return JSON.stringify(val);
+  }
+  if (val instanceof Array) {
+    if (val.length === 0) return "[]";
+    const parts = val.map((s: any, i: number) => formatStepValue(s, i === 0));
+    return "(" + parts.join(" ") + ")";
+  }
+  if (typeof val === "object") {
+    try {
+      return JSON.stringify(val);
+    } catch {
+      return String(val);
+    }
+  }
+  return String(val);
+}
+
+/**
  * Format a step into a readable string representation for logging.
  */
 function formatStep(step: any): string {
-  if (step === null || step === undefined) return String(step);
-  if (typeof step === "number" || typeof step === "boolean") return String(step);
-  if (typeof step === "string") return JSON.stringify(step);
-  if (step instanceof Array) {
-    if (step.length === 0) return "[]";
-    const parts = step.map((s: any) => formatStep(s));
-    return "(" + parts.join(" ") + ")";
-  }
-  if (typeof step === "object") {
+  return formatStepValue(step, false);
+}
+
+/**
+ * Format a value as an S-expression atom (no recursion into arrays).
+ */
+function formatAtom(val: any): string {
+  if (val === null || val === undefined) return "null";
+  if (typeof val === "number" || typeof val === "boolean") return String(val);
+  if (typeof val === "string") return JSON.stringify(val);
+  if (typeof val === "object" && !Array.isArray(val)) {
     try {
-      return JSON.stringify(step);
+      return JSON.stringify(val);
     } catch {
-      return String(step);
+      return "[object]";
     }
   }
-  return String(step);
+  return String(val);
+}
+
+/**
+ * Format a value for S-expression display. The first element (operator) of
+ * a step is rendered as a bare identifier; other string values are quoted.
+ */
+function formatSexpValue(val: any, isOperator: boolean): string {
+  if (isOperator && typeof val === "string") return val;
+  return formatAtom(val);
+}
+
+/**
+ * Pretty-print a single step as an S-expression with width-based wrapping.
+ */
+function prettyFormatStep(step: any, indentUnit: string, maxLineWidth: number, currentIndent: string): string {
+  if (!Array.isArray(step)) return formatAtom(step);
+  if (step.length === 0) return "()";
+
+  // Try compact first
+  const compact = "(" + step.map((s: any, i: number) => {
+    if (Array.isArray(s)) return prettyFormatStep(s, indentUnit, Infinity, "");
+    return formatSexpValue(s, i === 0);
+  }).join(" ") + ")";
+
+  if (currentIndent.length + compact.length <= maxLineWidth) return compact;
+
+  // Wrap: operator on first line, each arg indented
+  const op = Array.isArray(step[0]) ? prettyFormatStep(step[0], indentUnit, maxLineWidth, currentIndent) : formatSexpValue(step[0], true);
+  const args = step.slice(1);
+  if (args.length === 0) return "(" + op + ")";
+
+  const childIndent = currentIndent + indentUnit;
+  const formattedArgs = args.map((a: any) => prettyFormatStep(a, indentUnit, maxLineWidth, childIndent));
+  return "(" + op + "\n" + formattedArgs.map((a: string) => childIndent + a).join("\n") + ")";
 }
 
 function validOperatorNames(): string {
@@ -189,9 +256,31 @@ class Rule {
   locals: { [key: string]: any } = {};
 
   /**
+   * When true, evaluation traces are logged and captured.
+   */
+  trace: boolean = false;
+  traceLog: string[] = [];
+  /** @hidden */
+  private _traceDepth: number = 0;
+
+  /**
    * Static operator info mapping operator names to their expected argument counts.
    */
   static operatorInfo: { [key: string]: OperatorArity } = operatorInfo;
+
+  /**
+   * Format arbitrary steps as pretty-printed S-expressions.
+   */
+  static formatSteps(steps: any[], options?: RuleFormatOptions): string {
+    const indent = (options && options.indent) || "  ";
+    const maxLineWidth = (options && options.maxLineWidth) || 60;
+    // Check if it's multi-step (array of arrays)
+    const isMultiStep = steps.length > 0 && Array.isArray(steps[0]);
+    if (isMultiStep) {
+      return steps.map((s: any) => prettyFormatStep(s, indent, maxLineWidth, "")).join("\n\n");
+    }
+    return prettyFormatStep(steps, indent, maxLineWidth, "");
+  }
 
   /**
    * A single step may be as simple as `["get", "x"]`. This returns the `Agent`'s `"x"` value to the outer step that contains it. So, for example, the step `["add", 1, ["get", "x"]]`, working from the inside out, retrieves the `"x"` value and then adds `1` to it. More complex steps function similarly, always traversing to the deepest nested step, evaluating it, and 'unwrapping' until all steps have been executed.
@@ -229,6 +318,20 @@ class Rule {
   constructor(environment: Environment, steps: Step[]) {
     this.environment = environment;
     this.steps = steps;
+  }
+
+  /**
+   * Pretty-print the rule's step tree as S-expressions.
+   */
+  format(options?: RuleFormatOptions): string {
+    return Rule.formatSteps(this.steps, options);
+  }
+
+  /**
+   * Returns a formatted S-expression representation of the rule.
+   */
+  toString(): string {
+    return this.format();
   }
 
   /**
@@ -337,6 +440,16 @@ class Rule {
    * @since 0.3.0
    * @hidden
    */
+  /** @hidden */
+  private _traceLogEntry(step: any[], result: any): void {
+    const indent = "  ".repeat(this._traceDepth - 1);
+    const formatted = formatStep(step);
+    const resultFormatted = formatStep(result);
+    const line = `Rule trace: ${indent}${formatted} → ${resultFormatted}`;
+    console.log(line);
+    this.traceLog.push(line);
+  }
+
   evaluate = (agent: Agent, step: any[]): any => {
     const first = step && step.length > 0 ? step[0] : null;
     if (first === undefined || first === null) return null;
@@ -347,6 +460,22 @@ class Rule {
       return innerStep;
     }
 
+    // Trace: check if this is a known operator call to trace
+    const shouldTrace = this.trace && typeof first === "string" && first in Operators;
+    if (shouldTrace) this._traceDepth++;
+
+    const result = this._evaluateOp(agent, step, first);
+
+    if (shouldTrace) {
+      this._traceLogEntry(step, result);
+      this._traceDepth--;
+    }
+
+    return result;
+  };
+
+  /** @hidden */
+  private _evaluateOp = (agent: Agent, step: any[], first: any): any => {
     if (first === Operators.log) {
       const args = step.slice(1);
       if (args.length === 0) {
@@ -493,8 +622,12 @@ class Rule {
    * @hidden
    */
   call(agent: Agent): any {
+    if (this.trace) {
+      this.traceLog = [];
+      this._traceDepth = 0;
+    }
     return this.evaluate(agent, this.steps);
   }
 }
 
-export { Rule, RuleDiagnostic };
+export { Rule, RuleDiagnostic, RuleFormatOptions };

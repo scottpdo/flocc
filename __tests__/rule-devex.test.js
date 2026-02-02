@@ -411,3 +411,239 @@ describe("Regression tests", () => {
     expect(rule.call()).toBe(10);
   });
 });
+
+// ============================================================
+// Task 4: Pretty-Printing — format() / toString()
+// ============================================================
+
+describe("Rule.format() and Rule.toString()", () => {
+  it("formats a simple expression on one line", () => {
+    const rule = new Rule(environment, ["add", 1, 2]);
+    expect(rule.format()).toBe("(add 1 2)");
+  });
+
+  it("formats nested expression that fits on one line", () => {
+    const rule = new Rule(environment, ["add", 1, ["get", "x"]]);
+    expect(rule.format()).toBe('(add 1 (get "x"))');
+  });
+
+  it("wraps nested expression when it exceeds maxLineWidth", () => {
+    const rule = new Rule(environment, [
+      "set", "myLongVariableName", ["add", ["get", "myLongVariableName"], ["get", "anotherLongName"]]
+    ]);
+    const formatted = rule.format({ maxLineWidth: 40 });
+    expect(formatted).toContain("\n");
+    // Should start with (set
+    expect(formatted).toMatch(/^\(set/);
+  });
+
+  it("separates multi-step rules with blank lines", () => {
+    const rule = new Rule(environment, [
+      ["set", "x", ["add", 1, ["get", "x"]]],
+      ["set", "y", ["subtract", ["get", "y"], 1]]
+    ]);
+    const formatted = rule.format();
+    expect(formatted).toContain("\n\n");
+    const parts = formatted.split("\n\n");
+    expect(parts.length).toBe(2);
+    expect(parts[0]).toContain("set");
+    expect(parts[1]).toContain("set");
+  });
+
+  it("quotes strings", () => {
+    const rule = new Rule(environment, ["get", "x"]);
+    expect(rule.format()).toBe('(get "x")');
+  });
+
+  it("formats numbers bare", () => {
+    const rule = new Rule(environment, ["add", 42, 3.14]);
+    expect(rule.format()).toBe("(add 42 3.14)");
+  });
+
+  it("formats booleans bare", () => {
+    const rule = new Rule(environment, ["if", true, 1, 2]);
+    expect(rule.format()).toBe("(if true 1 2)");
+  });
+
+  it("formats null/undefined as null", () => {
+    const rule = new Rule(environment, ["if", null, 1, 2]);
+    expect(rule.format()).toContain("null");
+  });
+
+  it("respects custom indent option", () => {
+    const rule = new Rule(environment, [
+      "set", "myLongVariableName", ["add", ["get", "myLongVariableName"], ["get", "anotherLongName"]]
+    ]);
+    const formatted = rule.format({ indent: "    ", maxLineWidth: 30 });
+    // Should use 4-space indent
+    expect(formatted).toMatch(/\n {4}/);
+  });
+
+  it("respects custom maxLineWidth option", () => {
+    const rule = new Rule(environment, ["add", 1, 2]);
+    // With very small maxLineWidth, even simple expressions wrap
+    const formatted = rule.format({ maxLineWidth: 5 });
+    expect(formatted).toContain("\n");
+  });
+
+  it("toString() returns same as format()", () => {
+    const rule = new Rule(environment, ["set", "x", ["add", 1, ["get", "x"]]]);
+    expect(rule.toString()).toBe(rule.format());
+  });
+
+  it("handles objects that are not arrays via JSON.stringify", () => {
+    const rule = new Rule(environment, ["log", { key: "value" }]);
+    const formatted = rule.format();
+    expect(formatted).toContain('{"key":"value"}');
+  });
+});
+
+describe("Rule.formatSteps() static method", () => {
+  it("formats a single step", () => {
+    expect(Rule.formatSteps(["add", 1, 2])).toBe("(add 1 2)");
+  });
+
+  it("formats multi-step arrays", () => {
+    const result = Rule.formatSteps([
+      ["set", "x", 1],
+      ["set", "y", 2]
+    ]);
+    expect(result).toContain("\n\n");
+    expect(result).toContain('(set "x" 1)');
+    expect(result).toContain('(set "y" 2)');
+  });
+
+  it("accepts format options", () => {
+    const result = Rule.formatSteps(
+      ["set", "aVeryLongVariableNameIndeed", ["add", ["get", "aVeryLongVariableNameIndeed"], 1]],
+      { maxLineWidth: 30 }
+    );
+    expect(result).toContain("\n");
+  });
+});
+
+// ============================================================
+// Task 5: Trace Mode
+// ============================================================
+
+describe("Trace mode", () => {
+  let logSpy;
+  let warnSpy;
+
+  beforeEach(() => {
+    logSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+    warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+  });
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it("trace=false produces no trace output (default)", () => {
+    const rule = new Rule(environment, ["add", 1, 2]);
+    rule.call();
+    // Should not have any "Rule trace:" calls
+    const traceCalls = logSpy.mock.calls.filter(c => c[0] && c[0].includes("Rule trace:"));
+    expect(traceCalls.length).toBe(0);
+  });
+
+  it("trace defaults to false", () => {
+    const rule = new Rule(environment, ["add", 1, 2]);
+    expect(rule.trace).toBe(false);
+  });
+
+  it("trace=true logs each operator evaluation", () => {
+    const rule = new Rule(environment, ["add", 1, 2]);
+    rule.trace = true;
+    rule.call();
+    const traceCalls = logSpy.mock.calls.filter(c => c[0] && c[0].includes("Rule trace:"));
+    expect(traceCalls.length).toBeGreaterThan(0);
+    expect(traceCalls[0][0]).toContain("(add 1 2)");
+    expect(traceCalls[0][0]).toContain("→");
+    expect(traceCalls[0][0]).toContain("3");
+  });
+
+  it("nested steps show indented traces", () => {
+    const agent = new Agent();
+    agent.set("x", 5);
+    const rule = new Rule(environment, ["add", 1, ["get", "x"]]);
+    rule.trace = true;
+    rule.call(agent);
+    const traceCalls = logSpy.mock.calls.filter(c => c[0] && c[0].includes("Rule trace:"));
+    // Should have traces for both get and add
+    expect(traceCalls.length).toBe(2);
+    // get should be more indented than add (it's nested)
+    const getLine = traceCalls.find(c => c[0].includes("get"));
+    const addLine = traceCalls.find(c => c[0].includes("add"));
+    expect(getLine).toBeDefined();
+    expect(addLine).toBeDefined();
+    // get should have more indentation (deeper)
+    const getIndent = getLine[0].match(/Rule trace: ( *)/)[1].length;
+    const addIndent = addLine[0].match(/Rule trace: ( *)/)[1].length;
+    expect(getIndent).toBeGreaterThan(addIndent);
+  });
+
+  it("traceLog captures all lines", () => {
+    const rule = new Rule(environment, ["add", 1, 2]);
+    rule.trace = true;
+    rule.call();
+    expect(rule.traceLog.length).toBeGreaterThan(0);
+    expect(rule.traceLog[0]).toContain("Rule trace:");
+    expect(rule.traceLog[0]).toContain("(add 1 2)");
+  });
+
+  it("traceLog is cleared on each call()", () => {
+    const rule = new Rule(environment, ["add", 1, 2]);
+    rule.trace = true;
+    rule.call();
+    const firstLen = rule.traceLog.length;
+    expect(firstLen).toBeGreaterThan(0);
+    rule.call();
+    // Should be same length (cleared + repopulated), not doubled
+    expect(rule.traceLog.length).toBe(firstLen);
+  });
+
+  it("trace works with if/and/or conditional operators", () => {
+    const rule = new Rule(environment, ["if", ["and", true, false], 1, 2]);
+    rule.trace = true;
+    const result = rule.call();
+    expect(result).toBe(2);
+    expect(rule.traceLog.some(l => l.includes("and"))).toBe(true);
+    expect(rule.traceLog.some(l => l.includes("if"))).toBe(true);
+  });
+
+  it("trace works with or operator", () => {
+    const rule = new Rule(environment, ["or", true, false]);
+    rule.trace = true;
+    const result = rule.call();
+    expect(result).toBe(true);
+    expect(rule.traceLog.some(l => l.includes("or"))).toBe(true);
+  });
+
+  it("trace works with map", () => {
+    const rule = new Rule(environment, ["map", [1, 2, 3], ["add", 10]]);
+    rule.trace = true;
+    const result = rule.call();
+    expect(result).toEqual([11, 12, 13]);
+    expect(rule.traceLog.some(l => l.includes("map"))).toBe(true);
+    expect(rule.traceLog.some(l => l.includes("add"))).toBe(true);
+  });
+
+  it("trace works with filter", () => {
+    const rule = new Rule(environment, ["filter", [1, 2, 3, 4, 5], ["gte", 3]]);
+    rule.trace = true;
+    const result = rule.call();
+    expect(result).toEqual([3, 4, 5]);
+    expect(rule.traceLog.some(l => l.includes("filter"))).toBe(true);
+    expect(rule.traceLog.some(l => l.includes("gte"))).toBe(true);
+  });
+
+  it("traceLog strings match what is console.logged", () => {
+    const rule = new Rule(environment, ["add", 1, 2]);
+    rule.trace = true;
+    rule.call();
+    const traceCalls = logSpy.mock.calls
+      .filter(c => c[0] && c[0].includes("Rule trace:"))
+      .map(c => c[0]);
+    expect(rule.traceLog).toEqual(traceCalls);
+  });
+});
