@@ -229,6 +229,50 @@ it("Correctly filters arrays.", () => {
   expect(rule.call()).toEqual([1]);
 });
 
+it("Filters with compound predicates using local '_' syntax.", () => {
+  const arr = [1, 2, 3, 4, 5];
+
+  // Filter using AND with local "_" syntax
+  let steps = ["filter", arr, ["and", ["gte", ["local", "_"], 2], ["lte", ["local", "_"], 4]]];
+  let rule = new Rule(environment, steps);
+  expect(rule.call()).toEqual([2, 3, 4]);
+
+  // Filter using OR
+  steps = ["filter", arr, ["or", ["lt", ["local", "_"], 2], ["gt", ["local", "_"], 4]]];
+  rule = new Rule(environment, steps);
+  expect(rule.call()).toEqual([1, 5]);
+
+  // Filter using nested IF
+  steps = ["filter", arr, ["if", ["eq", ["local", "_"], 3], true, false]];
+  rule = new Rule(environment, steps);
+  expect(rule.call()).toEqual([3]);
+});
+
+it("Maps with compound expressions using local '_' syntax.", () => {
+  const arr = [1, 2, 3, 4, 5];
+
+  // Map using IF to conditionally transform
+  let steps = ["map", arr, ["if", ["gt", ["local", "_"], 2], ["multiply", ["local", "_"], 10], ["local", "_"]]];
+  let rule = new Rule(environment, steps);
+  expect(rule.call()).toEqual([1, 2, 30, 40, 50]);
+});
+
+it("Handles multiple calls with same rule (no state corruption).", () => {
+  const arr = [1, 2, 3, 4, 5];
+
+  // Old syntax
+  let rule = new Rule(environment, ["filter", arr, ["gte", 3]]);
+  expect(rule.call()).toEqual([3, 4, 5]);
+  expect(rule.call()).toEqual([3, 4, 5]);
+  expect(rule.call()).toEqual([3, 4, 5]);
+
+  // New syntax
+  rule = new Rule(environment, ["filter", arr, ["and", ["gte", ["local", "_"], 2], ["lte", ["local", "_"], 4]]]);
+  expect(rule.call()).toEqual([2, 3, 4]);
+  expect(rule.call()).toEqual([2, 3, 4]);
+  expect(rule.call()).toEqual([2, 3, 4]);
+});
+
 it(`Correctly retrieves values from an object's key.`, () => {
   let steps = ["key", { abc: "123" }, "abc"];
   let rule = new Rule(environment, steps);

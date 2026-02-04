@@ -307,8 +307,8 @@ class Rule {
    * |`"lt"`|`2`|""|
    * |`"lte"`|`2`|""|
    * |`"eq"`|`2`|""|
-   * |`"map"`|`2`|Pass an array (or step that evaluates to an array) and a lambda to invoke for each element|
-   * |`"filter"`|`2`|""|
+   * |`"map"`|`2`|Pass an array and a lambda. For simple lambdas like `["add", 2]`, the element is spliced as the first operand. For compound lambdas (using `and`, `or`, `if`), use `["local", "_"]` to reference the current element, e.g. `["if", ["gt", ["local", "_"], 5], ...]`|
+   * |`"filter"`|`2`|Same as `map` — use `["local", "_"]` for compound predicates, e.g. `["and", ["gte", ["local", "_"], 2], ["lte", ["local", "_"], 5]]`|
    * |`"key"`|`2`|Pass an object (or step that evaluates to an object) and the key to retrieve from that object|
    * |`"agent"`|`0`|No arguments; returns the `Agent`|
    * |`"environment"`|`0`|No arguments, returns the `Environment`|
@@ -433,6 +433,24 @@ class Rule {
         }
       }
     }
+  }
+
+  /**
+   * Check if a step contains ["local", "_"] anywhere in its tree.
+   * Used to determine whether to use new vs old map/filter lambda syntax.
+   * @hidden
+   */
+  private _containsLocalUnderscore(step: any): boolean {
+    if (!Array.isArray(step)) return false;
+    // Check if this is ["local", "_"]
+    if (step.length === 2 && step[0] === "local" && step[1] === "_") {
+      return true;
+    }
+    // Recursively check children
+    for (const child of step) {
+      if (this._containsLocalUnderscore(child)) return true;
+    }
+    return false;
   }
 
   /**
@@ -580,26 +598,56 @@ class Rule {
       const arr = this.evaluate(agent, a);
       const lambda = step[2]; // before evaluation
       const mapped = [];
+      // Save previous "_" local for nested map/filter support
+      const prevLocal = this.locals["_"];
+      // Check if lambda uses ["local", "_"] - if so, don't splice (new syntax)
+      const usesLocalUnderscore = this._containsLocalUnderscore(lambda);
       for (let i in arr) {
         const el = arr[i];
-        const withEl = Array.from(lambda);
-        withEl.splice(1, 0, el);
-        mapped.push(this.evaluate(agent, withEl));
+        // Bind element to local "_" for compound lambdas
+        this.locals["_"] = el;
+        if (usesLocalUnderscore) {
+          // New syntax: evaluate lambda directly, it references ["local", "_"]
+          mapped.push(this.evaluate(agent, [lambda]));
+        } else {
+          // Old syntax: splice element at position 1 for backward compat
+          const withEl = Array.from(lambda);
+          withEl.splice(1, 0, el);
+          mapped.push(this.evaluate(agent, withEl));
+        }
       }
+      // Restore previous local
+      this.locals["_"] = prevLocal;
       return mapped;
     }
     if (first === Operators.filter) {
       const arr = this.evaluate(agent, a);
       const lambda = step[2]; // before evaluation
       const mapped = [];
+      // Save previous "_" local for nested map/filter support
+      const prevLocal = this.locals["_"];
+      // Check if lambda uses ["local", "_"] - if so, don't splice (new syntax)
+      const usesLocalUnderscore = this._containsLocalUnderscore(lambda);
       for (let i in arr) {
         const el = arr[i];
-        const withEl = Array.from(lambda);
-        withEl.splice(1, 0, el);
-        if (this.evaluate(agent, withEl)) {
+        // Bind element to local "_" for compound lambdas
+        this.locals["_"] = el;
+        let shouldInclude: boolean;
+        if (usesLocalUnderscore) {
+          // New syntax: evaluate lambda directly, it references ["local", "_"]
+          shouldInclude = this.evaluate(agent, [lambda]);
+        } else {
+          // Old syntax: splice element at position 1 for backward compat
+          const withEl = Array.from(lambda);
+          withEl.splice(1, 0, el);
+          shouldInclude = this.evaluate(agent, withEl);
+        }
+        if (shouldInclude) {
           mapped.push(el);
         }
       }
+      // Restore previous local
+      this.locals["_"] = prevLocal;
       return mapped;
     }
     if (first === Operators.key)
