@@ -1,6 +1,6 @@
 {
   "name": "flocc",
-  "version": "0.5.24",
+  "version": "0.6.0",
   "description": "Agent-based modeling in JavaScript in the browser or server.",
   "main": "dist/flocc.js",
   "module": "dist/flocc.es.js",

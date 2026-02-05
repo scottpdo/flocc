@@ -2,6 +2,7 @@
 /// <reference path="../types/DataObj.d.ts" />
 import { Environment } from "../environments/Environment";
 import type { KDTree } from "../helpers/KDTree";
+import type { FloccEvent, EventHandler } from "../events/EventBus";
 import uuid from "../utils/uuid";
 import { Rule } from "../helpers/Rule";
 import once from "../utils/once";
@@ -63,6 +64,18 @@ class Agent implements DataObj {
    * @hidden
    */
   __newData: Data = {};
+
+  /**
+   * Event handler subscriptions for this agent.
+   * @hidden
+   */
+  private __eventHandlers: Map<string, Array<(agent: Agent, event: FloccEvent) => void>> = new Map();
+
+  /**
+   * Unsubscribe functions for event bus subscriptions.
+   * @hidden
+   */
+  private __eventUnsubscribers: Array<() => void> = [];
 
   /** When agent.get('key') is called, this pseudo-private member is set to 'key'.
    * Once it is retrieved, it is reset to null. If agent.get('key') is called before
@@ -421,6 +434,169 @@ class Agent implements DataObj {
       if (data) this.set(data);
     }
   }
+
+  // ============================================================
+  // Event System Methods
+  // ============================================================
+
+  /**
+   * Subscribe to an event type. The handler receives the agent as the first
+   * argument and the event object as the second.
+   *
+   * @param type - Event type to listen for
+   * @param handler - Function to call when event is emitted
+   * @returns Unsubscribe function
+   *
+   * @example
+   * ```js
+   * agent.on('food:nearby', (agent, event) => {
+   *   agent.set('target', event.data.location);
+   *   agent.set('state', 'foraging');
+   * });
+   * ```
+   *
+   * @since 0.6.0
+   */
+  on<T = any>(type: string, handler: (agent: Agent, event: FloccEvent<T>) => void): () => void {
+    // Store handler locally
+    if (!this.__eventHandlers.has(type)) {
+      this.__eventHandlers.set(type, []);
+    }
+    this.__eventHandlers.get(type)!.push(handler as (agent: Agent, event: FloccEvent) => void);
+
+    // If attached to environment with event bus, also subscribe there
+    if (this.environment?.events) {
+      const unsubscribe = this.environment.events.on(type, (event) => {
+        handler(this, event);
+      });
+      this.__eventUnsubscribers.push(unsubscribe);
+      return unsubscribe;
+    }
+
+    // Return a no-op unsubscribe if not yet attached to environment
+    return () => {
+      const handlers = this.__eventHandlers.get(type);
+      if (handlers) {
+        const index = handlers.indexOf(handler as (agent: Agent, event: FloccEvent) => void);
+        if (index !== -1) handlers.splice(index, 1);
+      }
+    };
+  }
+
+  /**
+   * Emit an event to the environment's event bus.
+   *
+   * @param type - Event type
+   * @param data - Event payload
+   *
+   * @example
+   * ```js
+   * // In tick function
+   * agent.set('tick', (a) => {
+   *   if (a.get('health') < 10) {
+   *     a.emit('agent:lowHealth', { health: a.get('health') });
+   *   }
+   * });
+   * ```
+   *
+   * @since 0.6.0
+   */
+  emit<T = any>(type: string, data: T): void {
+    if (this.environment?.events) {
+      this.environment.events.emit(type, data, this);
+    }
+  }
+
+  /**
+   * Re-register all event handlers with the environment's event bus.
+   * Called automatically when agent is added to an environment.
+   * @hidden
+   */
+  __registerEventHandlers(): void {
+    if (!this.environment?.events) return;
+
+    // Clear old unsubscribers
+    for (const unsub of this.__eventUnsubscribers) {
+      unsub();
+    }
+    this.__eventUnsubscribers = [];
+
+    // Re-register all handlers
+    this.__eventHandlers.forEach((handlers, type) => {
+      handlers.forEach(handler => {
+        const unsubscribe = this.environment.events.on(type, (event) => {
+          handler(this, event);
+        });
+        this.__eventUnsubscribers.push(unsubscribe);
+      });
+    });
+  }
+
+  /**
+   * Clean up event subscriptions when agent is removed.
+   * @hidden
+   */
+  __unregisterEventHandlers(): void {
+    for (const unsub of this.__eventUnsubscribers) {
+      unsub();
+    }
+    this.__eventUnsubscribers = [];
+  }
+
+  // ============================================================
+  // Scheduling Methods
+  // ============================================================
+
+  /**
+   * Schedule this agent to tick at a specific environment time.
+   * Only has an effect if the environment uses a scheduler that supports
+   * explicit scheduling (e.g., PriorityScheduler).
+   *
+   * @param time - The environment time at which to tick
+   *
+   * @example
+   * ```js
+   * agent.set('tick', (a) => {
+   *   // Do something...
+   *   
+   *   // Schedule next tick at time 150
+   *   a.scheduleAt(150);
+   * });
+   * ```
+   *
+   * @since 0.6.0
+   */
+  scheduleAt(time: number): void {
+    if (this.environment?.scheduler) {
+      this.environment.scheduler.schedule(this, time);
+    }
+  }
+
+  /**
+   * Schedule this agent to tick after a delay (relative to current time).
+   * Shorthand for `agent.scheduleAt(environment.time + delay)`.
+   *
+   * @param delay - Number of ticks to wait before next activation
+   *
+   * @example
+   * ```js
+   * agent.set('tick', (a) => {
+   *   const energy = a.get('energy');
+   *   a.set('energy', energy - 10);
+   *   
+   *   // Lower energy = longer wait until next action
+   *   const delay = Math.ceil(100 / energy);
+   *   a.scheduleIn(delay);
+   * });
+   * ```
+   *
+   * @since 0.6.0
+   */
+  scheduleIn(delay: number): void {
+    const currentTime = this.environment?.time ?? 0;
+    this.scheduleAt(currentTime + delay);
+  }
 }
 
 export { Agent };
+

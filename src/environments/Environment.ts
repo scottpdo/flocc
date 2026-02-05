@@ -7,6 +7,8 @@ import { Network } from "../helpers/Network";
 import { KDTree } from "../helpers/KDTree";
 import { Terrain } from "../helpers/Terrain";
 import type { AbstractRenderer } from "../renderers/AbstractRenderer";
+import type { Scheduler } from "../scheduling/Scheduler";
+import { EventBus } from "../events/EventBus";
 import once from "../utils/once";
 import { random, series } from "../utils/utils";
 import sample, { sampler, isMultipleSampleFunc } from "../utils/sample";
@@ -88,6 +90,19 @@ class Environment extends Agent {
    */
   playing: boolean = true;
 
+  /**
+   * Optional scheduler for controlling agent activation timing.
+   * If set, the scheduler determines which agents tick at each time step.
+   * @since 0.6.0
+   */
+  scheduler: Scheduler | null = null;
+
+  /**
+   * Optional event bus for publish-subscribe messaging between agents.
+   * @since 0.6.0
+   */
+  events: EventBus | null = null;
+
   /** @hidden */
   private _tickIntervalId: ReturnType<typeof setInterval> | null = null;
   /**
@@ -121,6 +136,8 @@ class Environment extends Agent {
    * - `torus` &mdash; Whether the `Environment` should wrap around in 2d space (with `Agent`s that move off the right reappearing on the left, off the top reappearing on the bottom, etc.)
    * - `width` &mdash; The width of the `Environment` (used when `torus = true`)
    * - `height` &mdash; The height of the `Environment` (used when `torus = true`)
+   * - `scheduler` &mdash; Optional scheduler for controlling agent activation (see {@linkcode Scheduler})
+   * - `events` &mdash; Optional event bus for pub-sub messaging (see {@linkcode EventBus})
    * @override
    */
   constructor(opts: EnvironmentOptions = defaultEnvironmentOptions) {
@@ -129,6 +146,17 @@ class Environment extends Agent {
     this.opts = Object.assign(this.opts, opts);
     this.width = this.opts.width;
     this.height = this.opts.height;
+
+    // Set up scheduler if provided
+    if (opts.scheduler) {
+      this.scheduler = opts.scheduler;
+    }
+
+    // Set up event bus if provided
+    if (opts.events) {
+      this.events = opts.events;
+      this.events.setEnvironment(this);
+    }
   }
 
   /**
@@ -149,6 +177,21 @@ class Environment extends Agent {
       this.helpers.kdtree.needsUpdating = true;
       if (rebalance) this.helpers.kdtree.rebalance();
     }
+
+    // Notify scheduler of new agent
+    if (this.scheduler) {
+      this.scheduler.onAgentAdded(agent, this.time);
+    }
+
+    // Register agent's event handlers with the event bus
+    if (this.events) {
+      agent.__registerEventHandlers();
+    }
+
+    // Emit agent:added event
+    if (this.events) {
+      this.events.emit("agent:added", { agent }, this);
+    }
   }
 
   /** @hidden */
@@ -163,6 +206,19 @@ class Environment extends Agent {
    * @since 0.0.8
    */
   removeAgent(agent: Agent, rebalance: boolean = true): void {
+    // Emit agent:removed event before removal
+    if (this.events) {
+      this.events.emit("agent:removed", { agent }, this);
+    }
+
+    // Unregister agent's event handlers
+    agent.__unregisterEventHandlers();
+
+    // Notify scheduler
+    if (this.scheduler) {
+      this.scheduler.onAgentRemoved(agent);
+    }
+
     agent.environment = null;
     const index = this.agents.indexOf(agent);
     this.agents.splice(index, 1);
@@ -300,8 +356,20 @@ class Environment extends Agent {
       randomizeOrder
     } = this._getTickOptions(opts);
 
+    // Emit tick:start event
+    if (this.events) {
+      this.events.emit("tick:start", { time: this.time }, this);
+    }
+
+    // If a scheduler is configured, use it to determine which agents tick
+    if (this.scheduler) {
+      const agentsToTick = this.scheduler.getAgentsForTick(this.time);
+      this._executeAgentRules(agentsToTick);
+      this._executeEnqueuedAgentRules(agentsToTick);
+    }
+    // Otherwise, use the traditional activation modes
     // for uniform activation, every agent is always activated
-    if (activation === "uniform") {
+    else if (activation === "uniform") {
       const agentsInOrder = randomizeOrder ? shuffle(this.agents) : this.agents;
       this._executeAgentRules(agentsInOrder);
       this._executeEnqueuedAgentRules(agentsInOrder);
@@ -362,6 +430,11 @@ class Environment extends Agent {
 
     this.time++;
 
+    // Emit tick:end event
+    if (this.events) {
+      this.events.emit("tick:end", { time: this.time }, this);
+    }
+
     if (count > 1) {
       this.tick(count - 1);
       return;
@@ -413,6 +486,147 @@ class Environment extends Agent {
     this.playing = true;
     this.tick(opts);
     this.playing = wasPlaying;
+  }
+
+  /**
+   * Advance the `Environment` to the next scheduled event time.
+   * Only works with schedulers that support `nextScheduledTime()` (e.g., PriorityScheduler).
+   * This enables event-driven simulation where empty time steps are skipped.
+   *
+   * ```js
+   * const scheduler = new PriorityScheduler();
+   * const env = new Environment({ scheduler });
+   *
+   * // Run until next scheduled agent activates
+   * env.tickNext();
+   * ```
+   *
+   * @returns The time that was advanced to, or null if nothing was scheduled
+   * @since 0.6.0
+   */
+  tickNext(): number | null {
+    if (!this.scheduler) {
+      // Fall back to regular tick if no scheduler
+      this.tick();
+      return this.time;
+    }
+
+    const nextTime = this.scheduler.nextScheduledTime();
+    if (nextTime === null) {
+      return null;
+    }
+
+    // Jump time forward to the next scheduled event
+    this.time = nextTime;
+
+    // Execute tick for that time (scheduler will return the scheduled agents)
+    const wasPlaying = this.playing;
+    this.playing = true;
+
+    // Emit tick:start event
+    if (this.events) {
+      this.events.emit("tick:start", { time: this.time }, this);
+    }
+
+    const agentsToTick = this.scheduler.getAgentsForTick(this.time);
+    this._executeAgentRules(agentsToTick);
+    this._executeEnqueuedAgentRules(agentsToTick);
+
+    if (this.helpers.kdtree) this.helpers.kdtree.rebalance();
+
+    // Emit tick:end event
+    if (this.events) {
+      this.events.emit("tick:end", { time: this.time }, this);
+    }
+
+    this.renderers.forEach(r => r.render());
+    this.playing = wasPlaying;
+
+    return this.time;
+  }
+
+  /**
+   * Run the simulation until the specified time is reached.
+   * Uses `tickNext()` for event-driven simulation with a PriorityScheduler,
+   * or regular `tick()` otherwise.
+   *
+   * ```js
+   * const env = new Environment({ scheduler: new PriorityScheduler() });
+   *
+   * // Run simulation until time = 1000
+   * env.tickUntil(1000);
+   * ```
+   *
+   * @param targetTime - The time to run until
+   * @param maxIterations - Maximum number of iterations (safety limit, default 1000000)
+   * @returns The final time reached
+   * @since 0.6.0
+   */
+  tickUntil(targetTime: number, maxIterations: number = 1000000): number {
+    let iterations = 0;
+
+    while (this.time < targetTime && iterations < maxIterations) {
+      if (this.scheduler?.nextScheduledTime !== undefined) {
+        const nextTime = this.tickNext();
+        if (nextTime === null) break; // Nothing more scheduled
+      } else {
+        this.tick();
+      }
+      iterations++;
+    }
+
+    return this.time;
+  }
+
+  /**
+   * Schedule a one-time action to run at a specific time.
+   * The action will be executed during the tick at that time.
+   *
+   * ```js
+   * // Spawn reinforcements at time 100
+   * environment.scheduleAction(100, () => {
+   *   for (let i = 0; i < 10; i++) {
+   *     environment.addAgent(new Agent({ type: 'reinforcement' }));
+   *   }
+   * });
+   * ```
+   *
+   * @param time - The time at which to execute the action
+   * @param action - The function to execute
+   * @since 0.6.0
+   */
+  scheduleAction(time: number, action: () => void): void {
+    if (!this.events) {
+      console.warn("Environment.scheduleAction requires an EventBus. Create environment with { events: new EventBus() }");
+      return;
+    }
+
+    // Use a one-time event listener on tick:end (time is already incremented)
+    const unsubscribe = this.events.on("tick:end", (event) => {
+      if (event.time >= time) {
+        unsubscribe();
+        action();
+      }
+    });
+  }
+
+  /**
+   * Schedule a one-time action to run after a delay.
+   * Shorthand for `scheduleAction(environment.time + delay, action)`.
+   *
+   * ```js
+   * // Trigger weather event in 50 time steps
+   * environment.scheduleActionIn(50, () => {
+   *   environment.events.emit('weather:storm', { severity: 0.8 });
+   * });
+   * ```
+   *
+   * @param delay - Number of time steps to wait
+   * @param action - The function to execute
+   * @since 0.6.0
+   */
+  scheduleActionIn(delay: number, action: () => void): void {
+    this.scheduleAction(this.time + delay, action);
   }
 
   /**
