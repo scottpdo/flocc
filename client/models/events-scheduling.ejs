@@ -1,0 +1,401 @@
+<div id="container"></div>
+<div id="stats"></div>
+<style>
+  #stats {
+    font-family: monospace;
+    padding: 10px;
+    background: #1a1a2e;
+    color: #eee;
+    max-width: 600px;
+  }
+  #stats .event-log {
+    height: 120px;
+    overflow-y: auto;
+    font-size: 12px;
+    border-top: 1px solid #333;
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+  #stats .event-log div {
+    padding: 2px 0;
+  }
+  #stats .event-log .hunt { color: #ff6b6b; }
+  #stats .event-log .birth { color: #4ecdc4; }
+  #stats .event-log .death { color: #95a5a6; }
+  #stats .event-log .alert { color: #f39c12; }
+</style>
+<script>
+/**
+ * Events & Scheduling Demo
+ * 
+ * Demonstrates Flocc 0.6.0 features:
+ * - EventBus for agent communication
+ * - PriorityScheduler for discrete event simulation  
+ * - Agent self-scheduling with variable timing
+ * 
+ * Ecosystem simulation:
+ * - Prey (green) wander and reproduce, emit "distress" events when caught
+ * - Predators (red) hunt prey, respond to nearby distress signals
+ * - Food (yellow) spawns periodically, prey eat to gain energy
+ */
+
+const {
+  Agent,
+  Environment,
+  CanvasRenderer,
+  EventBus,
+  PriorityScheduler,
+  utils
+} = flocc;
+
+utils.seed(42);
+
+// Configuration
+const WIDTH = 600;
+const HEIGHT = 400;
+const INITIAL_PREY = 30;
+const INITIAL_PREDATORS = 5;
+const FOOD_SPAWN_INTERVAL = 20;
+
+// Create event bus and scheduler
+const events = new EventBus();
+const scheduler = new PriorityScheduler();
+
+// Create environment with new features
+const environment = new Environment({ events, scheduler });
+
+// Stats tracking
+let eventLog = [];
+const maxLogEntries = 50;
+
+function logEvent(type, message) {
+  eventLog.unshift({ type, message, time: environment.time });
+  if (eventLog.length > maxLogEntries) eventLog.pop();
+  updateStats();
+}
+
+// Renderer setup
+const renderer = new CanvasRenderer(environment, {
+  background: "#1a1a2e",
+  width: WIDTH,
+  height: HEIGHT
+});
+renderer.mount("#container");
+
+// ============================================================
+// Event Handlers (global reactions to events)
+// ============================================================
+
+// When prey emits distress, nearby predators get alerted
+events.on("prey:distress", (event) => {
+  const { location, prey } = event.data;
+  logEvent("alert", `Distress signal at (${location.x.toFixed(0)}, ${location.y.toFixed(0)})`);
+  
+  // Alert nearby predators (within range 80)
+  environment.getAgents()
+    .filter(a => a.get("type") === "predator")
+    .forEach(predator => {
+      const dx = predator.get("x") - location.x;
+      const dy = predator.get("y") - location.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 80 && dist > 0) {
+        // Predator moves toward distress signal
+        predator.set("targetX", location.x);
+        predator.set("targetY", location.y);
+        predator.set("alerted", true);
+      }
+    });
+});
+
+// Track births and deaths for stats
+events.on("agent:added", (event) => {
+  const agent = event.data.agent;
+  if (agent.get("type") === "prey" && environment.time > 0) {
+    logEvent("birth", `New prey born at time ${environment.time}`);
+  }
+});
+
+events.on("prey:caught", (event) => {
+  logEvent("hunt", `Predator caught prey! (+${event.data.energy} energy)`);
+});
+
+// ============================================================
+// Agent Definitions
+// ============================================================
+
+function createPrey(x, y) {
+  const prey = new Agent({
+    type: "prey",
+    x, y,
+    energy: 50 + utils.uniform() * 50,
+    size: 6,
+    shape: "circle",
+    color: "#4ecdc4"
+  });
+
+  prey.set("tick", (agent) => {
+    const energy = agent.get("energy");
+    
+    // Random movement
+    agent.set("x", agent.get("x") + utils.uniform(-3, 3));
+    agent.set("y", agent.get("y") + utils.uniform(-3, 3));
+    
+    // Wrap around edges
+    agent.set("x", (agent.get("x") + WIDTH) % WIDTH);
+    agent.set("y", (agent.get("y") + HEIGHT) % HEIGHT);
+    
+    // Lose energy over time
+    agent.set("energy", energy - 1);
+    
+    // Die if no energy
+    if (agent.get("energy") <= 0) {
+      logEvent("death", `Prey starved at time ${environment.time}`);
+      environment.removeAgent(agent);
+      return;
+    }
+    
+    // Reproduce if enough energy
+    if (energy > 100 && utils.uniform() < 0.1) {
+      agent.set("energy", energy / 2);
+      const child = createPrey(agent.get("x"), agent.get("y"));
+      child.set("energy", energy / 2);
+      environment.addAgent(child);
+      scheduler.schedule(child, environment.time + 1);
+    }
+    
+    // Schedule next tick - prey are fast
+    agent.scheduleIn(1);
+  });
+
+  // Listen for nearby food
+  prey.on("food:spawned", (agent, event) => {
+    const foodX = event.data.x;
+    const foodY = event.data.y;
+    const dx = agent.get("x") - foodX;
+    const dy = agent.get("y") - foodY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    
+    // Move toward food if nearby
+    if (dist < 100) {
+      agent.set("targetX", foodX);
+      agent.set("targetY", foodY);
+    }
+  });
+
+  return prey;
+}
+
+function createPredator(x, y) {
+  const predator = new Agent({
+    type: "predator",
+    x, y,
+    energy: 100,
+    size: 10,
+    shape: "circle",
+    color: "#ff6b6b",
+    alerted: false,
+    targetX: null,
+    targetY: null
+  });
+
+  predator.set("tick", (agent) => {
+    const energy = agent.get("energy");
+    let targetX = agent.get("targetX");
+    let targetY = agent.get("targetY");
+    
+    // Move toward target or wander
+    if (targetX !== null && targetY !== null) {
+      const dx = targetX - agent.get("x");
+      const dy = targetY - agent.get("y");
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      
+      if (dist > 5) {
+        agent.set("x", agent.get("x") + (dx / dist) * 4);
+        agent.set("y", agent.get("y") + (dy / dist) * 4);
+      } else {
+        // Reached target, clear it
+        agent.set("targetX", null);
+        agent.set("targetY", null);
+        agent.set("alerted", false);
+      }
+    } else {
+      // Wander
+      agent.set("x", agent.get("x") + utils.uniform(-2, 2));
+      agent.set("y", agent.get("y") + utils.uniform(-2, 2));
+    }
+    
+    // Wrap around
+    agent.set("x", (agent.get("x") + WIDTH) % WIDTH);
+    agent.set("y", (agent.get("y") + HEIGHT) % HEIGHT);
+    
+    // Hunt nearby prey
+    const prey = environment.getAgents().filter(a => a.get("type") === "prey");
+    for (const p of prey) {
+      const dx = p.get("x") - agent.get("x");
+      const dy = p.get("y") - agent.get("y");
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      
+      if (dist < 15) {
+        // Catch prey!
+        const gainedEnergy = p.get("energy") * 0.5;
+        agent.set("energy", energy + gainedEnergy);
+        
+        // Prey emits distress before being removed
+        p.emit("prey:distress", { 
+          location: { x: p.get("x"), y: p.get("y") },
+          prey: p 
+        });
+        
+        events.emit("prey:caught", { predator: agent, prey: p, energy: gainedEnergy.toFixed(0) });
+        environment.removeAgent(p);
+        break;
+      }
+    }
+    
+    // Lose energy
+    agent.set("energy", energy - 0.5);
+    
+    // Die if no energy
+    if (agent.get("energy") <= 0) {
+      logEvent("death", `Predator starved at time ${environment.time}`);
+      environment.removeAgent(agent);
+      return;
+    }
+    
+    // Update color based on alerted state
+    agent.set("color", agent.get("alerted") ? "#ff9f43" : "#ff6b6b");
+    
+    // Predators tick slower than prey (every 2 time units)
+    agent.scheduleIn(2);
+  });
+
+  return predator;
+}
+
+function createFood(x, y) {
+  const food = new Agent({
+    type: "food",
+    x, y,
+    size: 4,
+    shape: "rect",
+    color: "#f1c40f",
+    lifetime: 50
+  });
+
+  food.set("tick", (agent) => {
+    agent.set("lifetime", agent.get("lifetime") - 1);
+    
+    // Check if prey ate this food
+    const prey = environment.getAgents().filter(a => a.get("type") === "prey");
+    for (const p of prey) {
+      const dx = p.get("x") - agent.get("x");
+      const dy = p.get("y") - agent.get("y");
+      if (Math.sqrt(dx * dx + dy * dy) < 10) {
+        p.set("energy", p.get("energy") + 30);
+        environment.removeAgent(agent);
+        return;
+      }
+    }
+    
+    // Despawn if too old
+    if (agent.get("lifetime") <= 0) {
+      environment.removeAgent(agent);
+      return;
+    }
+    
+    agent.scheduleIn(1);
+  });
+
+  return food;
+}
+
+// ============================================================
+// Scheduled Environment Actions
+// ============================================================
+
+// Spawn food periodically using environment.scheduleAction
+function scheduleNextFood() {
+  environment.scheduleActionIn(FOOD_SPAWN_INTERVAL, () => {
+    const x = utils.uniform() * WIDTH;
+    const y = utils.uniform() * HEIGHT;
+    const food = createFood(x, y);
+    environment.addAgent(food);
+    scheduler.schedule(food, environment.time + 1);
+    
+    // Notify prey about new food
+    events.emit("food:spawned", { x, y });
+    
+    // Schedule next food spawn
+    scheduleNextFood();
+  });
+}
+
+// ============================================================
+// Stats Display
+// ============================================================
+
+function updateStats() {
+  const prey = environment.getAgents().filter(a => a.get("type") === "prey");
+  const predators = environment.getAgents().filter(a => a.get("type") === "predator");
+  const food = environment.getAgents().filter(a => a.get("type") === "food");
+  
+  const statsDiv = document.getElementById("stats");
+  statsDiv.innerHTML = `
+    <div><strong>Time:</strong> ${environment.time} | 
+         <strong>Prey:</strong> ${prey.length} | 
+         <strong>Predators:</strong> ${predators.length} |
+         <strong>Food:</strong> ${food.length}</div>
+    <div class="event-log">
+      ${eventLog.map(e => `<div class="${e.type}">[${e.time}] ${e.message}</div>`).join("")}
+    </div>
+  `;
+}
+
+// ============================================================
+// Setup and Run
+// ============================================================
+
+function setup() {
+  // Create initial prey
+  for (let i = 0; i < INITIAL_PREY; i++) {
+    const prey = createPrey(
+      utils.uniform() * WIDTH,
+      utils.uniform() * HEIGHT
+    );
+    environment.addAgent(prey);
+    scheduler.schedule(prey, 0);
+  }
+
+  // Create initial predators
+  for (let i = 0; i < INITIAL_PREDATORS; i++) {
+    const predator = createPredator(
+      utils.uniform() * WIDTH,
+      utils.uniform() * HEIGHT
+    );
+    environment.addAgent(predator);
+    scheduler.schedule(predator, 0);
+  }
+
+  // Start food spawning
+  scheduleNextFood();
+  
+  updateStats();
+}
+
+function run() {
+  // Use tickNext for event-driven simulation
+  const nextTime = environment.tickNext();
+  
+  if (nextTime !== null) {
+    updateStats();
+    setTimeout(run, 16); // ~60fps
+  } else {
+    // Simulation ended (no more scheduled agents)
+    logEvent("death", "Simulation ended - no agents left");
+    updateStats();
+  }
+}
+
+setup();
+run();
+</script>
