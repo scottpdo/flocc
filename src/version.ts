@@ -1,5 +1,5 @@
 /**
  * The current version of the Flocc library.
  */
-const version: string = "0.5.23";
+const version: string = "%%VERSION%%";
 export default version;
