@@ -275,6 +275,33 @@ describe("Agent events", () => {
     expect(received[0].data).toBe("test-data");
   });
 
+  it("unsubscribe removes handler completely", () => {
+    const events = new EventBus();
+    const env = new Environment({ events });
+    const received = [];
+
+    const agent = new Agent();
+    env.addAgent(agent);
+
+    const unsubscribe = agent.on("test:event", (a, event) => {
+      received.push(event.data);
+    });
+
+    events.emit("test:event", 1);
+    expect(received).toEqual([1]);
+
+    // Unsubscribe
+    unsubscribe();
+    events.emit("test:event", 2);
+    expect(received).toEqual([1]); // Should NOT have received 2
+
+    // Remove and re-add agent - handler should NOT be re-registered
+    env.removeAgent(agent);
+    env.addAgent(agent);
+    events.emit("test:event", 3);
+    expect(received).toEqual([1]); // Should still be just [1]
+  });
+
   it("can emit events via agent.emit", () => {
     const events = new EventBus();
     const env = new Environment({ events });

@@ -107,9 +107,10 @@ class DefaultScheduler implements Scheduler {
   }
 
   nextScheduledTime(): number | null {
-    // For interval-based scheduling, there's always a next time
-    // as long as there are agents scheduled
-    return this.configs.size > 0 ? null : null;
+    // Interval-based scheduling doesn't have discrete scheduled times.
+    // Agents tick every N steps, so there's no specific "next time" to jump to.
+    // Return null to indicate tickNext() should fall back to regular tick().
+    return null;
   }
 
   onAgentAdded(agent: Agent, time: number): void {

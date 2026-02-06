@@ -517,9 +517,10 @@ class Environment extends Agent {
     }
 
     // Jump time forward to the next scheduled event
+    // Note: Unlike tick(), tickNext() does NOT auto-increment time.
+    // In discrete event simulation, time advances to scheduled events only.
     this.time = nextTime;
 
-    // Execute tick for that time (scheduler will return the scheduled agents)
     const wasPlaying = this.playing;
     this.playing = true;
 
@@ -534,7 +535,13 @@ class Environment extends Agent {
 
     if (this.helpers.kdtree) this.helpers.kdtree.rebalance();
 
-    // Emit tick:end event
+    // Handle Terrain if present
+    const { terrain } = this.helpers;
+    if (terrain && terrain.rule) {
+      terrain._loop({ randomizeOrder: false });
+    }
+
+    // Emit tick:end event (same time as tick:start for DES - the tick occurred at this time)
     if (this.events) {
       this.events.emit("tick:end", { time: this.time }, this);
     }
@@ -566,7 +573,9 @@ class Environment extends Agent {
     let iterations = 0;
 
     while (this.time < targetTime && iterations < maxIterations) {
-      if (this.scheduler?.nextScheduledTime !== undefined) {
+      // Use tickNext() if scheduler supports discrete event times
+      const nextScheduled = this.scheduler?.nextScheduledTime();
+      if (nextScheduled !== null && nextScheduled !== undefined) {
         const nextTime = this.tickNext();
         if (nextTime === null) break; // Nothing more scheduled
       } else {

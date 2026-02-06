@@ -462,25 +462,34 @@ class Agent implements DataObj {
     if (!this.__eventHandlers.has(type)) {
       this.__eventHandlers.set(type, []);
     }
-    this.__eventHandlers.get(type)!.push(handler as (agent: Agent, event: FloccEvent) => void);
+    const typedHandler = handler as (agent: Agent, event: FloccEvent) => void;
+    this.__eventHandlers.get(type)!.push(typedHandler);
 
-    // If attached to environment with event bus, also subscribe there
-    if (this.environment?.events) {
-      const unsubscribe = this.environment.events.on(type, (event) => {
-        handler(this, event);
-      });
-      this.__eventUnsubscribers.push(unsubscribe);
-      return unsubscribe;
-    }
-
-    // Return a no-op unsubscribe if not yet attached to environment
-    return () => {
+    // Helper to remove from local handlers
+    const removeFromLocal = () => {
       const handlers = this.__eventHandlers.get(type);
       if (handlers) {
-        const index = handlers.indexOf(handler as (agent: Agent, event: FloccEvent) => void);
+        const index = handlers.indexOf(typedHandler);
         if (index !== -1) handlers.splice(index, 1);
       }
     };
+
+    // If attached to environment with event bus, also subscribe there
+    if (this.environment?.events) {
+      const eventBusUnsub = this.environment.events.on(type, (event) => {
+        handler(this, event);
+      });
+      this.__eventUnsubscribers.push(eventBusUnsub);
+      
+      // Return unsubscribe that removes from both EventBus AND local handlers
+      return () => {
+        eventBusUnsub();
+        removeFromLocal();
+      };
+    }
+
+    // Return unsubscribe for local handlers only (not yet attached to environment)
+    return removeFromLocal;
   }
 
   /**
