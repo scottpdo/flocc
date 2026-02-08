@@ -1,0 +1,12 @@
+[build]
+  command = "npm run docs-build"
+  publish = "docs"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+# Redirect root to latest docs
+[[redirects]]
+  from = "/"
+  to = "/index.html"
+  status = 200
