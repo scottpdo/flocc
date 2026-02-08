@@ -1,0 +1,11 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/main.ts"],
+  "out": "docs",
+  "name": "Flocc",
+  "readme": "README.md",
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "hideGenerator": true,
+  "gitRevision": "main"
+}
