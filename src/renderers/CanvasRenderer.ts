@@ -502,7 +502,7 @@ class CanvasRenderer extends AbstractRenderer {
       const { scale } = terrain.opts;
       const terrainContext = terrainBuffer.getContext("2d");
       const imageData = new ImageData(
-        terrain.data,
+        terrain.data as Uint8ClampedArray<ArrayBuffer>,
         terrain.width * scale,
         terrain.height * scale
       );

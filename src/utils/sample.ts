@@ -97,7 +97,7 @@ function destructivelySample<T>(array: T[], weights?: number[]): T {
  */
 export function sampler(n: number): SampleFunc | MultipleSampleFunc {
   // return a function that always returns null
-  if (n < 1) return () => null;
+  if (n < 1) return (): null => null;
   // if n = 1, it's just a standard sample
   if (n === 1) return sample;
   return function sampleFunc<T>(array: T[], weights?: number[]): T[] {
