@@ -5,7 +5,8 @@
     "lib": ["es2015", "es2017", "dom"],
     "noImplicitAny": true,
     "outDir": "./dist",
-    "target": "es5"
+    "target": "es5",
+    "skipLibCheck": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules"]
