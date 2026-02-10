@@ -7,7 +7,6 @@ export { NumArray } from "./helpers/NumArray";
 export { Colors, Terrain } from "./helpers/Terrain";
 
 export { Environment } from "./environments/Environment";
-export { GridEnvironment } from "./environments/GridEnvironment";
 
 // Scheduling
 export type { Scheduler } from "./scheduling/Scheduler";
@@ -20,7 +19,6 @@ export { EventBus, FloccEvent, EventHandler } from "./events/EventBus";
 // Utilities
 export { PriorityQueue } from "./utils/PriorityQueue";
 
-export { ASCIIRenderer } from "./renderers/ASCIIRenderer";
 export { CanvasRenderer } from "./renderers/CanvasRenderer";
 export { Histogram } from "./renderers/Histogram";
 export { LineChartRenderer } from "./renderers/LineChartRenderer";
