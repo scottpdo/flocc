@@ -30,7 +30,7 @@ export const defaultTickOptions: TickOptions = {
   activation: "uniform",
   activationCount: 1,
   count: 1,
-  randomizeOrder: false
+  randomizeOrder: true
 };
 
 const defaultEnvironmentOptions = {
@@ -284,15 +284,6 @@ class Environment extends Agent {
       baseOpts.count = opts;
     } else if (!!opts) {
       Object.assign(baseOpts, opts);
-    }
-
-    if (
-      opts === undefined ||
-      (typeof opts !== "number" && !opts.hasOwnProperty("randomizeOrder"))
-    ) {
-      warnOnce(
-        "You called `environment.tick` without specifying a `randomizeOrder` option. Currently this defaults to `false` (i.e. each agent ticks in the order it was added to the environment). However, in **Flocc 0.6.0 this will default to `true`** — agent activation order will default to being randomized."
-      );
     }
 
     return baseOpts;
