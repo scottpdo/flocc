@@ -206,6 +206,9 @@ class Environment extends Agent {
    * @since 0.0.8
    */
   removeAgent(agent: Agent, rebalance: boolean = true): void {
+    // Guard against null/undefined agent
+    if (!agent) return;
+
     // Emit agent:removed event before removal
     if (this.events) {
       this.events.emit("agent:removed", { agent }, this);
