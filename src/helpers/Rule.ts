@@ -1,6 +1,7 @@
 import { Environment } from "../environments/Environment";
 import { Agent } from "../agents/Agent";
 import { Vector } from "./Vector";
+import random from "../utils/random";
 
 enum Operators {
   add = "add",
@@ -28,7 +29,8 @@ enum Operators {
   agent = "agent",
   environment = "environment",
   vector = "vector",
-  log = "log"
+  log = "log",
+  random = "random"
 }
 
 type StepToken = number | string | Step;
@@ -80,7 +82,8 @@ const operatorInfo: { [key: string]: OperatorArity } = {
   agent: { min: 0, max: 0 },
   environment: { min: 0, max: 0 },
   vector: { min: 1, max: Infinity },
-  log: { min: 1, max: Infinity }
+  log: { min: 1, max: Infinity },
+  random: { min: 0, max: 2 }
 };
 
 const ARITHMETIC_OPS = new Set(["add", "subtract", "multiply", "divide", "mod", "power"]);
@@ -314,6 +317,7 @@ class Rule {
    * |`"environment"`|`0`|No arguments, returns the `Environment`|
    * |`"vector"`|`any`|Creates an n-dimensional {@linkcode Vector} from the supplied arguments|
    * |`"log"`|`any`|Logs expression(s) and returns the last evaluated value|
+   * |`"random"`|`0-2`|Returns a random number. No args: float 0-1. One arg (max): int 0-max. Two args (min, max): int min-max. Uses seeded PRNG if `utils.seed()` was called.|
    */
   constructor(environment: Environment, steps: Step[]) {
     this.environment = environment;
@@ -660,6 +664,21 @@ class Rule {
     if (first === Operators.environment) return this.environment;
     if (first === Operators.vector) {
       return new Vector(...this.evaluate(agent, step.slice(1)));
+    }
+    if (first === Operators.random) {
+      // ["random"] -> float 0-1
+      // ["random", max] -> int 0-max
+      // ["random", min, max] -> int min-max
+      if (argCount === 0) {
+        return random(0, 1, true);
+      } else if (argCount === 1) {
+        const max = this.evaluate(agent, a);
+        return random(0, max);
+      } else {
+        const min = this.evaluate(agent, a);
+        const max = this.evaluate(agent, b);
+        return random(min, max);
+      }
     }
 
     return first;

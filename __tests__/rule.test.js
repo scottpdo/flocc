@@ -320,3 +320,34 @@ it("Correctly instantiates Vectors.", () => {
   let rule = new Rule(environment, steps);
   expect(rule.call()).toEqual([3, 4]);
 });
+
+it("Correctly generates random numbers.", () => {
+  // No args: returns float between 0 and 1
+  let steps = ["random"];
+  let rule = new Rule(environment, steps);
+  for (let i = 0; i < 10; i++) {
+    const result = rule.call();
+    expect(result).toBeGreaterThanOrEqual(0);
+    expect(result).toBeLessThanOrEqual(1);
+  }
+
+  // One arg: returns int between 0 and max
+  steps = ["random", 10];
+  rule = new Rule(environment, steps);
+  for (let i = 0; i < 20; i++) {
+    const result = rule.call();
+    expect(Number.isInteger(result)).toBe(true);
+    expect(result).toBeGreaterThanOrEqual(0);
+    expect(result).toBeLessThanOrEqual(10);
+  }
+
+  // Two args: returns int between min and max
+  steps = ["random", 5, 15];
+  rule = new Rule(environment, steps);
+  for (let i = 0; i < 20; i++) {
+    const result = rule.call();
+    expect(Number.isInteger(result)).toBe(true);
+    expect(result).toBeGreaterThanOrEqual(5);
+    expect(result).toBeLessThanOrEqual(15);
+  }
+});
