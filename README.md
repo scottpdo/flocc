@@ -11,7 +11,7 @@
 
 Flocc makes it easy to create simulations where many autonomous agents interact with each other and their environment, producing emergent behaviors and complex dynamics. Whether you're a researcher, educator, or curious developer, Flocc provides the building blocks to explore complex systems.
 
-**[Examples](https://flocc.net)** · **[Documentation](https://docs.flocc.net)** *(coming soon)* · **[API Reference](https://docs.flocc.net)**
+**[Examples](https://flocc.net)** · **[Documentation + API Reference](https://docs.flocc.net)**
 
 ---
 
@@ -192,7 +192,7 @@ Explore interactive examples at **[flocc.net](https://flocc.net)**:
 ## Resources
 
 - **[Examples Gallery](https://flocc.net)** — Interactive demos and tutorials
-- **[API Documentation](https://docs.flocc.net)** — Full API reference *(coming soon)*
+- **[API Documentation](https://docs.flocc.net)** — Full API reference
 - **[GitHub Discussions](https://github.com/scottpdo/flocc/discussions)** — Ask questions and share ideas
 - **[Changelog](./CHANGELOG.md)** — Recent updates and releases
 
