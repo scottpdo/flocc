@@ -23,5 +23,5 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
       
-      - run: aws s3 sync dist/ s3://docs.flocc.net --delete
+      - run: aws s3 sync docs/ s3://docs.flocc.net --delete
       - run: aws cloudfront create-invalidation --distribution-id E1XBVYNOZGB186 --paths "/*"
