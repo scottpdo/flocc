@@ -3,7 +3,6 @@ import { BBox } from "./BBox";
 import median from "../utils/median";
 import sample from "../utils/sample";
 import { Vector } from "./Vector";
-import min from "../utils/min";
 import distance from "../utils/distance";
 
 const MAX_IN_LEAF = 5;
@@ -98,9 +97,14 @@ class KDTree {
     trees: KDTree[] = []
   ): KDTree[] {
     const { left, right } = this;
-    if (left) left.subtreesWithinDistance(pt, d, trees);
-    if (right) right.subtreesWithinDistance(pt, d, trees);
-    if (!left && !right && this.sphereIntersectsBBox(pt, d)) trees.push(this);
+    if (!left && !right) {
+      if (this.sphereIntersectsBBox(pt, d)) trees.push(this);
+    } else {
+      if (left && left.sphereIntersectsBBox(pt, d))
+        left.subtreesWithinDistance(pt, d, trees);
+      if (right && right.sphereIntersectsBBox(pt, d))
+        right.subtreesWithinDistance(pt, d, trees);
+    }
     return trees;
   }
 
@@ -148,55 +152,79 @@ class KDTree {
 
   /**
    * Return all the Agents in this KDTree that are within `d` distance
-   * of the given Point or Agent `pt`.
+   * of the given Point or Agent `pt`, optionally restricted to agents that
+   * pass `filterFn`.
    * @param {Point | Agent} pt
    * @param {number} d
+   * @param {(a: Agent) => boolean} [filterFn] - Optional predicate; only
+   *   matching agents are returned. Defaults to accepting all agents.
    * @since 0.3.5
    */
-  agentsWithinDistance(pt: Point | Agent, d: number): Agent[] {
+  agentsWithinDistance(
+    pt: Point | Agent,
+    d: number,
+    filterFn: (a: Agent) => boolean = () => true
+  ): Agent[] {
     const trees = this.subtreesWithinDistance(pt, d);
     return arrayOfTreesToAgents(trees).filter(
-      a => a !== pt && distance(a, pt) <= d
+      a => a !== pt && distance(a, pt) <= d && filterFn(a)
     );
   }
 
   /**
-   * Returns the Agent in this KDTree that is closest spatially to the
-   * given Point or Agent `pt`.
-   * @param {Point | Agent} pt
+   * Returns the Agent in this KDTree that is closest spatially to the given
+   * Point or Agent `pt`, optionally restricted to agents that pass `filterFn`.
+   *
+   * When `pt` is an Agent, its cached `__subtree` reference is used directly
+   * instead of traversing from the root, avoiding an O(log n) traversal and a
+   * potential out-of-bounds error. The search expands outward until a
+   * qualifying candidate is found, then widens to all subtrees within that
+   * distance to guarantee the true nearest filtered neighbor is returned.
+   * Distance values are computed once per candidate and cached to avoid
+   * redundant calculations during sorting.
+   *
+   * @param {Agent | Point} pt - The reference point or agent to search from.
+   * @param {(a: Agent) => boolean} [filterFn] - Optional predicate. Only agents
+   *   for which `filterFn(agent)` returns `true` are considered. Defaults to
+   *   accepting all agents.
+   * @returns {Agent} The nearest qualifying agent.
    * @since 0.3.5
    */
-  nearestNeighbor(pt: Agent | Point): Agent {
-    // locate the subtree this point is in
-    let candidates: Agent[] = this.locateSubtree(pt).agents.filter(
-      a => a !== pt
-    );
+  nearestNeighbor(pt: Agent | Point, filterFn: (a: Agent) => boolean = () => true): Agent {
+    // When pt is an Agent, use its cached subtree reference directly to avoid
+    // an O(log n) root traversal and a potential out-of-bounds throw.
+    const leafSubtree =
+      pt instanceof Agent && pt.__subtree ? pt.__subtree : this.locateSubtree(pt);
 
-    // get the distance of the nearest candidate agent in this subtree
-    let nearestDistance = min(candidates.map(a => distance(a, pt)));
+    // Collect filtered candidates from the leaf and compute distances once.
+    let candidates: Agent[] = leafSubtree.agents.filter(a => a !== pt && filterFn(a));
+    let nearestDistance = candidates.reduce(
+      (best, a) => Math.min(best, distance(a, pt)),
+      Infinity
+    );
     let trees: KDTree[];
 
-    // if there are no other candidates, then slowly expand the circle outward
-    // from this agent until we hit at least one
+    // If no qualifying candidates exist in the leaf, expand the search radius
+    // outward exponentially until we find at least one filtered agent.
     let testDistance = 0.001;
     while (nearestDistance === Infinity) {
       trees = this.subtreesWithinDistance(pt, testDistance);
-      candidates = arrayOfTreesToAgents(trees).filter(a => a !== pt);
-      nearestDistance = min(candidates.map(a => distance(a, pt)));
+      candidates = arrayOfTreesToAgents(trees).filter(a => a !== pt && filterFn(a));
+      nearestDistance = candidates.reduce(
+        (best, a) => Math.min(best, distance(a, pt)),
+        Infinity
+      );
       testDistance *= 3;
     }
 
-    // get all subtrees that could contain agents
-    // within `nearestDistance` radius
+    // Collect all candidates within `nearestDistance`, compute each distance
+    // once, sort by it, and return the closest.
     trees = this.subtreesWithinDistance(pt, nearestDistance);
-    candidates = arrayOfTreesToAgents(trees).filter(a => a !== pt);
+    candidates = arrayOfTreesToAgents(trees).filter(a => a !== pt && filterFn(a));
 
-    // sort by distance
-    candidates.sort((a, b) => {
-      return distance(a, pt) < distance(b, pt) ? -1 : 1;
-    });
-
-    return candidates[0];
+    const withDist = candidates.map(a => ({ a, d: distance(a, pt) }));
+    withDist.sort((x, y) => x.d - y.d);
+    return withDist[0]?.a ?? null;
   }
 
   /**
