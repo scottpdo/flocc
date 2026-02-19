@@ -149,7 +149,34 @@ it("agentsWithinDistance captures agents near both the left and right edges", ()
   expect(neighbors).toContain(wrap);
 });
 
-// ─── Test 5: correct after rebalance ─────────────────────────────────────────
+// ─── Test 5: nearestNeighbor returns null when filter matches nothing ────────
+
+it("nearestNeighbor returns null (not infinite loop) when no agent passes filter", () => {
+  const env = new Environment({ torus: true, width: W, height: H });
+  const tree = new KDTree([], 2);
+  env.use(tree);
+
+  // Add some agents of type "predator"
+  for (let i = 0; i < 10; i++) {
+    const a = new Agent({ x: Math.random() * W, y: Math.random() * H });
+    a.set('typeId', 'predator');
+    env.addAgent(a, false);
+  }
+
+  const query = new Agent({ x: 50, y: 50 });
+  query.set('typeId', 'predator');
+  env.addAgent(query, false);
+
+  tree.rebalance();
+
+  // Filter for "prey" — but there are none
+  const nearest = tree.nearestNeighbor(query, (a) => a.get('typeId') === 'prey');
+
+  // Should return null, NOT hang in infinite loop
+  expect(nearest).toBeNull();
+});
+
+// ─── Test 6: correct after rebalance ─────────────────────────────────────────
 
 it("torus nearest neighbor remains correct after rebalancing", () => {
   const env = new Environment({ torus: true, width: W, height: H });

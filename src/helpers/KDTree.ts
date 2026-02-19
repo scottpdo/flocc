@@ -190,7 +190,7 @@ class KDTree {
    * @returns {Agent} The nearest qualifying agent.
    * @since 0.3.5
    */
-  nearestNeighbor(pt: Agent | Point, filterFn: (a: Agent) => boolean = () => true): Agent {
+  nearestNeighbor(pt: Agent | Point, filterFn: (a: Agent) => boolean = () => true): Agent | null {
     // When pt is an Agent, use its cached subtree reference directly to avoid
     // an O(log n) root traversal and a potential out-of-bounds throw.
     const leafSubtree =
@@ -206,8 +206,18 @@ class KDTree {
 
     // If no qualifying candidates exist in the leaf, expand the search radius
     // outward exponentially until we find at least one filtered agent.
+    // To avoid an infinite loop when NO agent passes the filter, we cap the
+    // search at the diagonal of the bounding box (guarantees we've checked
+    // everywhere) and return null if still nothing is found.
+    const maxSearchDistance = Math.sqrt(
+      Math.pow(this.bbox.max.x - this.bbox.min.x, 2) +
+        Math.pow(this.bbox.max.y - this.bbox.min.y, 2) +
+        (this.dimension === 3
+          ? Math.pow(this.bbox.max.z - this.bbox.min.z, 2)
+          : 0)
+    );
     let testDistance = 0.001;
-    while (nearestDistance === Infinity) {
+    while (nearestDistance === Infinity && testDistance <= maxSearchDistance * 2) {
       trees = this.subtreesWithinDistance(pt, testDistance);
       candidates = arrayOfTreesToAgents(trees).filter(a => a !== pt && filterFn(a));
       nearestDistance = candidates.reduce(
@@ -215,6 +225,11 @@ class KDTree {
         Infinity
       );
       testDistance *= 3;
+    }
+
+    // If we've searched the entire tree and found nothing, return null.
+    if (nearestDistance === Infinity) {
+      return null;
     }
 
     // Collect all candidates within `nearestDistance`, compute each distance
