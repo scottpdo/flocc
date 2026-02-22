@@ -91,7 +91,7 @@ it("Correctly loops over agents in the order they were added.", () => {
     agent.addRule(tick);
     environment.addAgent(agent);
   }
-  environment.tick();
+  environment.tick({ randomizeOrder: false });
   expect(order).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
 
   environment.clear();
