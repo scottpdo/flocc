@@ -98,10 +98,11 @@ class Environment extends Agent {
   scheduler: Scheduler | null = null;
 
   /**
-   * Optional event bus for publish-subscribe messaging between agents.
+   * Event bus for publish-subscribe messaging between agents.
+   * Automatically created with every Environment.
    * @since 0.6.0
    */
-  events: EventBus | null = null;
+  events: EventBus;
 
   /** @hidden */
   private _tickIntervalId: ReturnType<typeof setInterval> | null = null;
@@ -137,7 +138,7 @@ class Environment extends Agent {
    * - `width` &mdash; The width of the `Environment` (used when `torus = true`)
    * - `height` &mdash; The height of the `Environment` (used when `torus = true`)
    * - `scheduler` &mdash; Optional scheduler for controlling agent activation (see {@linkcode Scheduler})
-   * - `events` &mdash; Optional event bus for pub-sub messaging (see {@linkcode EventBus})
+   * - `events` &mdash; Custom event bus for pub-sub messaging (one is created automatically if not provided; see {@linkcode EventBus})
    * @override
    */
   constructor(opts: EnvironmentOptions = defaultEnvironmentOptions) {
@@ -152,11 +153,9 @@ class Environment extends Agent {
       this.scheduler = opts.scheduler;
     }
 
-    // Set up event bus if provided
-    if (opts.events) {
-      this.events = opts.events;
-      this.events.setEnvironment(this);
-    }
+    // Set up event bus (use provided or create new)
+    this.events = opts.events ?? new EventBus();
+    this.events.setEnvironment(this);
   }
 
   /**
