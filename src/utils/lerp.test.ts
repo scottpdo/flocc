@@ -1,8 +1,5 @@
-/**
- * Test linear interpolation function.
- */
+import { utils } from '../main';
 
-const { utils } = require("../dist/flocc");
 const { lerp } = utils;
 
 it("Correctly linearly interpolates between two values.", () => {

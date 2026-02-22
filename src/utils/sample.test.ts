@@ -1,4 +1,5 @@
-const { utils } = require("../dist/flocc");
+import { utils } from '../main';
+
 const { sample, sampler } = utils;
 
 it("Samples an array without weights.", () => {
@@ -17,7 +18,7 @@ it("Samples an array with weights.", () => {
   const arr = [20, 30, 40];
   // weights already normalized
   const weights = [0.1, 0.1, 0.8];
-  const output = [];
+  const output: number[] = [];
 
   while (output.length < 1000) output.push(sample(arr, weights));
 
@@ -32,7 +33,7 @@ it("Samples an array with weights.", () => {
   const [a, b, c] = [{ a: 1 }, { b: 2 }, { c: 3 }];
   const arr2 = [a, b, c];
   const weights2 = [2, 2, 16];
-  const output2 = [];
+  const output2: any[] = [];
 
   while (output2.length < 1000) output2.push(sample(arr2, weights2));
 
@@ -49,14 +50,14 @@ it("Creates a sampler to sample multiple values.", () => {
   expect(sample0(arr)).toBeNull();
 
   const sample1 = sampler(1);
-  sampled = sample1(arr);
+  let sampled: any = sample1(arr);
   expect(arr.includes(sampled)).toBe(true);
 
   const sample2 = sampler(2);
   sampled = sample2(arr);
 
   expect(sampled).toHaveLength(2);
-  sampled.forEach(s => {
+  sampled.forEach((s: any) => {
     expect(arr.includes(s)).toBe(true);
   });
 
@@ -71,8 +72,8 @@ it("Samples multiple values with weights.", () => {
   const weights = [100, 10, 1, 1, 1];
 
   const sample2 = sampler(2);
-  const first = [];
-  const second = [];
+  const first: number[] = [];
+  const second: number[] = [];
   for (let i = 0; i < 1000; i++) {
     const [a, b] = sample2(arr, weights);
     first.push(a);

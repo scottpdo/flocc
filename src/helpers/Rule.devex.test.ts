@@ -1,4 +1,4 @@
-const { Agent, Environment, Rule } = require("../dist/flocc");
+import { Agent, Environment, Rule } from '../main';
 
 const environment = new Environment();
 
@@ -7,7 +7,7 @@ const environment = new Environment();
 // ============================================================
 
 describe("Runtime warnings", () => {
-  let warnSpy;
+  let warnSpy: jest.SpyInstance;
 
   beforeEach(() => {
     warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
@@ -269,7 +269,7 @@ describe("Rule.operatorInfo", () => {
 // ============================================================
 
 describe("Improved log operator", () => {
-  let logSpy;
+  let logSpy: jest.SpyInstance;
 
   beforeEach(() => {
     logSpy = jest.spyOn(console, "log").mockImplementation(() => {});
@@ -351,7 +351,7 @@ describe("Improved log operator", () => {
 // ============================================================
 
 describe("Regression tests", () => {
-  let warnSpy;
+  let warnSpy: jest.SpyInstance;
 
   beforeEach(() => {
     warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
@@ -527,8 +527,8 @@ describe("Rule.formatSteps() static method", () => {
 // ============================================================
 
 describe("Trace mode", () => {
-  let logSpy;
-  let warnSpy;
+  let logSpy: jest.SpyInstance;
+  let warnSpy: jest.SpyInstance;
 
   beforeEach(() => {
     logSpy = jest.spyOn(console, "log").mockImplementation(() => {});

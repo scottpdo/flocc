@@ -1,4 +1,4 @@
-const { Agent, Environment, Vector, KDTree, utils } = require("../dist/flocc");
+import { Agent, Environment, Vector, KDTree, utils } from '../main';
 
 utils.seed(1);
 
@@ -77,12 +77,12 @@ it("Finds all agents within a given distance.", () => {
   expect(neighbors.includes(agent)).toBe(false);
   expect(neighbors.length).toBe(3);
 
-  let point = { x: 5.2, y: 2.1, z: 3 };
+  let point: { x: number; y: number; z: number } = { x: 5.2, y: 2.1, z: 3 };
   neighbors = tree.agentsWithinDistance(point, 1);
   expect(neighbors.length).toBeGreaterThan(0);
 
-  point = new Vector(5.2, 2.1, 3);
-  neighbors = tree.agentsWithinDistance(point, 1);
+  const vecPoint = new Vector(5.2, 2.1, 3);
+  neighbors = tree.agentsWithinDistance(vecPoint, 1);
   expect(neighbors.length).toBeGreaterThan(0);
 });
 
@@ -111,7 +111,7 @@ it("Handles adding and removing agents", () => {
 
 it(".__subtree member is correctly set for agents", () => {
   const agent = environment.getAgents()[0]; // at 0, 0, 0
-  expect(agent.__subtree).toBeInstanceOf(KDTree);
+  expect((agent as any).__subtree).toBeInstanceOf(KDTree);
 });
 
 it("nearestNeighbor with filterFn skips agents that don't pass the filter", () => {
@@ -138,7 +138,7 @@ it("nearestNeighbor with filterFn works when filtered agent is in a different su
   expect(unfiltered).toBeInstanceOf(Agent);
 
   // Filter out all agents at distance 1 from the corner
-  const skipClose = a => {
+  const skipClose = (a: Agent) => {
     const dx = a.get("x") - 0;
     const dy = a.get("y") - 0;
     const dz = a.get("z") - 0;
@@ -165,7 +165,7 @@ it("nearestNeighbor uses __subtree for agent lookups", () => {
   const agent = environment.getAgents().find(
     a => a.get("x") === 10 && a.get("y") === 10 && a.get("z") === 10
   );
-  expect(agent.__subtree).toBeInstanceOf(KDTree);
+  expect((agent as any).__subtree).toBeInstanceOf(KDTree);
 
   // Agent path (uses __subtree) must not return the agent itself,
   // and must return an adjacent grid neighbor at distance 1.

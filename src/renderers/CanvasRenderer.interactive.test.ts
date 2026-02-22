@@ -1,9 +1,10 @@
-const { Agent, Environment, CanvasRenderer } = require("../dist/flocc");
+import { Agent, Environment, CanvasRenderer } from '../main';
 
 // Mock devicePixelRatio
 Object.defineProperty(window, "devicePixelRatio", { value: 1 });
 
-let environment, renderer;
+let environment: Environment;
+let renderer: CanvasRenderer;
 
 beforeEach(() => {
   environment = new Environment();
@@ -73,37 +74,40 @@ describe("CanvasRenderer interactive features", () => {
         width: 100,
         height: 100,
         right: 100,
-        bottom: 100
+        bottom: 100,
+        x: 0,
+        y: 0,
+        toJSON: () => {}
       });
     });
 
     it("returns null when no agents exist", () => {
-      expect(renderer._agentAtPoint(50, 50)).toBeNull();
+      expect((renderer as any)._agentAtPoint(50, 50)).toBeNull();
     });
 
     it("detects a circle agent at its position", () => {
       const agent = new Agent({ x: 50, y: 50, size: 10 });
       environment.addAgent(agent);
-      expect(renderer._agentAtPoint(50, 50)).toBe(agent);
+      expect((renderer as any)._agentAtPoint(50, 50)).toBe(agent);
     });
 
     it("returns null when clicking outside an agent", () => {
       const agent = new Agent({ x: 50, y: 50, size: 5 });
       environment.addAgent(agent);
-      expect(renderer._agentAtPoint(0, 0)).toBeNull();
+      expect((renderer as any)._agentAtPoint(0, 0)).toBeNull();
     });
 
     it("detects a rect agent at its position", () => {
       const agent = new Agent({ x: 50, y: 50, shape: "rect", width: 20, height: 20 });
       environment.addAgent(agent);
       // Center of the rect should hit
-      expect(renderer._agentAtPoint(50, 50)).toBe(agent);
+      expect((renderer as any)._agentAtPoint(50, 50)).toBe(agent);
     });
 
     it("detects a triangle agent at its position", () => {
       const agent = new Agent({ x: 50, y: 50, shape: "triangle", size: 20 });
       environment.addAgent(agent);
-      expect(renderer._agentAtPoint(50, 50)).toBe(agent);
+      expect((renderer as any)._agentAtPoint(50, 50)).toBe(agent);
     });
 
     it("returns the topmost agent when agents overlap", () => {
@@ -112,7 +116,7 @@ describe("CanvasRenderer interactive features", () => {
       environment.addAgent(agent1);
       environment.addAgent(agent2);
       // agent2 added last, drawn on top, should be returned
-      expect(renderer._agentAtPoint(50, 50)).toBe(agent2);
+      expect((renderer as any)._agentAtPoint(50, 50)).toBe(agent2);
     });
   });
 

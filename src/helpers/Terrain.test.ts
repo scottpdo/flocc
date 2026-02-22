@@ -1,7 +1,7 @@
-const { Environment, Terrain, Colors } = require("../dist/flocc");
+import { Environment, Terrain, Colors } from '../main';
 
-let environment;
-let terrain;
+let environment: Environment;
+let terrain: Terrain;
 
 const width = 50;
 const height = 50;
@@ -43,13 +43,13 @@ it("Can initialize with other pixels", () => {
 });
 
 it("Can have a single update rule", () => {
-  const update = (x, y) => {};
+  const update = (x: number, y: number) => {};
   terrain.addRule(update);
   expect(terrain.rule).toBe(update);
 });
 
 it("Update rules that don't return anything don't affect the pixel value", () => {
-  const update = (x, y) => {};
+  const update = (x: number, y: number) => {};
   terrain.addRule(update);
   // set all to red
   terrain.init((x, y) => Colors.RED);
@@ -63,24 +63,22 @@ it("Update rules that don't return anything don't affect the pixel value", () =>
 });
 
 it("Returning a pixel from the update rule sets that pixel value", () => {
-  const update = (x, y) => Colors.YELLOW;
+  const update = (x: number, y: number) => Colors.YELLOW;
   terrain.addRule(update);
   environment.tick();
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      // should still be red
       expect(terrain.sample(x, y)).toStrictEqual(Colors.YELLOW);
     }
   }
 });
 
 it("Returning a number from the update rule sets that value on r/g/b", () => {
-  const update = (x, y) => 127;
+  const update = (x: number, y: number) => 127;
   terrain.addRule(update);
   environment.tick();
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      // should still be red
       expect(terrain.sample(x, y)).toStrictEqual({
         r: 127,
         g: 127,
@@ -94,11 +92,11 @@ it("Returning a number from the update rule sets that value on r/g/b", () => {
 const DEAD = 0;
 const ALIVE = 255;
 
-const isAlive = p => p === ALIVE;
+const isAlive = (p: number) => p === ALIVE;
 
-const lifeRule = (x, y) => {
+const lifeRule = (x: number, y: number) => {
   const self = terrain.sample(x, y);
-  const isSelfAlive = isAlive(self);
+  const isSelfAlive = isAlive(self as number);
   const livingNeighbors = terrain.neighbors(x, y, 1, true).filter(isAlive)
     .length;
 

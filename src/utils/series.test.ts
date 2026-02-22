@@ -1,4 +1,5 @@
-const { utils } = require("../dist/flocc");
+import { utils } from '../main';
+
 const { series } = utils;
 
 it("Creates non-repeating series.", () => {
@@ -7,7 +8,7 @@ it("Creates non-repeating series.", () => {
   const c = 999;
 
   [a, b, c].forEach(n => {
-    const arr = [];
+    const arr: number[] = [];
     const generator = series(n);
     for (let i = 0; i < n; i++) {
       const { value } = generator.next();

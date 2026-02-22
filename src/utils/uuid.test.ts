@@ -1,4 +1,5 @@
-const { Agent, Environment, utils } = require("../dist/flocc");
+import { utils } from '../main';
+
 const { uuid } = utils;
 
 it("Generates a uuid of length 36", () => {

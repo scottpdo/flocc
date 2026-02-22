@@ -1,8 +1,5 @@
-/**
- * Test stats functions (sum, mean, standard deviation).
- */
+import { utils } from '../main';
 
-const { utils } = require("../dist/flocc");
 const { sum, max, min, median, mean, stdDev } = utils;
 
 it("Correctly sums an array.", () => {

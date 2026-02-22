@@ -7,19 +7,19 @@
  * torus check in intersectsAlongDimension must bridge the wrap.
  */
 
-const { Agent, Environment, KDTree } = require("../dist/flocc");
+import { Agent, Environment, KDTree } from '../main';
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 /** Add an agent at (x, y) to env; return it. */
-function addAt(env, x, y) {
+function addAt(env: Environment, x: number, y: number): Agent {
   const a = new Agent({ x, y });
   env.addAgent(a, false); // rebalance: false — rebalance once at end
   return a;
 }
 
 /** Euclidean torus distance between two (x,y) tuples. */
-function torusDist(ax, ay, bx, by, w, h) {
+function torusDist(ax: number, ay: number, bx: number, by: number, w: number, h: number): number {
   let dx = Math.abs(bx - ax);
   let dy = Math.abs(by - ay);
   if (dx > w / 2) dx = w - dx;
@@ -170,7 +170,7 @@ it("nearestNeighbor returns null (not infinite loop) when no agent passes filter
   tree.rebalance();
 
   // Filter for "prey" — but there are none
-  const nearest = tree.nearestNeighbor(query, (a) => a.get('typeId') === 'prey');
+  const nearest = tree.nearestNeighbor(query, a => a.get('typeId') === 'prey');
 
   // Should return null, NOT hang in infinite loop
   expect(nearest).toBeNull();

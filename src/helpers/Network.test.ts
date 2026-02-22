@@ -1,7 +1,7 @@
-const { Agent, Environment, Network } = require("../dist/flocc");
+import { Agent, Environment, Network } from '../main';
 
-let network;
-let environment;
+let network: Network;
+let environment: Environment;
 
 beforeEach(() => {
   network = new Network();

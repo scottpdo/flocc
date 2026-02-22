@@ -1,4 +1,4 @@
-const { Vector } = require("../dist/flocc");
+import { Vector } from '../main';
 
 const v = new Vector();
 const v2 = new Vector();

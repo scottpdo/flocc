@@ -1,4 +1,4 @@
-const { Agent, Environment, TableRenderer } = require("../dist/flocc");
+import { Agent, Environment, TableRenderer } from '../main';
 
 it("Instantiates an empty TableRenderer", () => {
   const environment = new Environment();
@@ -72,7 +72,7 @@ it("Can filter out data", () => {
     environment.addAgent(new Agent({ i }));
   }
   const renderer = new TableRenderer(environment, {
-    filter: a => a.get("i") % 2 === 0
+    filter: (a: Agent) => a.get("i") % 2 === 0
   });
   renderer.columns = ["i"];
   expect(renderer.output()).toBe(
@@ -143,7 +143,7 @@ it("Can display filtered, limited, and sorted data", () => {
     environment.addAgent(new Agent({ i, j: (2 * i) % 7 }));
   }
   const renderer = new TableRenderer(environment, {
-    filter: a => a.get("i") < 7,
+    filter: (a: Agent) => a.get("i") < 7,
     sortKey: "j",
     order: "desc",
     limit: 4,

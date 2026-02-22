@@ -1,10 +1,10 @@
-const { Agent, Environment, Rule, Vector } = require("../dist/flocc");
+import { Agent, Environment, Rule, Vector } from '../main';
 
 const agent = new Agent();
 const environment = new Environment();
 
 it("Correctly adds.", () => {
-  let steps = ["add", 1, 1];
+  let steps: any[] = ["add", 1, 1];
   let rule = new Rule(environment, steps);
   expect(rule.call()).toBe(2);
 
@@ -14,7 +14,7 @@ it("Correctly adds.", () => {
 });
 
 it("Correctly subtracts.", () => {
-  let steps = ["subtract", 1, 1];
+  let steps: any[] = ["subtract", 1, 1];
   let rule = new Rule(environment, steps);
   expect(rule.call()).toBe(0);
 
@@ -24,7 +24,7 @@ it("Correctly subtracts.", () => {
 });
 
 it("Correctly multiplies.", () => {
-  let steps = ["multiply", 10, 10];
+  let steps: any[] = ["multiply", 10, 10];
   let rule = new Rule(environment, steps);
   expect(rule.call()).toBe(100);
 
@@ -34,7 +34,7 @@ it("Correctly multiplies.", () => {
 });
 
 it("Correctly divides.", () => {
-  let steps = ["divide", 100, 10];
+  let steps: any[] = ["divide", 100, 10];
   let rule = new Rule(environment, steps);
   expect(rule.call()).toBe(10);
 
@@ -44,7 +44,7 @@ it("Correctly divides.", () => {
 });
 
 it("Correctly takes modulos.", () => {
-  let steps = ["mod", 17, 10];
+  let steps: any[] = ["mod", 17, 10];
   let rule = new Rule(environment, steps);
   expect(rule.call()).toBe(7);
 
@@ -54,7 +54,7 @@ it("Correctly takes modulos.", () => {
 });
 
 it("Correctly exponentiates.", () => {
-  let steps = ["power", 2, 5];
+  let steps: any[] = ["power", 2, 5];
   let rule = new Rule(environment, steps);
   expect(rule.call()).toBe(32);
 
@@ -66,7 +66,7 @@ it("Correctly exponentiates.", () => {
 it("Correctly retrieves agent data.", () => {
   agent.set("x", 123);
   agent.set("y", "asdf");
-  let steps = ["get", "x"];
+  let steps: any[] = ["get", "x"];
   let rule = new Rule(environment, steps);
   expect(rule.call(agent)).toBe(123);
 
@@ -80,14 +80,14 @@ it("Correctly retrieves agent data.", () => {
 });
 
 it("Correctly sets agent data.", () => {
-  let steps = ["set", "x", 999];
+  let steps: any[] = ["set", "x", 999];
   let rule = new Rule(environment, steps);
   rule.call(agent);
   expect(agent.get("x")).toBe(999);
 });
 
 it("Correctly enqueues setting agent data.", () => {
-  let steps = ["enqueue", "x", 999];
+  let steps: any[] = ["enqueue", "x", 999];
   let rule = new Rule(environment, steps);
   const a = new Agent();
   a.set("x", 100);
@@ -99,7 +99,7 @@ it("Correctly enqueues setting agent data.", () => {
 });
 
 it("Correctly sets and gets local variables.", () => {
-  let steps = [["local", "i", 1], ["local", "i"]];
+  let steps: any[] = [["local", "i", 1], ["local", "i"]];
   let rule = new Rule(environment, steps);
   expect(rule.call()).toBe(1);
 
@@ -124,7 +124,7 @@ it("Correctly sets and gets local variables.", () => {
 });
 
 it("Correctly matches conditionals.", () => {
-  let steps = ["if", true, 1, 2];
+  let steps: any[] = ["if", true, 1, 2];
   let rule = new Rule(environment, steps);
   expect(rule.call()).toBe(1);
 
@@ -134,7 +134,7 @@ it("Correctly matches conditionals.", () => {
 });
 
 it("Correctly matches 'and' statements.", () => {
-  let steps = ["and", true, true];
+  let steps: any[] = ["and", true, true];
   let rule = new Rule(environment, steps);
   expect(rule.call()).toBe(true);
 
@@ -144,7 +144,7 @@ it("Correctly matches 'and' statements.", () => {
 });
 
 it("Correctly matches 'or' statements.", () => {
-  let steps = ["or", false, false];
+  let steps: any[] = ["or", false, false];
   let rule = new Rule(environment, steps);
   expect(rule.call()).toBe(false);
 
@@ -154,7 +154,7 @@ it("Correctly matches 'or' statements.", () => {
 });
 
 it("Correctly does numeric comparisons.", () => {
-  let steps = ["gt", 1, 2];
+  let steps: any[] = ["gt", 1, 2];
   let rule = new Rule(environment, steps);
   expect(rule.call()).toBe(false);
 
@@ -202,7 +202,7 @@ it("Correctly maps arrays.", () => {
   // when given an array, returns the same object
   expect(rule.call()).toBe(arr);
 
-  let steps = ["map", arr, ["add", 2]];
+  let steps: any[] = ["map", arr, ["add", 2]];
   rule = new Rule(environment, steps);
   expect(rule.call()).toEqual([3, 4, 5]);
 
@@ -217,7 +217,7 @@ it("Correctly maps arrays.", () => {
 it("Correctly filters arrays.", () => {
   const arr = [1, 2, 3, 4, 5];
 
-  let steps = ["filter", arr, ["gte", 2]];
+  let steps: any[] = ["filter", arr, ["gte", 2]];
   let rule = new Rule(environment, steps);
   expect(rule.call()).toEqual([2, 3, 4, 5]);
 
@@ -233,7 +233,7 @@ it("Filters with compound predicates using local '_' syntax.", () => {
   const arr = [1, 2, 3, 4, 5];
 
   // Filter using AND with local "_" syntax
-  let steps = ["filter", arr, ["and", ["gte", ["local", "_"], 2], ["lte", ["local", "_"], 4]]];
+  let steps: any[] = ["filter", arr, ["and", ["gte", ["local", "_"], 2], ["lte", ["local", "_"], 4]]];
   let rule = new Rule(environment, steps);
   expect(rule.call()).toEqual([2, 3, 4]);
 
@@ -252,7 +252,7 @@ it("Maps with compound expressions using local '_' syntax.", () => {
   const arr = [1, 2, 3, 4, 5];
 
   // Map using IF to conditionally transform
-  let steps = ["map", arr, ["if", ["gt", ["local", "_"], 2], ["multiply", ["local", "_"], 10], ["local", "_"]]];
+  let steps: any[] = ["map", arr, ["if", ["gt", ["local", "_"], 2], ["multiply", ["local", "_"], 10], ["local", "_"]]];
   let rule = new Rule(environment, steps);
   expect(rule.call()).toEqual([1, 2, 30, 40, 50]);
 });
@@ -274,7 +274,7 @@ it("Handles multiple calls with same rule (no state corruption).", () => {
 });
 
 it(`Correctly retrieves values from an object's key.`, () => {
-  let steps = ["key", { abc: "123" }, "abc"];
+  let steps: any[] = ["key", { abc: "123" }, "abc"];
   let rule = new Rule(environment, steps);
   expect(rule.call()).toEqual("123");
 
@@ -284,12 +284,12 @@ it(`Correctly retrieves values from an object's key.`, () => {
 });
 
 it("Correctly calls methods on an object.", () => {
-  let steps = [
+  let steps: any[] = [
     [
       "local",
       "obj",
       {
-        double(a) {
+        double(a: number) {
           return 2 * a;
         }
       }
@@ -313,7 +313,7 @@ it("Correctly calls methods on an object.", () => {
 });
 
 it("Correctly instantiates Vectors.", () => {
-  let steps = [
+  let steps: any[] = [
     ["local", "v", ["vector", 2, 3, 4]],
     ["key", ["local", "v"], "yz"]
   ];
@@ -323,7 +323,7 @@ it("Correctly instantiates Vectors.", () => {
 
 it("Correctly generates random numbers.", () => {
   // No args: returns float between 0 and 1
-  let steps = ["random"];
+  let steps: any[] = ["random"];
   let rule = new Rule(environment, steps);
   for (let i = 0; i < 10; i++) {
     const result = rule.call();

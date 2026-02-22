@@ -1,12 +1,5 @@
-const {
-  Environment,
-  LineChartRenderer,
-  utils
-} = require("../dist/flocc");
-const fs = require("fs");
-const PNG = require("pngjs").PNG;
-const pixelmatch = require("pixelmatch");
-const puppeteer = require("puppeteer");
+import { Environment, LineChartRenderer, utils } from '../main';
+import path from 'path';
 
 const width = 200;
 const height = 400;
@@ -38,6 +31,11 @@ it("Can add metrics to a LineChartRenderer", () => {
 });
 
 it("Renders static LineChartRenderer test correctly", async () => {
+  const fs = require('fs');
+  const { PNG } = require('pngjs');
+  const pixelmatch = require('pixelmatch');
+  const puppeteer = require('puppeteer');
+
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
   try {
@@ -50,7 +48,7 @@ it("Renders static LineChartRenderer test correctly", async () => {
     );
     return await browser.close();
   }
-  const filePath = __dirname + "/screenshots/linechart1.png";
+  const filePath = path.join(__dirname, '../../__tests__/screenshots/linechart1.png');
   const existingImage = fs.existsSync(filePath)
     ? PNG.sync.read(fs.readFileSync(filePath))
     : null;
@@ -58,17 +56,22 @@ it("Renders static LineChartRenderer test correctly", async () => {
   if (!existingImage) {
     return await browser.close();
   }
-  const { width, height } = existingImage;
+  const { width: imgWidth, height: imgHeight } = existingImage;
   const newImage = PNG.sync.read(fs.readFileSync(filePath));
-  const diff = new PNG({ width, height });
+  const diff = new PNG({ width: imgWidth, height: imgHeight });
   expect(
-    pixelmatch(existingImage.data, newImage.data, diff.data, width, height)
+    pixelmatch(existingImage.data, newImage.data, diff.data, imgWidth, imgHeight)
   ).toBe(0);
 
   await browser.close();
 });
 
 it("Renders static Lorenz attractor test correctly", async () => {
+  const fs = require('fs');
+  const { PNG } = require('pngjs');
+  const pixelmatch = require('pixelmatch');
+  const puppeteer = require('puppeteer');
+
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
   try {
@@ -81,7 +84,7 @@ it("Renders static Lorenz attractor test correctly", async () => {
     );
     return await browser.close();
   }
-  const filePath = __dirname + "/screenshots/linechart2.png";
+  const filePath = path.join(__dirname, '../../__tests__/screenshots/linechart2.png');
   const existingImage = fs.existsSync(filePath)
     ? PNG.sync.read(fs.readFileSync(filePath))
     : null;
@@ -90,11 +93,11 @@ it("Renders static Lorenz attractor test correctly", async () => {
     await browser.close();
     return;
   }
-  const { width, height } = existingImage;
+  const { width: imgWidth, height: imgHeight } = existingImage;
   const newImage = PNG.sync.read(fs.readFileSync(filePath));
-  const diff = new PNG({ width, height });
+  const diff = new PNG({ width: imgWidth, height: imgHeight });
   expect(
-    pixelmatch(existingImage.data, newImage.data, diff.data, width, height)
+    pixelmatch(existingImage.data, newImage.data, diff.data, imgWidth, imgHeight)
   ).toBe(0);
 
   await browser.close();

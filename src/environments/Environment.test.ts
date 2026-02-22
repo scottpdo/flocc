@@ -1,6 +1,6 @@
-const { Agent, Environment, utils } = require("../dist/flocc");
+import { Agent, Environment, utils } from '../main';
 
-let environment;
+let environment: Environment;
 
 beforeEach(() => {
   environment = new Environment();
@@ -81,8 +81,8 @@ it("Correctly removes agents.", () => {
 });
 
 it("Correctly loops over agents in the order they were added.", () => {
-  const order = [];
-  function tick(agent) {
+  const order: number[] = [];
+  function tick(agent: Agent) {
     order.push(agent.get("i"));
   }
   for (let i = 0; i < 10; i++) {
@@ -98,8 +98,8 @@ it("Correctly loops over agents in the order they were added.", () => {
 });
 
 it("Correctly loops over agents in random order.", () => {
-  const order = [];
-  function tick(agent) {
+  const order: number[] = [];
+  function tick(agent: Agent) {
     order.push(agent.get("i"));
   }
   for (let i = 0; i < 10; i++) {
@@ -118,8 +118,8 @@ it("Correctly loops over agents in random order.", () => {
 });
 
 it("Activates only a single random agent with activation = `random`", () => {
-  const activated = [];
-  const tick = agent => activated.push(agent.get("i"));
+  const activated: number[] = [];
+  const tick = (agent: Agent) => activated.push(agent.get("i"));
   for (let i = 0; i < 11; i++) {
     environment.addAgent(
       new Agent({
@@ -167,8 +167,8 @@ it("Only loops over `n` agents when calling `tick` with an `activationCount`", (
   // when passing more than the total # of agents, should activate
   // exactly as many as there are in the environment
   const environment2 = new Environment();
-  const activated = [];
-  const tick2 = agent => {
+  const activated: number[] = [];
+  const tick2 = (agent: Agent) => {
     activated.push(agent.get("i"));
     count++;
   };
@@ -212,7 +212,7 @@ it("Memoizes values", () => {
   expect(environment.memo(() => true)).toBe(true);
 
   const expensiveFunction = jest.fn(() => 123);
-  const tick = agent => {
+  const tick = (agent: Agent) => {
     agent.set("s", environment.memo(expensiveFunction));
   };
   for (let i = 0; i < 5; i++) {

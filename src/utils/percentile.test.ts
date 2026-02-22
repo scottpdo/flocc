@@ -1,4 +1,5 @@
-const { utils } = require("../dist/flocc");
+import { utils } from '../main';
+
 const { percentile } = utils;
 
 it("Returns null when trying to get percentile of empty array", () => {

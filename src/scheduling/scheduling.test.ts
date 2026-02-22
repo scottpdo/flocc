@@ -1,15 +1,15 @@
-const {
+import {
   Agent,
   Environment,
   EventBus,
   DefaultScheduler,
   PriorityScheduler,
-  PriorityQueue,
-} = require("../dist/flocc.js");
+  PriorityQueue
+} from '../main';
 
 describe("PriorityQueue", () => {
   it("maintains min-heap property", () => {
-    const pq = new PriorityQueue((a, b) => a - b);
+    const pq = new PriorityQueue((a: number, b: number) => a - b);
     pq.insert(5);
     pq.insert(3);
     pq.insert(7);
@@ -23,7 +23,7 @@ describe("PriorityQueue", () => {
   });
 
   it("handles custom comparator", () => {
-    const pq = new PriorityQueue((a, b) => a.priority - b.priority);
+    const pq = new PriorityQueue((a: any, b: any) => a.priority - b.priority);
     pq.insert({ name: "low", priority: 10 });
     pq.insert({ name: "high", priority: 1 });
     pq.insert({ name: "mid", priority: 5 });
@@ -48,9 +48,9 @@ describe("PriorityQueue", () => {
 describe("EventBus", () => {
   it("emits and receives events", () => {
     const events = new EventBus();
-    const received = [];
+    const received: any[] = [];
 
-    events.on("test", (event) => {
+    events.on("test", event => {
       received.push(event.data);
     });
 
@@ -62,9 +62,9 @@ describe("EventBus", () => {
 
   it("supports unsubscribe", () => {
     const events = new EventBus();
-    const received = [];
+    const received: any[] = [];
 
-    const unsubscribe = events.on("test", (event) => {
+    const unsubscribe = events.on("test", event => {
       received.push(event.data);
     });
 
@@ -77,9 +77,9 @@ describe("EventBus", () => {
 
   it("supports once", () => {
     const events = new EventBus();
-    const received = [];
+    const received: any[] = [];
 
-    events.once("test", (event) => {
+    events.once("test", event => {
       received.push(event.data);
     });
 
@@ -91,14 +91,14 @@ describe("EventBus", () => {
 
   it("supports stopPropagation", () => {
     const events = new EventBus();
-    const received = [];
+    const received: string[] = [];
 
-    events.on("test", (event) => {
+    events.on("test", event => {
       received.push("first");
       event.stopPropagation();
     });
 
-    events.on("test", (event) => {
+    events.on("test", () => {
       received.push("second");
     });
 
@@ -112,8 +112,8 @@ describe("EventBus", () => {
     const env = new Environment({ events });
     env.time = 42;
 
-    let receivedEvent = null;
-    events.on("test", (event) => {
+    let receivedEvent: any = null;
+    events.on("test", event => {
       receivedEvent = event;
     });
 
@@ -195,12 +195,12 @@ describe("PriorityScheduler", () => {
 
     let tickCount = 0;
     const agent = new Agent({
-      tick: (a) => {
+      tick: (a: Agent) => {
         tickCount++;
         if (tickCount < 3) {
           a.scheduleIn(5);
         }
-      },
+      }
     });
     env.addAgent(agent);
     scheduler.schedule(agent, 0);
@@ -229,10 +229,10 @@ describe("Environment with EventBus", () => {
   it("emits tick:start and tick:end events", () => {
     const events = new EventBus();
     const env = new Environment({ events });
-    const received = [];
+    const received: string[] = [];
 
-    events.on("tick:start", (e) => received.push(`start:${e.data.time}`));
-    events.on("tick:end", (e) => received.push(`end:${e.data.time}`));
+    events.on("tick:start", e => received.push(`start:${e.data.time}`));
+    events.on("tick:end", e => received.push(`end:${e.data.time}`));
 
     env.tick();
 
@@ -242,10 +242,10 @@ describe("Environment with EventBus", () => {
   it("emits agent:added and agent:removed events", () => {
     const events = new EventBus();
     const env = new Environment({ events });
-    const received = [];
+    const received: string[] = [];
 
-    events.on("agent:added", (e) => received.push(`added:${e.data.agent.id}`));
-    events.on("agent:removed", (e) => received.push(`removed:${e.data.agent.id}`));
+    events.on("agent:added", e => received.push(`added:${e.data.agent.id}`));
+    events.on("agent:removed", e => received.push(`removed:${e.data.agent.id}`));
 
     const agent = new Agent();
     env.addAgent(agent);
@@ -259,7 +259,7 @@ describe("Agent events", () => {
   it("can subscribe to events via agent.on", () => {
     const events = new EventBus();
     const env = new Environment({ events });
-    const received = [];
+    const received: any[] = [];
 
     const agent = new Agent();
     env.addAgent(agent);
@@ -278,7 +278,7 @@ describe("Agent events", () => {
   it("unsubscribe removes handler completely", () => {
     const events = new EventBus();
     const env = new Environment({ events });
-    const received = [];
+    const received: any[] = [];
 
     const agent = new Agent();
     env.addAgent(agent);
@@ -305,12 +305,12 @@ describe("Agent events", () => {
   it("can emit events via agent.emit", () => {
     const events = new EventBus();
     const env = new Environment({ events });
-    const received = [];
+    const received: any[] = [];
 
     const agent = new Agent();
     env.addAgent(agent);
 
-    events.on("agent:signal", (event) => {
+    events.on("agent:signal", event => {
       received.push(event.data);
     });
 
@@ -350,10 +350,10 @@ describe("Environment.tickUntil", () => {
     let tickCount = 0;
 
     const agent = new Agent({
-      tick: (a) => {
+      tick: (a: Agent) => {
         tickCount++;
         a.scheduleIn(10);
-      },
+      }
     });
     env.addAgent(agent);
     scheduler.schedule(agent, 0);

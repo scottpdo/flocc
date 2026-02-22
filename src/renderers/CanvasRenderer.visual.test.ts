@@ -1,17 +1,18 @@
-const fs = require("fs");
-const PNG = require("pngjs").PNG;
-const pixelmatch = require("pixelmatch");
-const puppeteer = require("puppeteer");
-let browser, page;
+import path from 'path';
 
 it("Renders Agents correctly when they wrap in a torus Environment", async () => {
-  browser = await puppeteer.launch({
+  const fs = require('fs');
+  const { PNG } = require('pngjs');
+  const pixelmatch = require('pixelmatch');
+  const puppeteer = require('puppeteer');
+
+  const browser = await puppeteer.launch({
     defaultViewport: {
       height: 200,
       width: 800
     }
   });
-  page = await browser.newPage();
+  const page = await browser.newPage();
   try {
     await page.goto("http://localhost:3000/canvas-wrap", {
       waitUntil: "networkidle2"
@@ -22,7 +23,7 @@ it("Renders Agents correctly when they wrap in a torus Environment", async () =>
     );
     return await browser.close();
   }
-  const filePath = __dirname + "/screenshots/canvas-wrap.png";
+  const filePath = path.join(__dirname, '../../__tests__/screenshots/canvas-wrap.png');
   const existingImage = fs.existsSync(filePath)
     ? PNG.sync.read(fs.readFileSync(filePath))
     : null;

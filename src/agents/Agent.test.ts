@@ -1,4 +1,4 @@
-const { Agent, Environment, Rule } = require("../dist/flocc");
+import { Agent, Environment, Rule } from '../main';
 
 const agent = new Agent();
 agent.set("x", 12);
@@ -79,7 +79,7 @@ it("Sets new data based on return value of rules", () => {
   const a = new Agent();
   a.set("x", 100);
   expect(a.get("x")).toBe(100);
-  function rule(agt) {
+  function rule(agt: Agent) {
     return {
       x: agt.get("x") + 1
     };
@@ -99,7 +99,7 @@ it("Sets new data based on return value of rules asynchronously.", () => {
   e.addAgent(b);
   a.set("x", 100);
   b.set("x", 200);
-  function rule(agt) {
+  function rule(agt: Agent) {
     const mean =
       e
         .getAgents()
@@ -120,7 +120,7 @@ it("Executes function rules when adding a `tick` value.", () => {
   const e = new Environment();
   const a = new Agent({
     x: 1,
-    tick(a) {
+    tick(a: Agent) {
       a.increment("x");
     }
   });
@@ -133,7 +133,7 @@ it("Executes function rules when adding a `tick` value that returns a value.", (
   const e = new Environment();
   const a = new Agent({
     x: 1,
-    tick(a) {
+    tick(a: Agent) {
       return { x: a.get("x") + 1 };
     }
   });
@@ -157,14 +157,14 @@ it("Still executes rules added via `addRule` when there is a `tick` value.", () 
   const e = new Environment();
   const a = new Agent({
     x: 1,
-    tick(a) {
+    tick(a: Agent) {
       a.increment("x"); // 2
     }
   });
-  a.addRule(function(a) {
+  a.addRule(function(a: Agent) {
     a.set("x", a.get("x") * 10); // 20
   });
-  a.addRule(function(a) {
+  a.addRule(function(a: Agent) {
     a.decrement("x", 5); // 15
   });
   e.addAgent(a);
@@ -176,9 +176,9 @@ it("Executes enqueued function rules when adding a `queue` value.", () => {
   const e = new Environment();
   const a = new Agent({
     x: 1,
-    tick(a) {
+    tick(a: Agent) {
       a.increment("x"); // 2
-      a.set("queue", a => a.increment("x")); // 3
+      a.set("queue", (a: Agent) => a.increment("x")); // 3
     }
   });
   e.addAgent(a);
@@ -190,7 +190,7 @@ it("Executes enqueued class rules when adding a `queue` value.", () => {
   const e = new Environment();
   const a = new Agent({
     x: 1,
-    tick(a) {
+    tick(a: Agent) {
       a.increment("x"); // 2
       a.set("queue", new Rule(e, ["set", "x", ["multiply", ["get", "x"], 3]])); // 6
     }

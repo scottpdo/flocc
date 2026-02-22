@@ -1,4 +1,5 @@
-const { utils } = require("../dist/flocc");
+import { utils } from '../main';
+
 const { gcd } = utils;
 
 it("Finds the greatest common divisor of two numbers.", () => {

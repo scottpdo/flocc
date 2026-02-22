@@ -1,8 +1,5 @@
-/**
- * Test distance (Euclidean) and Manhattan distance utility functions.
- */
+import { Agent, Environment, utils } from '../main';
 
-const { Agent, Environment, utils } = require('../dist/flocc');
 const { distance, manhattanDistance } = utils;
 
 const nonToroidalEnv = new Environment({ torus: false });

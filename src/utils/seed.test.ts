@@ -1,9 +1,10 @@
-const { utils } = require("../dist/flocc");
+import { utils } from '../main';
+
 const { seed, uniform } = utils;
 
 it("Initially instantiates with no seed.", () => {
-  const a = [];
-  const b = [];
+  const a: number[] = [];
+  const b: number[] = [];
   while (a.length < 10) {
     a.push(uniform());
   }
@@ -17,7 +18,7 @@ it("Initially instantiates with no seed.", () => {
 
 it("After seeding, produces repeatable pseudo-random values", () => {
   seed(1);
-  const a = [];
+  const a: number[] = [];
   const aExpected = [
     0.3566528179889171,
     0.888477936864751,
@@ -40,8 +41,8 @@ it("After seeding, produces repeatable pseudo-random values", () => {
 
 it("Can re-seed to produce the same pseudo-random values", () => {
   seed(1);
-  const a = [];
-  const b = [];
+  const a: number[] = [];
+  const b: number[] = [];
   while (a.length < 10) {
     a.push(uniform());
   }
@@ -57,7 +58,7 @@ it("Can re-seed to produce the same pseudo-random values", () => {
 it("Can unseed to produce new pseudo-random values", () => {
   seed(1);
   const firstValue = 0.3566528179889171;
-  let secondValue;
+  let secondValue: number;
   expect(uniform()).toBeCloseTo(firstValue);
   seed(null);
   secondValue = uniform();

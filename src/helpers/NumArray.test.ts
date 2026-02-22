@@ -1,4 +1,4 @@
-const { NumArray } = require("../dist/flocc");
+import { NumArray } from '../main';
 
 it("Correctly instantiates a NumArray", () => {
   const arr = new NumArray();
