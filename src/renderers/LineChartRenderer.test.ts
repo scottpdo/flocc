@@ -1,5 +1,4 @@
-import { Environment, LineChartRenderer, utils } from '../main';
-import path from 'path';
+import { Agent, Environment, LineChartRenderer, utils } from '../main';
 
 const width = 200;
 const height = 400;
@@ -30,75 +29,41 @@ it("Can add metrics to a LineChartRenderer", () => {
   expect(renderer.metrics).toHaveLength(3);
 });
 
-it("Renders static LineChartRenderer test correctly", async () => {
-  const fs = require('fs');
-  const { PNG } = require('pngjs');
-  const pixelmatch = require('pixelmatch');
-  const puppeteer = require('puppeteer');
+it("Renders draw calls after multiple ticks", () => {
+  const env = new Environment();
+  const chart = new LineChartRenderer(env, { width, height });
+  chart.metric("x");
 
-  const browser = await puppeteer.launch();
-  const page = await browser.newPage();
-  try {
-    await page.goto("http://localhost:3000/linechart", {
-      waitUntil: "networkidle2"
-    });
-  } catch {
-    console.warn(
-      "Could not connect to localhost:3000, so skipping a LineChartRenderer test. Run `npm run dev` in a separate terminal window to make sure all tests run."
-    );
-    return await browser.close();
+  for (let i = 0; i < 10; i++) {
+    env.addAgent(new Agent({ x: Math.sin(i) * 50 + 100 }));
   }
-  const filePath = path.join(__dirname, '../../__tests__/screenshots/linechart1.png');
-  const existingImage = fs.existsSync(filePath)
-    ? PNG.sync.read(fs.readFileSync(filePath))
-    : null;
-  await page.screenshot({ path: filePath });
-  if (!existingImage) {
-    return await browser.close();
-  }
-  const { width: imgWidth, height: imgHeight } = existingImage;
-  const newImage = PNG.sync.read(fs.readFileSync(filePath));
-  const diff = new PNG({ width: imgWidth, height: imgHeight });
-  expect(
-    pixelmatch(existingImage.data, newImage.data, diff.data, imgWidth, imgHeight)
-  ).toBe(0);
 
-  await browser.close();
+  (chart.canvas.getContext("2d") as any).__clearDrawCalls();
+
+  for (let t = 0; t < 5; t++) {
+    env.tick();
+  }
+
+  const calls = (chart.canvas.getContext("2d") as any).__getDrawCalls();
+  expect(calls).toMatchSnapshot();
 });
 
-it("Renders static Lorenz attractor test correctly", async () => {
-  const fs = require('fs');
-  const { PNG } = require('pngjs');
-  const pixelmatch = require('pixelmatch');
-  const puppeteer = require('puppeteer');
+it("Renders multiple metrics to the line chart", () => {
+  const env = new Environment();
+  const chart = new LineChartRenderer(env, { width, height });
+  chart.metric("x");
+  chart.metric("y", { color: "#f00", fn: utils.sum });
 
-  const browser = await puppeteer.launch();
-  const page = await browser.newPage();
-  try {
-    await page.goto("http://localhost:3000/lorenz-static", {
-      waitUntil: "networkidle2"
-    });
-  } catch {
-    console.warn(
-      "Could not connect to localhost:3000, so skipping a LineChartRenderer test. Run `npm run dev` in a separate terminal window to make sure all tests run."
-    );
-    return await browser.close();
+  for (let i = 0; i < 5; i++) {
+    env.addAgent(new Agent({ x: i * 20, y: i * 10 }));
   }
-  const filePath = path.join(__dirname, '../../__tests__/screenshots/linechart2.png');
-  const existingImage = fs.existsSync(filePath)
-    ? PNG.sync.read(fs.readFileSync(filePath))
-    : null;
-  await page.screenshot({ path: filePath });
-  if (!existingImage) {
-    await browser.close();
-    return;
-  }
-  const { width: imgWidth, height: imgHeight } = existingImage;
-  const newImage = PNG.sync.read(fs.readFileSync(filePath));
-  const diff = new PNG({ width: imgWidth, height: imgHeight });
-  expect(
-    pixelmatch(existingImage.data, newImage.data, diff.data, imgWidth, imgHeight)
-  ).toBe(0);
 
-  await browser.close();
+  (chart.canvas.getContext("2d") as any).__clearDrawCalls();
+
+  for (let t = 0; t < 3; t++) {
+    env.tick();
+  }
+
+  const calls = (chart.canvas.getContext("2d") as any).__getDrawCalls();
+  expect(calls).toMatchSnapshot();
 });

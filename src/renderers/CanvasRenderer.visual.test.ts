@@ -1,42 +1,71 @@
-import path from 'path';
+import { Agent, Environment, CanvasRenderer } from '../main';
 
-it("Renders Agents correctly when they wrap in a torus Environment", async () => {
-  const fs = require('fs');
-  const { PNG } = require('pngjs');
-  const pixelmatch = require('pixelmatch');
-  const puppeteer = require('puppeteer');
+// Ensure devicePixelRatio is 1 for deterministic canvas coordinates
+Object.defineProperty(window, "devicePixelRatio", { value: 1 });
 
-  const browser = await puppeteer.launch({
-    defaultViewport: {
-      height: 200,
-      width: 800
-    }
-  });
-  const page = await browser.newPage();
-  try {
-    await page.goto("http://localhost:3000/canvas-wrap", {
-      waitUntil: "networkidle2"
+const width = 200;
+const height = 200;
+
+it("Renders agents to the buffer canvas", () => {
+  const environment = new Environment();
+  const renderer = new CanvasRenderer(environment, { width, height });
+  (renderer.buffer.getContext("2d") as any).__clearDrawCalls();
+
+  environment.addAgent(new Agent({ x: 100, y: 100, size: 5 }));
+  environment.addAgent(new Agent({ x: 50, y: 50, shape: "rect", width: 10, height: 10 }));
+
+  environment.tick();
+
+  const calls = (renderer.buffer.getContext("2d") as any).__getDrawCalls();
+  expect(calls).toMatchSnapshot();
+});
+
+it("Produces additional arc draw calls for agents near the boundary in a torus environment", () => {
+  const plainEnv = new Environment({ torus: false, width, height });
+  const plainRenderer = new CanvasRenderer(plainEnv, { width, height });
+  (plainRenderer.buffer.getContext("2d") as any).__clearDrawCalls();
+
+  const torusEnv = new Environment({ torus: true, width, height });
+  const torusRenderer = new CanvasRenderer(torusEnv, { width, height });
+  (torusRenderer.buffer.getContext("2d") as any).__clearDrawCalls();
+
+  // Agent near the right edge — wrap condition: x + size >= canvas width
+  // shape must be "circle" (not left null) so the circle draw path is taken
+  plainEnv.addAgent(new Agent({ x: width - 2, y: height / 2, size: 5, shape: "circle" }));
+  torusEnv.addAgent(new Agent({ x: width - 2, y: height / 2, size: 5, shape: "circle" }));
+
+  plainEnv.tick();
+  torusEnv.tick();
+
+  const plainCalls = (plainRenderer.buffer.getContext("2d") as any).__getDrawCalls();
+  const torusCalls = (torusRenderer.buffer.getContext("2d") as any).__getDrawCalls();
+
+  // arc calls are nested inside the 'path' of each 'fill' draw call
+  const arcCount = (calls: any[]) => {
+    let count = 0;
+    calls.forEach(call => {
+      if (call.type === "arc") count++;
+      if (call.props?.path) {
+        call.props.path.forEach((p: any) => {
+          if (p.type === "arc") count++;
+        });
+      }
     });
-  } catch {
-    console.warn(
-      "Could not connect to localhost:3000, so skipping a CanvasRenderer test. Run `npm run dev` in a separate terminal window to make sure all tests run."
-    );
-    return await browser.close();
-  }
-  const filePath = path.join(__dirname, '../../__tests__/screenshots/canvas-wrap.png');
-  const existingImage = fs.existsSync(filePath)
-    ? PNG.sync.read(fs.readFileSync(filePath))
-    : null;
-  await page.screenshot({ path: filePath });
-  if (!existingImage) {
-    return await browser.close();
-  }
-  const { width, height } = existingImage;
-  const newImage = PNG.sync.read(fs.readFileSync(filePath));
-  const diff = new PNG({ width, height });
-  expect(
-    pixelmatch(existingImage.data, newImage.data, diff.data, width, height)
-  ).toBe(0);
+    return count;
+  };
+  expect(arcCount(torusCalls)).toBeGreaterThan(arcCount(plainCalls));
+});
 
-  await browser.close();
+it("Produces snapshot of buffer draw calls for torus wrap rendering near a corner", () => {
+  const environment = new Environment({ torus: true, width, height });
+  const renderer = new CanvasRenderer(environment, { width, height });
+  (renderer.buffer.getContext("2d") as any).__clearDrawCalls();
+
+  // Agent near top-left corner — should wrap in both x and y directions
+  environment.addAgent(new Agent({ x: 3, y: 3, size: 6, shape: "circle" }));
+
+  environment.tick();
+
+  const calls = (renderer.buffer.getContext("2d") as any).__getDrawCalls();
+  expect(calls).toMatchSnapshot();
 });

@@ -1,43 +1,49 @@
-import path from 'path';
+import { Agent, Environment, Heatmap } from '../main';
 
-it("Renders a Heatmap from the test page", async () => {
-  const fs = require('fs');
-  const { PNG } = require('pngjs');
-  const pixelmatch = require('pixelmatch');
-  const puppeteer = require('puppeteer');
+const width = 200;
+const height = 200;
 
-  const browser = await puppeteer.launch({
-    defaultViewport: {
-      height: 1400,
-      width: 1400
-    }
-  });
-  const page = await browser.newPage();
+it("Renders an empty Heatmap", () => {
+  const environment = new Environment();
+  const heatmap = new Heatmap(environment, { width, height });
+  (heatmap.canvas.getContext("2d") as any).__clearDrawCalls();
 
-  try {
-    await page.goto("http://localhost:3000/heatmap", {
-      waitUntil: "networkidle2"
-    });
-  } catch {
-    console.warn(
-      "Could not connect to localhost:3000, so skipping a Heatmap test. Run `npm run dev` in a separate terminal window to make sure all tests run."
-    );
-    return await browser.close();
+  environment.tick();
+
+  const calls = (heatmap.canvas.getContext("2d") as any).__getDrawCalls();
+  expect(calls).toMatchSnapshot();
+});
+
+it("Renders a Heatmap with agents distributed across the space", () => {
+  const environment = new Environment();
+  const heatmap = new Heatmap(environment, { width, height });
+  (heatmap.canvas.getContext("2d") as any).__clearDrawCalls();
+
+  // x/y values in 0–1 range to match default Heatmap axis min/max
+  for (let i = 0; i < 50; i++) {
+    environment.addAgent(new Agent({
+      x: (i % 10) / 10,
+      y: Math.floor(i / 10) / 10
+    }));
   }
-  const filePath = path.join(__dirname, '../../__tests__/screenshots/heatmap.png');
-  const existingImage = fs.existsSync(filePath)
-    ? PNG.sync.read(fs.readFileSync(filePath))
-    : null;
-  await page.screenshot({ path: filePath });
-  if (!existingImage) {
-    return await browser.close();
-  }
-  const { width, height } = existingImage;
-  const newImage = PNG.sync.read(fs.readFileSync(filePath));
-  const diff = new PNG({ width, height });
-  expect(
-    pixelmatch(existingImage.data, newImage.data, diff.data, width, height)
-  ).toBe(0);
 
-  await browser.close();
+  environment.tick();
+
+  const calls = (heatmap.canvas.getContext("2d") as any).__getDrawCalls();
+  expect(calls).toMatchSnapshot();
+});
+
+it("Renders a Heatmap with a custom color range", () => {
+  const environment = new Environment();
+  const heatmap = new Heatmap(environment, { width, height, from: "#fff", to: "#f00" });
+  (heatmap.canvas.getContext("2d") as any).__clearDrawCalls();
+
+  for (let i = 0; i < 20; i++) {
+    environment.addAgent(new Agent({ x: i * 0.05, y: i * 0.05 }));
+  }
+
+  environment.tick();
+
+  const calls = (heatmap.canvas.getContext("2d") as any).__getDrawCalls();
+  expect(calls).toMatchSnapshot();
 });

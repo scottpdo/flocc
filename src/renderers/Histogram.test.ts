@@ -1,5 +1,4 @@
 import { Agent, Environment, Histogram } from '../main';
-import path from 'path';
 
 const width = 200;
 const height = 400;
@@ -74,38 +73,12 @@ it("Correctly renders with discrete buckets", () => {
   expect(calls).toMatchSnapshot();
 });
 
-it("Renders Flocking Histogram test correctly.", async () => {
-  const fs = require('fs');
-  const { PNG } = require('pngjs');
-  const pixelmatch = require('pixelmatch');
-  const puppeteer = require('puppeteer');
-
-  const browser = await puppeteer.launch();
-  const page = await browser.newPage();
-  try {
-    await page.goto("http://localhost:3000/flocking-histogram", {
-      waitUntil: "networkidle2"
-    });
-  } catch {
-    console.warn(
-      "Could not connect to localhost:3000, so skipping a Histogram test. Run `npm run dev` in a separate terminal window to make sure all tests run."
-    );
-    return await browser.close();
+it("Correctly renders histogram with many agents across buckets", () => {
+  for (let i = 0; i < 40; i++) {
+    const agent = new Agent({ x: i % 4 });
+    environment.addAgent(agent);
   }
-  const filePath = path.join(__dirname, '../../__tests__/screenshots/flocking-histogram.png');
-  const existingImage = fs.existsSync(filePath)
-    ? PNG.sync.read(fs.readFileSync(filePath))
-    : null;
-  await page.screenshot({ path: filePath });
-  if (!existingImage) {
-    return await browser.close();
-  }
-  const { width: imgWidth, height: imgHeight } = existingImage;
-  const newImage = PNG.sync.read(fs.readFileSync(filePath));
-  const diff = new PNG({ width: imgWidth, height: imgHeight });
-  expect(
-    pixelmatch(existingImage.data, newImage.data, diff.data, imgWidth, imgHeight)
-  ).toBe(0);
-
-  await browser.close();
+  environment.tick();
+  const calls = (histogram.canvas.getContext("2d") as any).__getDrawCalls();
+  expect(calls).toMatchSnapshot();
 });

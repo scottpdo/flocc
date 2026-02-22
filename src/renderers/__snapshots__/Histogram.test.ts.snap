@@ -1,0 +1,1789 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Correctly renders 1`] = `
+[
+  {
+    "props": {
+      "height": 400,
+      "width": 200,
+      "x": 0,
+      "y": 0,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "clearRect",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "0...0.25",
+      "x": 0,
+      "y": 0,
+    },
+    "transform": [
+      0.7071067811865476,
+      0.7071067811865475,
+      -0.7071067811865475,
+      0.7071067811865476,
+      38.75,
+      350,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "0.25...0.5",
+      "x": 0,
+      "y": 0,
+    },
+    "transform": [
+      0.7071067811865476,
+      0.7071067811865475,
+      -0.7071067811865475,
+      0.7071067811865476,
+      76.25,
+      350,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "0.5...0.75",
+      "x": 0,
+      "y": 0,
+    },
+    "transform": [
+      0.7071067811865476,
+      0.7071067811865475,
+      -0.7071067811865475,
+      0.7071067811865476,
+      113.75,
+      350,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "0.75...1",
+      "x": 0,
+      "y": 0,
+    },
+    "transform": [
+      0.7071067811865476,
+      0.7071067811865475,
+      -0.7071067811865475,
+      0.7071067811865476,
+      151.25,
+      350,
+    ],
+    "type": "fillText",
+  },
+]
+`;
+
+exports[`Correctly renders histogram with many agents across buckets 1`] = `
+[
+  {
+    "props": {
+      "height": 400,
+      "width": 200,
+      "x": 0,
+      "y": 0,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "clearRect",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "0",
+      "x": 2,
+      "y": 340,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 12,
+            "y": 340,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 200,
+            "y": 340,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "lineTo",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "10",
+      "x": 2,
+      "y": 255,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 12,
+            "y": 255,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 200,
+            "y": 255,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "lineTo",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "20",
+      "x": 2,
+      "y": 170,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 12,
+            "y": 170,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 200,
+            "y": 170,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "lineTo",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "30",
+      "x": 2,
+      "y": 85,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 12,
+            "y": 85,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 200,
+            "y": 85,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "lineTo",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "40",
+      "x": 2,
+      "y": 0,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 12,
+            "y": 0,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 200,
+            "y": 0,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "lineTo",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "0...0.25",
+      "x": 0,
+      "y": 0,
+    },
+    "transform": [
+      0.7071067811865476,
+      0.7071067811865475,
+      -0.7071067811865475,
+      0.7071067811865476,
+      40.5,
+      350,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "0.25...0.5",
+      "x": 0,
+      "y": 0,
+    },
+    "transform": [
+      0.7071067811865476,
+      0.7071067811865475,
+      -0.7071067811865475,
+      0.7071067811865476,
+      77.5,
+      350,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "0.5...0.75",
+      "x": 0,
+      "y": 0,
+    },
+    "transform": [
+      0.7071067811865476,
+      0.7071067811865475,
+      -0.7071067811865475,
+      0.7071067811865476,
+      114.5,
+      350,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "0.75...1",
+      "x": 0,
+      "y": 0,
+    },
+    "transform": [
+      0.7071067811865476,
+      0.7071067811865475,
+      -0.7071067811865475,
+      0.7071067811865476,
+      151.5,
+      350,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "height": 85,
+      "width": 29.6,
+      "x": 25.7,
+      "y": 255,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillRect",
+  },
+  {
+    "props": {
+      "height": 0,
+      "width": 29.6,
+      "x": 62.7,
+      "y": 340,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillRect",
+  },
+  {
+    "props": {
+      "height": 0,
+      "width": 29.6,
+      "x": 99.7,
+      "y": 340,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillRect",
+  },
+  {
+    "props": {
+      "height": 85,
+      "width": 29.6,
+      "x": 136.7,
+      "y": 255,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillRect",
+  },
+]
+`;
+
+exports[`Correctly renders with agents 1`] = `
+[
+  {
+    "props": {
+      "height": 400,
+      "width": 200,
+      "x": 0,
+      "y": 0,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "clearRect",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "0",
+      "x": 3,
+      "y": 340,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 13,
+            "y": 340,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 200,
+            "y": 340,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "lineTo",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "20",
+      "x": 3,
+      "y": 272,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 13,
+            "y": 272,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 200,
+            "y": 272,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "lineTo",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "40",
+      "x": 3,
+      "y": 204,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 13,
+            "y": 204,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 200,
+            "y": 204,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "lineTo",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "60",
+      "x": 3,
+      "y": 136,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 13,
+            "y": 136,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 200,
+            "y": 136,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "lineTo",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "80",
+      "x": 3,
+      "y": 68,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 13,
+            "y": 68,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 200,
+            "y": 68,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "lineTo",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "100",
+      "x": 3,
+      "y": 0,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 13,
+            "y": 0,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 200,
+            "y": 0,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "lineTo",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "0...0.25",
+      "x": 0,
+      "y": 0,
+    },
+    "transform": [
+      0.7071067811865476,
+      0.7071067811865475,
+      -0.7071067811865475,
+      0.7071067811865476,
+      41.375,
+      350,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "0.25...0.5",
+      "x": 0,
+      "y": 0,
+    },
+    "transform": [
+      0.7071067811865476,
+      0.7071067811865475,
+      -0.7071067811865475,
+      0.7071067811865476,
+      78.125,
+      350,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "0.5...0.75",
+      "x": 0,
+      "y": 0,
+    },
+    "transform": [
+      0.7071067811865476,
+      0.7071067811865475,
+      -0.7071067811865475,
+      0.7071067811865476,
+      114.875,
+      350,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "0.75...1",
+      "x": 0,
+      "y": 0,
+    },
+    "transform": [
+      0.7071067811865476,
+      0.7071067811865475,
+      -0.7071067811865475,
+      0.7071067811865476,
+      151.625,
+      350,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "height": 3.4,
+      "width": 29.400000000000002,
+      "x": 26.675,
+      "y": 336.6,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillRect",
+  },
+  {
+    "props": {
+      "height": 0,
+      "width": 29.400000000000002,
+      "x": 63.425000000000004,
+      "y": 340,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillRect",
+  },
+  {
+    "props": {
+      "height": 0,
+      "width": 29.400000000000002,
+      "x": 100.175,
+      "y": 340,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillRect",
+  },
+  {
+    "props": {
+      "height": 3.4,
+      "width": 29.400000000000002,
+      "x": 136.925,
+      "y": 336.6,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillRect",
+  },
+]
+`;
+
+exports[`Correctly renders with discrete buckets 1`] = `
+[
+  {
+    "props": {
+      "height": 400,
+      "width": 200,
+      "x": 0,
+      "y": 0,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "clearRect",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "0",
+      "x": 2,
+      "y": 340,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 12,
+            "y": 340,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 200,
+            "y": 340,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "lineTo",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "2",
+      "x": 2,
+      "y": 272,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 12,
+            "y": 272,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 200,
+            "y": 272,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "lineTo",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "4",
+      "x": 2,
+      "y": 204,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 12,
+            "y": 204,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 200,
+            "y": 204,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "lineTo",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "6",
+      "x": 2,
+      "y": 136,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 12,
+            "y": 136,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 200,
+            "y": 136,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "lineTo",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "8",
+      "x": 2,
+      "y": 68,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 12,
+            "y": 68,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 200,
+            "y": 68,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "lineTo",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "10",
+      "x": 2,
+      "y": 0,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 12,
+            "y": 0,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 200,
+            "y": 0,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "lineTo",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "1",
+      "x": 0,
+      "y": 0,
+    },
+    "transform": [
+      0.7071067811865476,
+      0.7071067811865475,
+      -0.7071067811865475,
+      0.7071067811865476,
+      46.66666666666667,
+      350,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "2",
+      "x": 0,
+      "y": 0,
+    },
+    "transform": [
+      0.7071067811865476,
+      0.7071067811865475,
+      -0.7071067811865475,
+      0.7071067811865476,
+      96,
+      350,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "3",
+      "x": 0,
+      "y": 0,
+    },
+    "transform": [
+      0.7071067811865476,
+      0.7071067811865475,
+      -0.7071067811865475,
+      0.7071067811865476,
+      145.33333333333334,
+      350,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "height": 102,
+      "width": 39.46666666666667,
+      "x": 26.933333333333334,
+      "y": 238,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillRect",
+  },
+  {
+    "props": {
+      "height": 68,
+      "width": 39.46666666666667,
+      "x": 76.26666666666668,
+      "y": 272,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillRect",
+  },
+  {
+    "props": {
+      "height": 68,
+      "width": 39.46666666666667,
+      "x": 125.6,
+      "y": 272,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillRect",
+  },
+]
+`;
