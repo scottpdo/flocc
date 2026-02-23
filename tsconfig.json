@@ -6,6 +6,7 @@
     "noImplicitAny": true,
     "outDir": "./dist",
     "resolveJsonModule": true,
+    "esModuleInterop": true,
     "target": "es5",
     "skipLibCheck": true
   },
