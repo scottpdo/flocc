@@ -122,6 +122,10 @@ class EventBus {
    * ```
    */
   emit<T = any>(type: string, data: T, source: Agent | Environment | null = null): void {
+    // Early exit if no handlers registered — avoids creating event object
+    const handlers = this.handlers.get(type);
+    if (!handlers || handlers.size === 0) return;
+
     const event: FloccEvent<T> = {
       type,
       source,
@@ -133,16 +137,13 @@ class EventBus {
       },
     };
 
-    const handlers = this.handlers.get(type);
-    if (handlers) {
-      const handlerArray = Array.from(handlers);
-      for (let i = 0; i < handlerArray.length; i++) {
-        if (event.propagationStopped) break;
-        try {
-          handlerArray[i](event);
-        } catch (error) {
-          console.error(`Error in event handler for "${type}":`, error);
-        }
+    const handlerArray = Array.from(handlers);
+    for (let i = 0; i < handlerArray.length; i++) {
+      if (event.propagationStopped) break;
+      try {
+        handlerArray[i](event);
+      } catch (error) {
+        console.error(`Error in event handler for "${type}":`, error);
       }
     }
   }
