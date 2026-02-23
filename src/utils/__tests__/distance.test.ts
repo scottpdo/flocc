@@ -1,4 +1,4 @@
-import { Agent, Environment, utils } from '../main';
+import { Agent, Environment, utils } from '../../main';
 
 const { distance, manhattanDistance } = utils;
 

@@ -1,4 +1,4 @@
-import { utils } from '../main';
+import { utils } from '../../main';
 
 const { gcd } = utils;
 
