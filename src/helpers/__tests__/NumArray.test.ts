@@ -1,4 +1,4 @@
-import { NumArray } from '../main';
+import { NumArray } from '../../main';
 
 it("Correctly instantiates a NumArray", () => {
   const arr = new NumArray();

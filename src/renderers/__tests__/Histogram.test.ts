@@ -1,4 +1,4 @@
-import { Agent, Environment, Histogram } from '../main';
+import { Agent, Environment, Histogram } from '../../main';
 
 const width = 200;
 const height = 400;

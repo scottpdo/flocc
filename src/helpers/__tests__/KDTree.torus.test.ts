@@ -7,7 +7,7 @@
  * torus check in intersectsAlongDimension must bridge the wrap.
  */
 
-import { Agent, Environment, KDTree } from '../main';
+import { Agent, Environment, KDTree } from '../../main';
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 

@@ -1,4 +1,4 @@
-import { Agent, Environment, TableRenderer } from '../main';
+import { Agent, Environment, TableRenderer } from '../../main';
 
 it("Instantiates an empty TableRenderer", () => {
   const environment = new Environment();

@@ -1,4 +1,4 @@
-import { Agent, Environment, CanvasRenderer } from '../main';
+import { Agent, Environment, CanvasRenderer } from '../../main';
 
 // Mock devicePixelRatio
 Object.defineProperty(window, "devicePixelRatio", { value: 1 });

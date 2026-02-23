@@ -1,4 +1,4 @@
-import { Environment, Terrain, Colors } from '../main';
+import { Environment, Terrain, Colors } from '../../main';
 
 let environment: Environment;
 let terrain: Terrain;

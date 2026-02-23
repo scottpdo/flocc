@@ -1,4 +1,4 @@
-import { Agent, Environment, Heatmap } from '../main';
+import { Agent, Environment, Heatmap } from '../../main';
 
 const width = 200;
 const height = 200;

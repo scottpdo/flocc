@@ -1,4 +1,4 @@
-import { Agent, Environment, Rule } from '../main';
+import { Agent, Environment, Rule } from '../../main';
 
 const environment = new Environment();
 
@@ -17,7 +17,9 @@ describe("Runtime warnings", () => {
   });
 
   it("warns on unknown string operator", () => {
+    // @ts-expect-error
     const rule = new Rule(environment, ["ad", 1, 2]);
+    // @ts-expect-error
     rule.call();
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining('unknown operator "ad"')

@@ -1,4 +1,4 @@
-import { Agent, Environment, CanvasRenderer } from '../main';
+import { Agent, Environment, CanvasRenderer } from '../../main';
 
 // Ensure devicePixelRatio is 1 for deterministic canvas coordinates
 Object.defineProperty(window, "devicePixelRatio", { value: 1 });

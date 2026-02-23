@@ -1,4 +1,4 @@
-import { Agent, Environment, Rule, Vector } from '../main';
+import { Agent, Environment, Rule, Vector } from '../../main';
 
 const agent = new Agent();
 const environment = new Environment();

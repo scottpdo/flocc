@@ -1,4 +1,4 @@
-import { Agent, Environment, Network } from '../main';
+import { Agent, Environment, Network } from '../../main';
 
 let network: Network;
 let environment: Environment;

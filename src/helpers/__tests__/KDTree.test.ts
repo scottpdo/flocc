@@ -1,4 +1,4 @@
-import { Agent, Environment, Vector, KDTree, utils } from '../main';
+import { Agent, Environment, Vector, KDTree, utils } from '../../main';
 
 utils.seed(1);
 
@@ -88,7 +88,7 @@ it("Finds all agents within a given distance.", () => {
 
 it("Handles adding and removing agents", () => {
   const point = { x: 5.2, y: 2.1, z: 3 };
-  let nearest = tree.nearestNeighbor(point);
+  let nearest = tree.nearestNeighbor(point)!;
   expect(tree.agents.includes(nearest)).toBe(true);
   expect(nearest.get("x")).toBe(5);
   expect(nearest.get("y")).toBe(2);
@@ -97,7 +97,7 @@ it("Handles adding and removing agents", () => {
   // now remove that nearest one
   environment.removeAgent(nearest);
   expect(tree.agents.includes(nearest)).toBe(false);
-  nearest = tree.nearestNeighbor(point);
+  nearest = tree.nearestNeighbor(point)!;
   expect(nearest.get("x")).toBe(6);
   expect(nearest.get("y")).toBe(2);
   expect(nearest.get("z")).toBe(3);
@@ -105,7 +105,7 @@ it("Handles adding and removing agents", () => {
   // now add an even closer one
   const agent = new Agent({ x: 5.1, y: 2, z: 3 });
   environment.addAgent(agent);
-  nearest = tree.nearestNeighbor(point);
+  nearest = tree.nearestNeighbor(point)!;
   expect(nearest).toBe(agent);
 });
 
@@ -131,7 +131,7 @@ it("nearestNeighbor with filterFn works when filtered agent is in a different su
   // so the search must expand into adjacent subtrees to find the answer.
   const corner = environment.getAgents().find(
     a => a.get("x") === 0 && a.get("y") === 0 && a.get("z") === 0
-  );
+  )!;
   const unfiltered = tree.nearestNeighbor(corner);
 
   // Confirm there IS a nearest (dist = 1)
@@ -145,7 +145,7 @@ it("nearestNeighbor with filterFn works when filtered agent is in a different su
     return Math.sqrt(dx * dx + dy * dy + dz * dz) > 1;
   };
 
-  const result = tree.nearestNeighbor(corner, skipClose);
+  const result = tree.nearestNeighbor(corner, skipClose)!;
   expect(result).toBeInstanceOf(Agent);
   // Nearest at dist > 1 from (0,0,0) in this grid is sqrt(2) away
   const dx = result.get("x");
@@ -164,12 +164,12 @@ it("nearestNeighbor with filterFn that accepts all agents behaves identically to
 it("nearestNeighbor uses __subtree for agent lookups", () => {
   const agent = environment.getAgents().find(
     a => a.get("x") === 10 && a.get("y") === 10 && a.get("z") === 10
-  );
-  expect((agent as any).__subtree).toBeInstanceOf(KDTree);
+  )!;
+  expect(agent.__subtree).toBeInstanceOf(KDTree);
 
   // Agent path (uses __subtree) must not return the agent itself,
   // and must return an adjacent grid neighbor at distance 1.
-  const viaAgent = tree.nearestNeighbor(agent);
+  const viaAgent = tree.nearestNeighbor(agent)!;
   expect(viaAgent).toBeInstanceOf(Agent);
   expect(viaAgent).not.toBe(agent);
   const dx = viaAgent.get("x") - 10;

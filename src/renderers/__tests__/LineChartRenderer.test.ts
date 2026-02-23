@@ -1,4 +1,4 @@
-import { Agent, Environment, LineChartRenderer, utils } from '../main';
+import { Agent, Environment, LineChartRenderer, utils } from '../../main';
 
 const width = 200;
 const height = 400;
