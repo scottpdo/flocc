@@ -2,7 +2,13 @@ import { Environment } from "../environments/Environment";
 import { Recorder, RecorderOptions } from "../recorders/Recorder";
 import { seed as setSeed } from "../utils/utils";
 import { expandParameters, formatCSVValue, generateCombinations } from "./helpers";
-import { ExperimentRecordOptions, ModelFactory, ParameterSpec } from "./types";
+import {
+  ExperimentRecordOptions,
+  ModelFactory,
+  ModelFactoryParams,
+  ParameterRange,
+  ParameterSpec,
+} from "./types";
 
 const DELIMITER = "\0";
 
@@ -77,7 +83,13 @@ interface ExperimentOptions {
 
   /**
    * Base seed for random number generation.
-   * Seeds are auto-incremented for each run.
+   *
+   * Seeds are assigned sequentially across all runs in the order they execute
+   * (combinations × replications). The Nth run receives seed `baseSeed + N`.
+   * Adding new parameter combinations therefore shifts seeds for subsequent
+   * combinations. Use a fixed `seed` when you need fully reproducible results
+   * and keep the parameter space stable between runs.
+   *
    * @default 0
    */
   seed?: number;
@@ -304,6 +316,10 @@ interface ExperimentProgress {
   completed: number;
   total: number;
   currentParams: Record<string, any>;
+  /**
+   * 0-based index of the current replication within its parameter combination.
+   * Add 1 when displaying to users (e.g. "Replication 1 of 5").
+   */
   currentReplication: number;
 }
 
@@ -477,13 +493,21 @@ class Experiment {
           });
         }
 
-        // Run simulation
-        const result = this.runSingle(params, currentSeed, runIndex);
-        results.push(result);
+        // Run simulation — catch per-run errors so one bad run doesn't abort
+        // the whole experiment. Failed runs are logged and omitted from results.
+        try {
+          const result = this.runSingle(params, currentSeed, runIndex);
+          results.push(result);
 
-        // Report run completion
-        if (options.onRunComplete) {
-          options.onRunComplete(result);
+          // Report run completion
+          if (options.onRunComplete) {
+            options.onRunComplete(result);
+          }
+        } catch (error) {
+          console.error(
+            `Run ${runIndex} (params=${JSON.stringify(params)}, seed=${currentSeed}) failed and was skipped:`,
+            error
+          );
         }
 
         runIndex++;
@@ -540,5 +564,7 @@ export {
   RunOptions,
   AggregatedResult,
   ModelFactory,
+  ModelFactoryParams,
+  ParameterRange,
   ParameterSpec,
 };
