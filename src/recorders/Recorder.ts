@@ -1,5 +1,6 @@
 import type { Environment } from "../environments/Environment";
 import type { Agent } from "../agents/Agent";
+import { formatCSVValue } from "../utils/csv";
 
 /**
  * Model-level metric function: receives environment, returns a value.
@@ -69,7 +70,7 @@ interface RecorderOptions {
  */
 interface ModelData {
   time: number[];
-  [key: string]: number[] | any[];
+  [key: string]: any[];
 }
 
 /**
@@ -147,10 +148,6 @@ class Recorder {
     }
   }
 
-  /**
-   * Subscribe to environment tick events for automatic recording.
-   * @hidden
-   */
   private subscribeToTicks(): void {
     this.unsubscribe = this.environment.events.on("tick:end", () => {
       this.tickCounter++;
@@ -261,7 +258,7 @@ class Recorder {
    * ```
    */
   getAgentData(): AgentDataRecord[] {
-    return { ...this.agentData };
+    return [...this.agentData];
   }
 
   /**
@@ -339,10 +336,6 @@ class Recorder {
     return this.getModelData();
   }
 
-  /**
-   * Convert model data to CSV.
-   * @hidden
-   */
   private modelDataToCSV(): string {
     const keys = ["time", ...Object.keys(this.modelMetrics)];
     const rows: string[] = [];
@@ -355,7 +348,7 @@ class Recorder {
     for (let i = 0; i < numRows; i++) {
       const row = keys.map((key) => {
         const value = (this.modelData[key] as any[])[i];
-        return this.formatCSVValue(value);
+        return formatCSVValue(value);
       });
       rows.push(row.join(","));
     }
@@ -363,17 +356,14 @@ class Recorder {
     return rows.join("\n");
   }
 
-  /**
-   * Convert agent data to CSV.
-   * @hidden
-   */
   private agentDataToCSV(): string {
     if (this.agentData.length === 0) {
       return "";
     }
 
-    // Get all keys from first record (assumes consistent schema)
-    const keys = Object.keys(this.agentData[0]);
+    // Derive column order from the configured metrics, not from the first record,
+    // so the schema is stable even if a metric throws on the first agent.
+    const keys = ["time", ...Object.keys(this.agentMetrics ?? {})];
     const rows: string[] = [];
 
     // Header row
@@ -381,36 +371,11 @@ class Recorder {
 
     // Data rows
     for (const record of this.agentData) {
-      const row = keys.map((key) => this.formatCSVValue(record[key]));
+      const row = keys.map((key) => formatCSVValue(record[key]));
       rows.push(row.join(","));
     }
 
     return rows.join("\n");
-  }
-
-  /**
-   * Format a value for CSV output.
-   * @hidden
-   */
-  private formatCSVValue(value: any): string {
-    if (value === null || value === undefined) {
-      return "";
-    }
-    if (typeof value === "string") {
-      // Escape quotes and wrap in quotes if contains comma, quote, or newline
-      if (value.includes(",") || value.includes('"') || value.includes("\n")) {
-        return `"${value.replace(/"/g, '""')}"`;
-      }
-      return value;
-    }
-    if (typeof value === "number") {
-      return String(value);
-    }
-    if (typeof value === "boolean") {
-      return value ? "true" : "false";
-    }
-    // For objects/arrays, stringify
-    return `"${JSON.stringify(value).replace(/"/g, '""')}"`;
   }
 
   /**

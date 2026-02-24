@@ -1,4 +1,5 @@
 import { ParameterRange, ParameterSpec } from "./types";
+export { formatCSVValue } from "../utils/csv";
 
 export const isRange = (value: any): value is ParameterRange => {
   return (
@@ -15,8 +16,8 @@ export const isRange = (value: any): value is ParameterRange => {
  */
 const rangeToArray = (range: ParameterRange): number[] => {
   const values: number[] = [];
-  if (range.step <= 0 || range.min >= range.max) {
-    console.warn("The given range configuration would result in an infinite loop. `rangeToArray` is only returning a single step for the given minimum value.");
+  if (range.step <= 0 || range.min > range.max) {
+    console.warn("Invalid range: step must be > 0 and min must be <= max. Returning [min].");
     return [range.min];
   }
   // Use epsilon to handle floating point comparison
@@ -78,18 +79,3 @@ export const generateCombinations = (parameterSpace: Record<string, any>): Recor
   return combinations;
 }
 
-/**
- * Format a value for CSV output.
- */
-export const formatCSVValue = (value: any): string => {
-  if (value === null || value === undefined) return "";
-  if (typeof value === "string") {
-    if (value.includes(",") || value.includes('"') || value.includes("\n")) {
-      return `"${value.replace(/"/g, '""')}"`;
-    }
-    return value;
-  }
-  if (typeof value === "number") return String(value);
-  if (typeof value === "boolean") return value ? "true" : "false";
-  return `"${JSON.stringify(value).replace(/"/g, '""')}"`;
-}

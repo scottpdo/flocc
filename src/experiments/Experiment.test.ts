@@ -389,8 +389,9 @@ describe("Experiment", () => {
       const groups = results.groupBy(["agentCount", "initialEnergy"]);
 
       expect(groups.size).toBe(6); // 3 x 2 combinations
-      expect(groups.get("5,50")?.length).toBe(2); // 2 replications
-      expect(groups.get("10,100")?.length).toBe(2);
+      // Keys use the null-byte delimiter so parameter values containing "," are safe
+      expect(groups.get("5\x0050")?.length).toBe(2); // 2 replications
+      expect(groups.get("10\x00100")?.length).toBe(2);
     });
 
     it("Aggregates across replications", () => {
