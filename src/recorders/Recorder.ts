@@ -117,6 +117,7 @@ class Recorder {
   private agentData: AgentDataRecord[];
 
   private lastRecordedTime: number = -1;
+  private tickCounter: number = 0;
   private unsubscribe: (() => void) | null = null;
   private hasWarnedDuplicate: boolean = false;
 
@@ -151,15 +152,13 @@ class Recorder {
    * @hidden
    */
   private subscribeToTicks(): void {
-    let tickCounter = 0;
-
     this.unsubscribe = this.environment.events.on("tick:end", () => {
-      tickCounter++;
+      this.tickCounter++;
 
       if (this.interval === "tick") {
         this.record();
       } else if (typeof this.interval === "number") {
-        if (tickCounter % this.interval === 0) {
+        if (this.tickCounter % this.interval === 0) {
           this.record();
         }
       }
@@ -242,7 +241,7 @@ class Recorder {
    * ```
    */
   getModelData(): ModelData {
-    return this.modelData;
+    return { ...this.modelData };
   }
 
   /**
@@ -262,7 +261,7 @@ class Recorder {
    * ```
    */
   getAgentData(): AgentDataRecord[] {
-    return this.agentData;
+    return { ...this.agentData };
   }
 
   /**
@@ -310,6 +309,8 @@ class Recorder {
     }
     this.agentData = [];
     this.lastRecordedTime = -1;
+    this.tickCounter = 0;
+    this.hasWarnedDuplicate = false;
   }
 
   /**
@@ -333,9 +334,9 @@ class Recorder {
    */
   toJSON(type: "model" | "agent" = "model"): ModelData | AgentDataRecord[] {
     if (type === "agent") {
-      return this.agentData;
+      return this.getAgentData();
     }
-    return this.modelData;
+    return this.getModelData();
   }
 
   /**
