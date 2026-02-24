@@ -1,61 +1,10 @@
 import { Environment } from "../environments/Environment";
 import { Recorder, RecorderOptions } from "../recorders/Recorder";
 import { seed as setSeed } from "../utils/utils";
+import { expandParameters, formatCSVValue, generateCombinations } from "./helpers";
+import { ExperimentRecordOptions, ModelFactory, ParameterSpec } from "./types";
 
-/**
- * Extended recorder options for Experiment that adds 'end' interval.
- */
-interface ExperimentRecordOptions extends Omit<RecorderOptions, "interval"> {
-  /**
-   * When to collect data:
-   * - `'end'`: only at the end of each run (default for experiments)
-   * - `'tick'`: every tick
-   * - `'manual'`: only when explicitly called
-   * - `number`: every N ticks
-   */
-  interval?: "end" | "tick" | "manual" | number;
-}
-
-/**
- * Parameters passed to the model factory function.
- */
-interface ModelFactoryParams {
-  /** The parameter values for this run */
-  parameters: Record<string, any>;
-  /** The random seed for this run */
-  seed: number;
-  // TODO: Add unique run ID
-  // TODO: Add run index within replication group
-}
-
-/**
- * Model factory function that creates an Environment for each run.
- */
-type ModelFactory = (params: ModelFactoryParams) => Environment;
-
-/**
- * Range specification for parameter values.
- */
-interface ParameterRange {
-  min: number;
-  max: number;
-  step: number;
-}
-
-// TODO: Add distribution sampling support
-// interface ParameterDistribution {
-//   distribution: 'uniform' | 'normal';
-//   min?: number;
-//   max?: number;
-//   mean?: number;
-//   std?: number;
-//   samples: number;
-// }
-
-/**
- * Parameter value specification: array of values or a range.
- */
-type ParameterSpec = any[] | ParameterRange;
+const DELIMITER = "\0";
 
 /**
  * Configuration options for an Experiment.
@@ -235,7 +184,7 @@ class ExperimentResults {
     const groups = new Map<string, RunResult[]>();
 
     for (const run of this.data) {
-      const groupKey = keyArray.map((k) => run.parameters[k]).join(",");
+      const groupKey = keyArray.map((k) => run.parameters[k]).join(DELIMITER);
       if (!groups.has(groupKey)) {
         groups.set(groupKey, []);
       }
@@ -273,7 +222,7 @@ class ExperimentResults {
       };
 
       // Extract parameter values from group key
-      const keyValues = groupKey.split(",");
+      const keyValues = groupKey.split(DELIMITER);
       options.groupBy.forEach((key, i) => {
         // Try to parse as number, otherwise keep as string
         const value = keyValues[i];
@@ -323,8 +272,8 @@ class ExperimentResults {
         run.seed,
         run.ticks,
         run.stoppedEarly,
-        ...paramKeys.map((k) => this.formatCSVValue(run.parameters[k])),
-        ...metricKeys.map((k) => this.formatCSVValue(run.metrics[k])),
+        ...paramKeys.map((k) => formatCSVValue(run.parameters[k])),
+        ...metricKeys.map((k) => formatCSVValue(run.metrics[k])),
       ];
       rows.push(row.join(","));
     }
@@ -337,23 +286,6 @@ class ExperimentResults {
    */
   toJSON(): RunResult[] {
     return this.data;
-  }
-
-  /**
-   * Format a value for CSV output.
-   * @hidden
-   */
-  private formatCSVValue(value: any): string {
-    if (value === null || value === undefined) return "";
-    if (typeof value === "string") {
-      if (value.includes(",") || value.includes('"') || value.includes("\n")) {
-        return `"${value.replace(/"/g, '""')}"`;
-      }
-      return value;
-    }
-    if (typeof value === "number") return String(value);
-    if (typeof value === "boolean") return value ? "true" : "false";
-    return `"${JSON.stringify(value).replace(/"/g, '""')}"`;
   }
 }
 
@@ -435,7 +367,7 @@ class Experiment {
 
   constructor(options: ExperimentOptions) {
     this.modelFactory = options.model;
-    this.parameterSpace = this.expandParameters(options.parameters);
+    this.parameterSpace = expandParameters(options.parameters);
     this.replications = options.replications ?? 1;
     this.maxTicks = options.maxTicks ?? 1000;
     this.stopCondition = options.stopCondition ?? null;
@@ -444,93 +376,12 @@ class Experiment {
     // Handle 'end' interval specially - convert to 'manual' for Recorder
     const interval = options.record?.interval ?? "end";
     this.recordAtEnd = interval === "end";
-    
+
     this.recordOptions = {
       ...options.record,
       // If 'end', use 'manual' so we control when recording happens
       interval: this.recordAtEnd ? "manual" : interval as RecorderOptions["interval"],
     };
-  }
-
-  /**
-   * Expand parameter specifications into arrays of values.
-   * @hidden
-   */
-  private expandParameters(
-    params: Record<string, ParameterSpec | any>
-  ): Record<string, any[]> {
-    const expanded: Record<string, any[]> = {};
-
-    for (const [key, spec] of Object.entries(params)) {
-      if (Array.isArray(spec)) {
-        // Already an array
-        expanded[key] = spec;
-      } else if (this.isRange(spec)) {
-        // Range specification
-        expanded[key] = this.rangeToArray(spec);
-      } else {
-        // Single value — wrap in array
-        expanded[key] = [spec];
-      }
-    }
-
-    return expanded;
-  }
-
-  /**
-   * Check if a value is a ParameterRange.
-   * @hidden
-   */
-  private isRange(value: any): value is ParameterRange {
-    return (
-      typeof value === "object" &&
-      value !== null &&
-      "min" in value &&
-      "max" in value &&
-      "step" in value
-    );
-  }
-
-  /**
-   * Convert a range specification to an array of values.
-   * @hidden
-   */
-  private rangeToArray(range: ParameterRange): number[] {
-    const values: number[] = [];
-    // Use epsilon to handle floating point comparison
-    const epsilon = range.step / 1000;
-    for (let v = range.min; v <= range.max + epsilon; v += range.step) {
-      // Round to avoid floating point artifacts
-      values.push(Math.round(v * 1e10) / 1e10);
-    }
-    return values;
-  }
-
-  /**
-   * Generate all parameter combinations (Cartesian product).
-   * @hidden
-   */
-  private generateCombinations(): Record<string, any>[] {
-    const keys = Object.keys(this.parameterSpace);
-    if (keys.length === 0) return [{}];
-
-    const combinations: Record<string, any>[] = [];
-
-    const recurse = (index: number, current: Record<string, any>) => {
-      if (index === keys.length) {
-        combinations.push({ ...current });
-        return;
-      }
-
-      const key = keys[index];
-      for (const value of this.parameterSpace[key]) {
-        current[key] = value;
-        recurse(index + 1, current);
-      }
-    };
-
-    recurse(0, {});
-    return combinations;
   }
 
   /**
@@ -607,7 +458,7 @@ class Experiment {
    */
   async run(options: RunOptions = {}): Promise<ExperimentResults> {
     const startTime = Date.now();
-    const combinations = this.generateCombinations();
+    const combinations = generateCombinations(this.parameterSpace);
     const totalRuns = combinations.length * this.replications;
     const results: RunResult[] = [];
 
@@ -668,14 +519,14 @@ class Experiment {
    * Get the total number of runs that will be executed.
    */
   getTotalRuns(): number {
-    return this.generateCombinations().length * this.replications;
+    return generateCombinations(this.parameterSpace).length * this.replications;
   }
 
   /**
    * Get all parameter combinations that will be tested.
    */
   getParameterCombinations(): Record<string, any>[] {
-    return this.generateCombinations();
+    return generateCombinations(this.parameterSpace);
   }
 }
 
@@ -689,7 +540,5 @@ export {
   RunOptions,
   AggregatedResult,
   ModelFactory,
-  ModelFactoryParams,
-  ParameterRange,
   ParameterSpec,
 };
