@@ -202,7 +202,7 @@ describe("Environment pause/step controls", () => {
   it("step() executes agent rules when paused", () => {
     const agent = new Agent();
     const rule = jest.fn();
-    agent.addRule(rule);
+    agent.set("tick",rule);
     environment.addAgent(agent);
     environment.pause();
     environment.step();

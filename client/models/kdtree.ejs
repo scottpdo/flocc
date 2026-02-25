@@ -112,7 +112,7 @@
         x: utils.random(0, width),
         y: utils.random(0, height)
       });
-      agent.addRule(tick);
+      agent.set("tick",tick);
       environment.addAgent(agent);
     }
     tree = new KDTree(environment.getAgents(), 2);

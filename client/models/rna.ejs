@@ -218,7 +218,7 @@ function makeDNAStrings() {
 			vy: 0,
 			type: template_type[c]
 		});
-		nucleotide.addRule(nucleotideTick);
+		nucleotide.set("tick",nucleotideTick);
 		return nucleotide;
 	});
 	templateNucleotides.forEach((nucleotide, i) => {
@@ -245,7 +245,7 @@ function setup() {
 			vy: v.y,
 			type: utils.sample(["A", "G", "C", "T", "U"])
 		});
-		nucleotide.addRule(nucleotideTick);
+		nucleotide.set("tick",nucleotideTick);
 		environment.addAgent(nucleotide);
 	}
 	environment.set("free", 1000);
@@ -262,7 +262,7 @@ function setup() {
 			vy: v.y,
 			RNA: [],
 		});
-		polymerase.addRule(polymeraseTick);
+		polymerase.set("tick",polymeraseTick);
 		environment.addAgent(polymerase);
 	}
 

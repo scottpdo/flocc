@@ -43,7 +43,7 @@
     function setup() {
         for (let i = 0; i < POPULATION; i++) {
             const agent = new Agent();
-            agent.addRule(tick);
+            agent.set("tick",tick);
             agent.set("i", i);
             agent.set("strategies", []);
             const { strategies } = agent.getData();
@@ -63,7 +63,7 @@
 
     function tick(agent) {
         if (agent.get("guess") === "1") environment.increment("ones");
-        agent.enqueue(updateStrategies);
+        agent.set("queue", updateStrategies);
     }
 
     function updateStrategies(agent) {

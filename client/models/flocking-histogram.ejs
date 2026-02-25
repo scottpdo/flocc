@@ -82,7 +82,7 @@
       agent.set("vy", Math.sin(angle));
       agent.set('vz', Math.tan(angle));
 
-      agent.addRule(tick);
+      agent.set("tick",tick);
 
       environment.addAgent(agent);
     }

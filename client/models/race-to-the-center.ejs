@@ -121,7 +121,7 @@
         y: height / 2,
         size: 1
       });
-      agent.addRule(vote);
+      agent.set("tick",vote);
       environment.addAgent(agent);
     }
     dem = new Agent({
@@ -132,7 +132,7 @@
       votes: 0,
       direction: utils.sample([1, -1])
     });
-    dem.addRule(shift);
+    dem.set("tick",shift);
     environment.addAgent(dem);
     rep = new Agent({
       x: utils.random((3 * width) / 4, width),
@@ -142,7 +142,7 @@
       votes: 0,
       direction: utils.sample([1, -1])
     });
-    rep.addRule(shift);
+    rep.set("tick",shift);
     environment.addAgent(rep);
   }
 

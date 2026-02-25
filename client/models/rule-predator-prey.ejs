@@ -121,7 +121,7 @@
       }
     });
   }
-  tracker.addRule(tickTracker);
+  tracker.set("tick",tickTracker);
 
   /* ── Setup ── */
   function makeAgent(type) {
@@ -133,10 +133,10 @@
     agent.set("shape", "circle");
     agent.set("color", type === "prey" ? "#4ecdc4" : "#ff6b6b");
     if (type === "prey") {
-      agent.addRule(preyRule);
+      agent.set("tick",preyRule);
     } else {
       agent.set("energy", 0.5 + utils.uniform() * 0.5);
-      agent.addRule(predatorRule);
+      agent.set("tick",predatorRule);
     }
     return agent;
   }

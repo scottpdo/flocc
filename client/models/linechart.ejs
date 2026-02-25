@@ -31,7 +31,7 @@
         x: Math.abs(Math.sin(i) * width),
         y: Math.abs(Math.cos(i) ** 2 * height)
       });
-      agent.addRule(tick);
+      agent.set("tick",tick);
       environment.addAgent(agent);
     }
   }

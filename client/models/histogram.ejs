@@ -168,7 +168,7 @@
         environment.set("eatery", new Eatery());
         for (let i = 0; i < 100; i++) {
             const agent = new SocialAgent();
-            agent.addRule(tick);
+            agent.set("tick",tick);
             environment.addAgent(agent);
             if (i === 100 - 1) {
                 agent.set("auto", false);

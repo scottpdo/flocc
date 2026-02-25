@@ -84,7 +84,7 @@ it("Sets new data based on return value of rules", () => {
       x: agt.get("x") + 1
     };
   }
-  a.addRule(rule);
+  a.set("tick",rule);
   const e = new Environment();
   e.addAgent(a);
   e.tick();
@@ -109,8 +109,8 @@ it("Sets new data based on return value of rules asynchronously.", () => {
       x: (agt.get("x") + mean) / 2
     };
   }
-  a.addRule(rule);
-  b.addRule(rule);
+  a.set("tick",rule);
+  b.set("tick",rule);
   e.tick();
   expect(a.get("x")).toBe(125);
   expect(b.get("x")).toBe(175);
@@ -161,10 +161,10 @@ it("Still executes rules added via `addRule` when there is a `tick` value.", () 
       a.increment("x"); // 2
     }
   });
-  a.addRule(function(a: Agent) {
+  a.set("tick",function(a: Agent) {
     a.set("x", a.get("x") * 10); // 20
   });
-  a.addRule(function(a: Agent) {
+  a.set("tick",function(a: Agent) {
     a.decrement("x", 5); // 15
   });
   e.addAgent(a);

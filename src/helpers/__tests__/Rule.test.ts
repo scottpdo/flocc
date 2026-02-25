@@ -91,7 +91,7 @@ it("Correctly enqueues setting agent data.", () => {
   let rule = new Rule(environment, steps);
   const a = new Agent();
   a.set("x", 100);
-  a.addRule(rule);
+  a.set("tick",rule);
   environment.addAgent(a);
   expect(a.get("x")).toBe(100);
   environment.tick();
