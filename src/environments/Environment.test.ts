@@ -88,7 +88,7 @@ it("Correctly loops over agents in the order they were added.", () => {
   for (let i = 0; i < 10; i++) {
     const agent = new Agent();
     agent.set("i", i);
-    agent.addRule(tick);
+    agent.set("tick",tick);
     environment.addAgent(agent);
   }
   environment.tick({ randomizeOrder: false });
@@ -105,7 +105,7 @@ it("Correctly loops over agents in random order.", () => {
   for (let i = 0; i < 10; i++) {
     const agent = new Agent();
     agent.set("i", i);
-    agent.addRule(tick);
+    agent.set("tick",tick);
     environment.addAgent(agent);
   }
   environment.tick({ randomizeOrder: true });
@@ -217,7 +217,7 @@ it("Memoizes values", () => {
   };
   for (let i = 0; i < 5; i++) {
     const agent = new Agent({ i });
-    agent.addRule(tick);
+    agent.set("tick",tick);
     environment.addAgent(agent);
   }
   environment.tick();

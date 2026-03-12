@@ -31,7 +31,7 @@ function profileEnqueue() {
   const environment = new Environment();
   for (let i = 0; i < numAgents; i++) {
     const agent = new Agent({ x: 0 });
-    agent.addRule(rule);
+    agent.set("tick",rule);
     environment.addAgent(agent);
   }
   console.log(`ENQUEUE: instantiating took ${sinceLast()}`);
@@ -50,7 +50,7 @@ function profileReturnValue() {
   const environment = new Environment();
   for (let i = 0; i < numAgents; i++) {
     const agent = new Agent({ x: 0 });
-    agent.addRule(rule);
+    agent.set("tick",rule);
     environment.addAgent(agent);
   }
   console.log(`RETURN VALUE: instantiating took ${sinceLast()}`);

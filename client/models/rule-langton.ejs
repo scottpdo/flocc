@@ -46,7 +46,7 @@
     cell.set("on", 0); /* 0 = white, 1 = black */
     cell.set("color", "#ffffff");
     /* Color rule: sync visual to state */
-    cell.addRule(a => {
+    cell.set("tick",a => {
       a.set("color", a.get("on") ? "#222" : "#fff");
     });
     environment.addAgentAt(x, y, cell);
@@ -86,8 +86,8 @@
   /* The ant needs a JS tick for grid interaction since the Rule DSL
      can't index into GridEnvironment cells by coordinate directly.
      This is a good example of mixing Rules with traditional ticks. */
-  ant.addRule(antRule);
-  ant.addRule(function antTick(a) {
+  ant.set("tick",antRule);
+  ant.set("tick",function antTick(a) {
     const cx = a.get("ax");
     const cy = a.get("ay");
     const cell = environment.getAgentAt(cx, cy);

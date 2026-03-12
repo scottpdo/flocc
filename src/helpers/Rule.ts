@@ -12,7 +12,7 @@ enum Operators {
   power = "power",
   get = "get",
   set = "set",
-  enqueue = "enqueue",
+
   local = "local",
   if = "if",
   and = "and",
@@ -65,7 +65,7 @@ const operatorInfo: { [key: string]: OperatorArity } = {
   power: { min: 2, max: 2 },
   get: { min: 1, max: 1 },
   set: { min: 2, max: 2 },
-  enqueue: { min: 2, max: 2 },
+
   local: { min: 1, max: 2 },
   if: { min: 2, max: 3 },
   and: { min: 2, max: 2 },
@@ -300,7 +300,7 @@ class Rule {
    * |`"power"`|`2`|""|
    * |`"get"`|`1`|Pass the key of `Agent` data to retrieve|
    * |`"set"`|`2`|Pass the key and value to set|
-   * |`"enqueue"`|`2`|Pass the key and value to enqueue|
+
    * |`"local"`|`2`|Pass the key and value to set as local variables|
    * |`"if"`|`3`|Pass the conditional (usually a step that evaluates to a boolean), the step to run when `true`, and the step to run when `false|
    * |`"and"`|`2`|Pass the two steps to logically evaluate|
@@ -560,12 +560,7 @@ class Rule {
     }
     if (first === Operators.set)
       return set(agent, this.evaluate(agent, a), this.evaluate(agent, b));
-    if (first === Operators.enqueue) {
-      agent.enqueue(() =>
-        set(agent, this.evaluate(agent, a), this.evaluate(agent, b))
-      );
-      return null;
-    }
+
     if (first === Operators.local) {
       const key = this.evaluate(agent, a);
       const value = this.evaluate(agent, b);

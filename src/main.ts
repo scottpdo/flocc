@@ -16,6 +16,25 @@ export { PriorityScheduler } from "./scheduling/PriorityScheduler";
 // Events
 export { EventBus, FloccEvent, EventHandler } from "./events/EventBus";
 
+// Data Recording
+export { Recorder } from "./recorders/Recorder";
+export type { RecorderOptions, ModelMetric, AgentMetric, ModelData, AgentDataRecord } from "./recorders/Recorder";
+
+// Experiments
+export { Experiment, ExperimentResults } from "./experiments/Experiment";
+export type {
+  ExperimentOptions,
+  ExperimentProgress,
+  ExperimentSummary,
+  RunResult,
+  RunOptions,
+  AggregatedResult,
+  ModelFactory,
+  ModelFactoryParams,
+  ParameterRange,
+  ParameterSpec,
+} from "./experiments/Experiment";
+
 // Utilities
 export { PriorityQueue } from "./utils/PriorityQueue";
 

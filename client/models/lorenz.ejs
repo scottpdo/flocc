@@ -50,9 +50,9 @@
     }
 
     (function setup() {
-        x.addRule(tickX);
-        y.addRule(tickY);
-        z.addRule(tickZ);
+        x.set("tick",tickX);
+        y.set("tick",tickY);
+        z.set("tick",tickZ);
 
         environment.addAgent(x);
         environment.addAgent(y);

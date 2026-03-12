@@ -5,7 +5,6 @@
     const {
         Agent,
         Environment,
-        GridEnvironment,
         Histogram,
         ASCIIRenderer,
         CanvasRenderer,
@@ -62,7 +61,7 @@
                 x: width / 2,
                 y: height / 2
             });
-            a.addRule(rule);
+            a.set("tick",rule);
             environment.addAgent(a);
         }
     }

@@ -14,9 +14,6 @@ declare interface RuleObj {
 
 const disallowed: string[] = ["tick", "queue"];
 
-const warnOnce1 = once(console.warn.bind(console));
-const warnOnce2 = once(console.warn.bind(console));
-
 /**
  * This class puts the `Agent` in 'agent-based modeling.' More specifically,
  * an `Agent` represents an individual unit of data and its associated
@@ -287,87 +284,6 @@ class Agent implements DataObj {
    */
   decrement(name: string, n: number = 1): void {
     this.increment(name, -n);
-  }
-
-  /**
-   * Until v0.5.14, this was the preferred way to add behavior to `Agent`s.
-   * Now, the preferred method is by setting the `Agent`'s `"tick"` value (i.e. `agent.set({ tick: function(agt) { ... }})`).
-   * This method will still be allowed until v0.7.0.
-   *
-   * Adds a rule (a function taking an `Agent` as a callback or a {@linkcode Rule} object) that may be run with every {@linkcode Environment.tick}.
-   * It is possible to add *more than one rule* to an `Agent`, although it
-   * is generally easier to write a longer function or to break it apart
-   * into multiple functions.
-   *
-   * ```js
-   * // adds a rule that *synchronously* increments the Agent's "x" value
-   * agent.addRule(function(agt) {
-   *   agent.increment('x');
-   * });
-   *
-   * // adds a rule that *asynchronously* increments the Agent's "x" value
-   * agent.addRule(function(agt) {
-   *   return {
-   *     x: agt.get('x') + 1
-   *   };
-   * });
-   * ```
-   *
-   * @deprecated since version 0.5.14
-   * @since 0.0.5
-   */
-  addRule(rule: Function | Rule, ...args: Array<any>): void {
-    warnOnce1(
-      "As of Flocc v0.5.14, Agent.addRule is **DEPRECATED**. It will be **REMOVED** in v0.7.0. Instead, add the Agent's update rule by calling `Agent.set('tick', ...);`"
-    );
-
-    this.rules.push({
-      args,
-      rule
-    });
-  }
-
-  /**
-   * Like {@linkcode Agent.addRule}, this method is deprecated and the
-   * recommended way is to now call
-   * `agent.set('queue', function(agt) { ... });`
-   *
-   * Calling this method enqueues a function to be executed
-   * *asynchronously* (at the end of the {@linkcode Environment}'s tick cycle).
-   * This is useful if a 'cleanup pass' should be performed between
-   * time steps to adjust `Agent` data.
-   *
-   * Below, the `Agent` sets its `"x"` value to `30` whenever it is
-   * activated during the `Environment`'s tick cycle. After all of that
-   * cycle's `Agent`s have been activated, this `Agent` sets its `"x"`
-   * value to `20`. So if any other `Agent` references its `"x"` value
-   * during a tick cycle after it has been activated, it will return `30`,
-   * but in between tick cycles it will return `20`.
-   *
-   * ```js
-   * agent.addRule(agt => {
-   *   agt.set("x", 30);
-   *   agt.enqueue(a => {
-   *     a.set("x", 20);
-   *   });
-   * });
-   * ```
-   *
-   * Any additional parameters passed to the enqueued function will
-   * be remembered and passed through when the function is executed.
-   *
-   * @deprecated since version 0.5.14
-   * @since 0.0.5
-   */
-  enqueue(rule: Function, ...args: Array<any>): void {
-    warnOnce2(
-      "As of Flocc v0.5.14, Agent.enqueue is **DEPRECATED**. It will be **REMOVED** in v0.7.0. Instead, add a rule to be executed at the end of this tick by calling `Agent.set('queue', ...);`"
-    );
-
-    this.queue.push({
-      args,
-      rule
-    });
   }
 
   /**

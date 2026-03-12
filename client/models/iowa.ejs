@@ -91,7 +91,7 @@
         size: 3,
         type: "voter"
       });
-      voter.addRule(tickVoter);
+      voter.set("tick",tickVoter);
       environment.addAgent(voter);
       network.addAgent(voter);
     }
