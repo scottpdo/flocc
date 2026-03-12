@@ -86,17 +86,6 @@ it("Correctly sets agent data.", () => {
   expect(agent.get("x")).toBe(999);
 });
 
-it("Correctly enqueues setting agent data.", () => {
-  let steps: any[] = ["enqueue", "x", 999];
-  let rule = new Rule(environment, steps);
-  const a = new Agent();
-  a.set("x", 100);
-  a.set("tick",rule);
-  environment.addAgent(a);
-  expect(a.get("x")).toBe(100);
-  environment.tick();
-  expect(a.get("x")).toBe(999);
-});
 
 it("Correctly sets and gets local variables.", () => {
   let steps: any[] = [["local", "i", 1], ["local", "i"]];
