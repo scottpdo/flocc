@@ -22,7 +22,7 @@
     "@rollup/plugin-typescript": "^12.3.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^14.0.19",
-    "browser-sync": "^2.26.14",
+    "browser-sync": "^3.0.4",
     "concurrently": "5.1.0",
     "ejs": "^3.0.2",
     "express": "^4.17.1",
