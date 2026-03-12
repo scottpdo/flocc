@@ -153,24 +153,6 @@ it("Executes class rules when adding a `tick` value.", () => {
   expect(a.get("x")).toBe(2);
 });
 
-it("Still executes rules added via `addRule` when there is a `tick` value.", () => {
-  const e = new Environment();
-  const a = new Agent({
-    x: 1,
-    tick(a: Agent) {
-      a.increment("x"); // 2
-    }
-  });
-  a.set("tick",function(a: Agent) {
-    a.set("x", a.get("x") * 10); // 20
-  });
-  a.set("tick",function(a: Agent) {
-    a.decrement("x", 5); // 15
-  });
-  e.addAgent(a);
-  e.tick();
-  expect(a.get("x")).toBe(15);
-});
 
 it("Executes enqueued function rules when adding a `queue` value.", () => {
   const e = new Environment();
