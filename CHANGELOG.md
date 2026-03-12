@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.7.0] - 2026-03-12
+
+### Added
+- **Recorder** — structured data collection from simulation runs
+  - Attach to any Environment to capture model-level and agent-level metrics
+  - `interval: 'tick' | 'manual' | number` controls when data is collected
+  - `agentFilter` limits agent recording to a subset of agents
+  - `getModelData()`, `getAgentData()`, `latest()` for data access
+  - `toCSV()` and `toJSON()` for export
+  - `reset()` clears collected data and resumes recording cleanly
+  - `detach()` unsubscribes from the environment
+- **Experiment** — batch parameter sweeps with replications
+  - Define a `parameters` space using arrays, `{ min, max, step }` ranges, or constants
+  - Cartesian product of all parameter combinations is run automatically
+  - `replications` runs each combination multiple times with distinct seeds
+  - `stopCondition` for early termination per run
+  - `onProgress` and `onRunComplete` callbacks for streaming results
+  - `ExperimentResults` with `filter()`, `groupBy()`, `aggregate()`, `toCSV()`, `toJSON()`
+- `Environment.events` is now auto-initialized — every Environment gets an EventBus without needing to pass one explicitly
+
+### Removed
+- `Agent.enqueue()` — deprecated since v0.5.14; use `agent.set('queue', fn)` instead
+- `Agent.addRule()` — use `agent.set('tick', fn)` instead
+- `enqueue` Rule DSL operator — depended on the removed `Agent.enqueue()` method
+
 ## [0.6.3] - 2026-02-16
 
 ### Added
